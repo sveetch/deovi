@@ -22,3 +22,10 @@ class DummyError(MyAppBaseException):
     Dummy exception sample to raise from your code.
     """
     pass
+
+
+class TaskValidationError(MyAppBaseException):
+    """
+    When task rules are not valid.
+    """
+    pass
