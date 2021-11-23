@@ -7,7 +7,7 @@ Specific application exceptions.
 """
 
 
-class MyAppBaseException(Exception):
+class DeoviClientBaseException(Exception):
     """
     Exception base.
 
@@ -17,15 +17,29 @@ class MyAppBaseException(Exception):
     pass
 
 
-class DummyError(MyAppBaseException):
+class DummyError(DeoviClientBaseException):
     """
     Dummy exception sample to raise from your code.
     """
     pass
 
 
-class TaskValidationError(MyAppBaseException):
+class TaskValidationError(DeoviClientBaseException):
     """
     When task rules are not valid.
     """
     pass
+
+
+class JobValidationError(DeoviClientBaseException):
+    """
+    When a job is not valid.
+
+    Keyword Arguments:
+        validation_details (dict): A possible dictionnary of validation details. It
+            won't output as exception message from traceback, you need to exploit it
+            yourself if needed.
+    """
+    def __init__(self, *args, **kwargs):
+        self.validation_details = kwargs.pop("validation_details", None)
+        super().__init__(*args, **kwargs)
