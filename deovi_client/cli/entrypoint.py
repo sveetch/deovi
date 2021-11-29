@@ -1,8 +1,8 @@
 """
 Main entrance to commandline actions
 
-Since Click use function docstring to build its help content, no command
-function are documented.
+TODO:
+    R&D to implement "COMMAND -h" / "COMMAND --help" as a "help COMMAND" command.
 """
 import click
 
@@ -10,6 +10,7 @@ from deovi_client.logger import init_logger
 
 from deovi_client.cli.version import version_command
 from deovi_client.cli.greet import greet_command
+from deovi_client.cli.rename import rename_command
 
 
 # Help alias on "-h" argument
@@ -62,3 +63,4 @@ def cli_frontend(ctx, verbose):
 # Attach commands methods to the main grouper
 cli_frontend.add_command(version_command, name="version")
 cli_frontend.add_command(greet_command, name="greet")
+cli_frontend.add_command(rename_command, name="rename")

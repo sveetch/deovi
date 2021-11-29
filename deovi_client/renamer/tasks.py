@@ -45,6 +45,7 @@ class TaskMethods:
             destination.name,
             label="capitalize",
             state="debug",
+            indent=options.get("_indent"),
         )
 
         return (source, destination)
@@ -75,6 +76,7 @@ class TaskMethods:
             destination.name,
             label="lowercase",
             state="debug",
+            indent=options.get("_indent"),
         )
 
         return (source, destination)
@@ -105,11 +107,12 @@ class TaskMethods:
             destination.name,
             label="uppercase",
             state="debug",
+            indent=options.get("_indent"),
         )
 
         return (source, destination)
 
-    def task_convert_underscore_to_dash(self, index, source, **options):
+    def task_underscore_to_dash(self, index, source, **options):
         """
         Convert every filenames with rules.
 
@@ -142,6 +145,7 @@ class TaskMethods:
             destination.name,
             label="underscore_to_dash",
             state="debug",
+            indent=options.get("_indent"),
         )
 
         return (source, destination)
@@ -174,6 +178,7 @@ class TaskMethods:
             destination.name,
             label="add_prefix",
             state="debug",
+            indent=options.get("_indent"),
         )
 
         return (source, destination)
@@ -219,6 +224,7 @@ class TaskMethods:
             destination.name,
             label="numerate",
             state="debug",
+            indent=options.get("_indent"),
         )
 
         return (source, destination)
@@ -282,6 +288,7 @@ class TaskMethods:
             destination.name,
             label="catch_segments",
             state="debug",
+            indent=options.get("_indent"),
         )
 
         return (source, destination)
@@ -319,6 +326,7 @@ class TaskMethods:
             destination.name,
             label="replace",
             state="debug",
+            indent=options.get("_indent"),
         )
 
         return (source, destination)

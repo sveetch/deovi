@@ -96,6 +96,8 @@ class Job(PrinterInterface):
         if self.reverse:
             files = reversed(files)
 
+        self.log_info(" • {} files to process".format(len(files)))
+
         return files
 
     def run(self, task_manager, dry_run=True):
@@ -109,6 +111,9 @@ class Job(PrinterInterface):
             dry_run (boolean): To enable "dry run" mode which does not write anything.
                 If disabled, every renaming will be writed to the filesystem. Disabled
                 by default.
+
+        Returns:
+            dict: A dictionnary of informations about original sources and renaming.
         """
         # A list of renamed filenames used for statistic and warning about overwritting
         # in dry run mode
@@ -116,19 +121,24 @@ class Job(PrinterInterface):
         # A list of tuple "(renamed, original)" to restore everything if needed
         reverse_store = []
 
-        self.log_info("")
         self.log_info("📂 Working on: {}".format(self.basepath))
 
         # A list of original source filenames
         original_store = self.get_target_files()
+        self.log_info("")
+
+        # Build row indice and indentation stuff. Indentation length is computed
+        # from indice string for the biggest index value
+        indentation, indicer = self.get_indentation_infos(
+            len(original_store), "[{i}]━",
+        )
 
         # Safely run task, in case of any exception, renamed file will be restored to
         # their original name
         try:
             for i, source in enumerate(original_store, start=1):
-                self.log_info("")
                 msg = "From: {}".format(source.name)
-                self.log_info(msg, state="start")
+                self.log_info(msg, state="start", indent=indicer(i))
                 # Start destination from original which will be update along the tasks
                 destination = source
 
@@ -138,7 +148,7 @@ class Job(PrinterInterface):
 
                     # Perform task
                     paths = getattr(task_manager, task_method)(
-                        i,  destination,  **options
+                        i,  destination, _indent=indentation, **options
                     )
 
                     # Update destination filename from returned task value
@@ -146,8 +156,6 @@ class Job(PrinterInterface):
 
                 # If final destination is not the same as the original
                 if destination != source:
-                    print()
-                    print(source, "=>", destination)
 
                     # Error if file already exists, no overwritting is allowed
                     if destination.exists():
@@ -156,7 +164,7 @@ class Job(PrinterInterface):
                         ).format(
                             destination.name
                         )
-                        self.log_warning(msg, state="end")
+                        self.log_warning(msg, state="end", indent=indentation)
                     elif destination in rename_store:
                         msg = (
                             "❗ This destination is already planned from another file: "
@@ -164,29 +172,32 @@ class Job(PrinterInterface):
                         ).format(
                             destination.name
                         )
-                        self.log_warning(msg, state="end")
+                        self.log_warning(msg, state="end", indent=indentation)
                     # Dry run mode just output results without writing anything
                     elif dry_run:
                         msg = "✨ To: {}".format(destination.name)
-                        self.log_info(msg, state="end")
+                        self.log_info(msg, state="end", indent=indentation)
                         rename_store.add(destination)
                     # Effective renaming
                     else:
                         msg = "✅ To: {}".format(destination.name)
-                        self.log_info(msg, state="end")
+                        self.log_info(msg, state="end", indent=indentation)
                         reverse_store.append(
                             (source, destination)
                         )
                         # Perform renaming
                         source.rename(destination)
                         rename_store.add(destination)
+                    # White space divider between jobs
+                    self.log_info("")
                 # If source and destination are identical, nothing to do, just warning
                 else:
                     msg = (
                         "❗ Source and destination paths are identical, nothing to "
                         "rename."
                     )
-                    self.log_warning(msg, state="end")
+                    self.log_warning(msg, state="end", indent=indentation)
+                    self.log_warning("")
         except:
             # Restore every renamed files before error
             msg = (

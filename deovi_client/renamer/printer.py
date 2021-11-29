@@ -18,8 +18,9 @@ class PrinterInterface:
         """
         Crawl every task to get the bigger name length.
 
-        NOTE:
-            Let's forget this feature ?
+        Arguments:
+            tasks (dict): A dictionnary of tasks infos, only its keys are used to
+                compute max value.
 
         Returns:
             integer: Length of bigger name or zero if task list is empty.
@@ -29,7 +30,36 @@ class PrinterInterface:
 
         return max([len(k) for k, v in tasks])
 
-    def _row_format(self, message, label=None, state=None):
+    def get_indentation_infos(self, length, template):
+        """
+        Return computated indice and indentation informations.
+
+        Arguments:
+            length (integer): Length of items to compute maximum indentation value.
+            template (string): String template to build formatted indice.
+
+        Returns:
+            tuple: In order, the indentation length (integer) and the indice formatter
+                function. This one attempt only an integer value and return a string.
+        """
+        zfill = len(
+            str(length)
+        )
+
+        indent_length = len(
+            template.format(i=length)
+        )
+
+        indice_func = None
+
+        # The formatter function carry the template to format indice directly from
+        # given integer
+        def indice_func(index):
+            return template.format(i=str(index).zfill(zfill))
+
+        return indent_length, indice_func
+
+    def _row_format(self, message, label=None, state=None, indent=None):
         """
         Format row message from given arguments.
 
@@ -37,20 +67,27 @@ class PrinterInterface:
             message (string): A message to display.
             state (string): State name can be start, default, debug or end. It will
                 define how the row will be formatted.
+            indent (integer or string): If a string, use it to prefix message. If an
+                integer, define the number of space to be added as prefix.
 
         Returns:
             string: Formatted message.
         """
-        content = []
+        prefix = ""
+
+        if indent and isinstance(indent, int):
+            prefix = " " * indent
+        elif indent:
+            prefix = indent
 
         # Select the leading string to insert before label or message
-        start = " ├─ "
+        start = "├─ "
         if state == "start":
-            start = " ┍━ "
+            start = "┍━ "
         elif state == "debug":
-            start = " ├┄ "
+            start = "├┄ "
         elif state == "end":
-            start = " ┕━ "
+            start = "┕━ "
 
         # Add label surrounding and padding
         label = label or ""
@@ -62,7 +99,7 @@ class PrinterInterface:
         # Put message if any
         message = message or ""
 
-        return "".join([start, label, message])
+        return "".join([prefix, start, label, message])
 
     def log(self, level, message, **kwargs):
         """
@@ -77,7 +114,7 @@ class PrinterInterface:
         Arguments:
             level (string): Logging level name (``debug``, ``info``, etc..).
         """
-        if "label" in kwargs or "state" in kwargs:
+        if "label" in kwargs or "state" in kwargs or "indent" in kwargs:
             getattr(self.logger, level)(
                 self._row_format(message, **kwargs)
             )

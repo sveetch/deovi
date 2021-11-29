@@ -122,12 +122,6 @@ class JobRunner(PrinterInterface):
             dry_run (boolean): To enable "dry run" mode which does not write anything.
                 If disabled, every renaming will be writed to the filesystem. Disabled
                 by default.
-
-        Raises:
-            JobValidationError: If there is any error during job validation.
-
-        Returns:
-            None:
         """
         task_manager = self.task_class()
 

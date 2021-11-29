@@ -5,6 +5,81 @@ import pytest
 from deovi_client.renamer.printer import PrinterInterface
 
 
+@pytest.mark.parametrize("length, template, expected_indent, expected_indice", [
+    (
+        0, "{{{i}}}━",
+        4, "{0}━"
+    ),
+    (
+        1, "{{{i}}}━",
+        4, "{1}━"
+    ),
+    (
+        42, "{{{i}}}━",
+        5, "{42}━"
+    ),
+    (
+        130, "{{{i}}}━",
+        6, "{130}━"
+    ),
+    (
+        42, "{i}",
+        2, "42"
+    ),
+    (
+        42, "-[{i}]-",
+        6, "-[42]-"
+    ),
+])
+def test_get_indentation_infos(length, template, expected_indent, expected_indice):
+    """
+    Method should return correctly indentation length to use and indice formatter
+    function.
+    """
+    printer = PrinterInterface()
+
+    indent_length, indicer = printer.get_indentation_infos(length, template)
+
+    assert indent_length == expected_indent
+    assert indicer(length) == expected_indice
+
+
+@pytest.mark.parametrize("length, value, expected_indice", [
+    (
+        0, 1, "[1]"
+    ),
+    (
+        1, 9, "[9]"
+    ),
+    (
+        20, 9, "[09]"
+    ),
+    (
+        20, 19, "[19]"
+    ),
+    (
+        100, 9, "[009]"
+    ),
+    (
+        100, 19, "[019]"
+    ),
+    (
+        100, 101, "[101]"
+    ),
+])
+def test_get_indentation_infos_zfill(length, value, expected_indice):
+    """
+    Ensure zfill is correctly computed and used in indice formatter function.
+    """
+    printer = PrinterInterface()
+
+    template = "[{i}]"
+
+    indent_length, indicer = printer.get_indentation_infos(length, template)
+
+    assert indicer(value) == expected_indice
+
+
 def test_printer_set_label_length():
     """
     Method should return the longest length from keys.
@@ -24,16 +99,16 @@ def test_printer_formatter():
     printer = PrinterInterface()
 
     result = printer._row_format(message="{1} Foo", state="start")
-    assert result == " ┍━ {1} Foo"
+    assert result == "┍━ {1} Foo"
 
     result = printer._row_format(message="Foo")
-    assert result == " ├─ Foo"
+    assert result == "├─ Foo"
 
     result = printer._row_format(message="Foo", state="debug")
-    assert result == " ├┄ Foo"
+    assert result == "├┄ Foo"
 
     result = printer._row_format(message="Foo", state="end")
-    assert result == " ┕━ Foo"
+    assert result == "┕━ Foo"
 
     data = [
         ("foo", "Foo bar"),
@@ -48,8 +123,8 @@ def test_printer_formatter():
         )
 
     assert results == [
-        " ┍━ [foo]        Foo bar",
-        " ┍━ [ping pong]  Pang pang",
+        "┍━ [foo]        Foo bar",
+        "┍━ [ping pong]  Pang pang",
     ]
 
 
@@ -73,13 +148,13 @@ def test_printer_log(caplog, debug_logger):
     caplog.clear()
 
     result = printer.log("info", "Chu", label="Pika", state="start")
-    assert [(logging.INFO, " ┍━ [Pika]  Chu")] == [
+    assert [(logging.INFO, "┍━ [Pika]  Chu")] == [
         (rec.levelno, rec.message) for rec in caplog.records
     ]
     caplog.clear()
 
     result = printer.log("warning", "Tchip", state="end")
-    assert [(logging.WARNING, " ┕━ Tchip")] == [
+    assert [(logging.WARNING, "┕━ Tchip")] == [
         (rec.levelno, rec.message) for rec in caplog.records
     ]
     caplog.clear()
@@ -105,13 +180,13 @@ def test_printer_log_levels(caplog, debug_logger):
     caplog.clear()
 
     result = printer.log_info("Chu", label="Pika", state="start")
-    assert [(logging.INFO, " ┍━ [Pika]  Chu")] == [
+    assert [(logging.INFO, "┍━ [Pika]  Chu")] == [
         (rec.levelno, rec.message) for rec in caplog.records
     ]
     caplog.clear()
 
     result = printer.log_warning("Tchip", state="end")
-    assert [(logging.WARNING, " ┕━ Tchip")] == [
+    assert [(logging.WARNING, "┕━ Tchip")] == [
         (rec.levelno, rec.message) for rec in caplog.records
     ]
     caplog.clear()
