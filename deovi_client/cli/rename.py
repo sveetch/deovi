@@ -3,10 +3,9 @@ from pathlib import Path
 
 import click
 
-from deovi_client import __version__
-from deovi_client.renamer.tasks import TaskMaster
-from deovi_client.renamer.runner import JobRunner
-from deovi_client.exceptions import JobValidationError, TaskValidationError
+from ..renamer.tasks import TaskMaster
+from ..renamer.runner import JobRunner
+from ..exceptions import JobValidationError
 
 
 @click.command()

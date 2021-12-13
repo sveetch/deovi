@@ -1,1 +1,1 @@
-deovi-client
+deovi

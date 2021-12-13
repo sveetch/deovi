@@ -1,15 +1,5 @@
-"""
-TODO:
-
-    Let's build the "rename" CLI and test it.
-
-    Think to make elsewhere a skipped dummy test to implement "--init" feature to
-    create new empty job file.
-"""
 import json
 import logging
-
-import pytest
 
 from click.testing import CliRunner
 
@@ -19,9 +9,9 @@ from deovi_client.cli.entrypoint import cli_frontend
 APPLABEL = "deovi-client"
 
 
-def test_rename_required_job_argument(caplog):
+def test_rename_required_job_option(caplog):
     """
-    At least one job argument is required.
+    At least one job option is required.
 
     NOTE: We do not test job filepath validation since it's a Click feature.
     """
@@ -35,14 +25,14 @@ def test_rename_required_job_argument(caplog):
         (
             APPLABEL,
             logging.CRITICAL,
-            "There is no job file to process."
+            "There is no job file to process.",
         )
     ]
 
 
 def test_rename_required_success(caplog, basic_sample, basic_suite):
     """
-    TODO
+    Just test successful jobs input and output
     """
     # Create sample job in basic sample
     sample1_source = basic_sample / "job_1.json"
@@ -84,7 +74,6 @@ def test_rename_required_success(caplog, basic_sample, basic_suite):
 
     assert result.exit_code == 0
 
-
     # All expected logs from both run modes
     expected_logs = [
         "Dry run mode is enabled, no file will be renamed.",
@@ -115,17 +104,17 @@ def test_rename_required_success(caplog, basic_sample, basic_suite):
         "[2]━┍━ From: Item.S01.E02.mp4",
         "    ├┄ [lowercase]  item.s01.e02.mp4",
         "    ├┄ [catch_segments]  item.mp4",
-        "    ┕━ ❗ This destination is already planned from another file:  item.mp4",
+        "    ┕━ ❗ This destination is already planned from another file: item.mp4",
         "",
         "[3]━┍━ From: Item.S02.E01.mp4",
         "    ├┄ [lowercase]  item.s02.e01.mp4",
         "    ├┄ [catch_segments]  item.mp4",
-        "    ┕━ ❗ This destination is already planned from another file:  item.mp4",
+        "    ┕━ ❗ This destination is already planned from another file: item.mp4",
         "",
         "[4]━┍━ From: Item.S02.E02.mp4",
         "    ├┄ [lowercase]  item.s02.e02.mp4",
         "    ├┄ [catch_segments]  item.mp4",
-        "    ┕━ ❗ This destination is already planned from another file:  item.mp4",
+        "    ┕━ ❗ This destination is already planned from another file: item.mp4",
         "",
     ]
     assert expected_logs == [rec.message for rec in caplog.records]

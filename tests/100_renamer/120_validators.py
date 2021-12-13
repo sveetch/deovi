@@ -273,6 +273,7 @@ def test_replace_validation():
         "Task 'replace' require option(s): from, to"
     )
 
+
 @pytest.mark.parametrize("source, extensions, expected", [
     (Path("foo"), [], True),
     (Path("bar"), [], False),

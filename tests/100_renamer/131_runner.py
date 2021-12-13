@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 
 import pytest
 
@@ -110,7 +109,7 @@ def test_jobrunner_get_job_tasks_errors(basic_sample):
         }, fp, indent=4)
 
     with pytest.raises(JobValidationError) as excinfo:
-        jobs = jobber.get_jobs([
+        jobber.get_jobs([
             sample1_source,
             sample2_source,
         ])
@@ -203,7 +202,7 @@ def test_jobrunner_run_success(caplog, debug_logger, basic_sample, basic_suite):
             ],
         }, fp, indent=4)
 
-    jobs = jobber.run([
+    jobber.run([
         sample1_source,
         sample2_source,
     ], dry_run=True)
@@ -236,17 +235,17 @@ def test_jobrunner_run_success(caplog, debug_logger, basic_sample, basic_suite):
         "[2]━┍━ From: Item.S01.E02.mp4",
         "    ├┄ [lowercase]  item.s01.e02.mp4",
         "    ├┄ [catch_segments]  item.mp4",
-        "    ┕━ ❗ This destination is already planned from another file:  item.mp4",
+        "    ┕━ ❗ This destination is already planned from another file: item.mp4",
         "",
         "[3]━┍━ From: Item.S02.E01.mp4",
         "    ├┄ [lowercase]  item.s02.e01.mp4",
         "    ├┄ [catch_segments]  item.mp4",
-        "    ┕━ ❗ This destination is already planned from another file:  item.mp4",
+        "    ┕━ ❗ This destination is already planned from another file: item.mp4",
         "",
         "[4]━┍━ From: Item.S02.E02.mp4",
         "    ├┄ [lowercase]  item.s02.e02.mp4",
         "    ├┄ [catch_segments]  item.mp4",
-        "    ┕━ ❗ This destination is already planned from another file:  item.mp4",
+        "    ┕━ ❗ This destination is already planned from another file: item.mp4",
         "",
     ]
     assert expected_logs == [rec.message for rec in caplog.records]

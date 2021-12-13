@@ -135,25 +135,25 @@ def test_printer_log(caplog, debug_logger):
     """
     printer = PrinterInterface()
 
-    result = printer.log("debug", "Foo!")
+    printer.log("debug", "Foo!")
     assert [(logging.DEBUG, "Foo!")] == [
         (rec.levelno, rec.message) for rec in caplog.records
     ]
     caplog.clear()
 
-    result = printer.log("info", "Bar!")
+    printer.log("info", "Bar!")
     assert [(logging.INFO, "Bar!")] == [
         (rec.levelno, rec.message) for rec in caplog.records
     ]
     caplog.clear()
 
-    result = printer.log("info", "Chu", label="Pika", state="start")
+    printer.log("info", "Chu", label="Pika", state="start")
     assert [(logging.INFO, "┍━ [Pika]  Chu")] == [
         (rec.levelno, rec.message) for rec in caplog.records
     ]
     caplog.clear()
 
-    result = printer.log("warning", "Tchip", state="end")
+    printer.log("warning", "Tchip", state="end")
     assert [(logging.WARNING, "┕━ Tchip")] == [
         (rec.levelno, rec.message) for rec in caplog.records
     ]
@@ -167,25 +167,25 @@ def test_printer_log_levels(caplog, debug_logger):
     """
     printer = PrinterInterface()
 
-    result = printer.log_debug("Foo!")
+    printer.log_debug("Foo!")
     assert [(logging.DEBUG, "Foo!")] == [
         (rec.levelno, rec.message) for rec in caplog.records
     ]
     caplog.clear()
 
-    result = printer.log_info("Bar!")
+    printer.log_info("Bar!")
     assert [(logging.INFO, "Bar!")] == [
         (rec.levelno, rec.message) for rec in caplog.records
     ]
     caplog.clear()
 
-    result = printer.log_info("Chu", label="Pika", state="start")
+    printer.log_info("Chu", label="Pika", state="start")
     assert [(logging.INFO, "┍━ [Pika]  Chu")] == [
         (rec.levelno, rec.message) for rec in caplog.records
     ]
     caplog.clear()
 
-    result = printer.log_warning("Tchip", state="end")
+    printer.log_warning("Tchip", state="end")
     assert [(logging.WARNING, "┕━ Tchip")] == [
         (rec.levelno, rec.message) for rec in caplog.records
     ]

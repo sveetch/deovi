@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import click
 
-from deovi_client import __version__
+from .. import __version__
 
 
 @click.command()

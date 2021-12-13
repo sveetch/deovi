@@ -1,10 +1,9 @@
-.. _intro_cli:
+.. _intro_usage:
 
-============
-Command line
-============
-
+=====
 Usage
+=====
+
 -----
 
 Every task must be run from a Job file. A job file is dedicated to work on a specific

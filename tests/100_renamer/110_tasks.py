@@ -100,7 +100,7 @@ def test_uppercase(caplog, debug_logger, task_manager):
     ),
 ])
 def test_underscore_to_dash(caplog, debug_logger, task_manager, source,
-                                    expected, expected_logs):
+                            expected, expected_logs):
     """
     Method should catch the divider segment and join them according to options.
     """

@@ -1,6 +1,3 @@
-import logging
-from pathlib import Path
-
 from .printer import PrinterInterface
 
 
@@ -29,8 +26,8 @@ class TaskMethods:
         Capitalize file name (work on the whole filename including extension).
 
         Arguments:
-            index (integer): Index integer for current item in the walked list. Mostly used
-                for print out message.
+            index (integer): Index integer for current item in the walked list. Mostly
+                used for print out message.
 
             source (pathlib.Path): Source filename.
             **options (dict): Tasks options, this task does not expect any options.
@@ -86,15 +83,15 @@ class TaskMethods:
         Uppercase file name(work on the whole filename including extension).
 
         Arguments:
-            index (integer): Index integer for current item in the walked list. Mostly used
-                for print out message.
+            index (integer): Index integer for current item in the walked list. Mostly
+                used for print out message.
 
             source (pathlib.Path): Source Path object.
             **options (dict): Tasks options, this task does not expect any options.
 
         Keyword Arguments:
-            verbose (string): To enable or disable verbosity, when disable not any output
-                will be printed out. Default to False.
+            verbose (string): To enable or disable verbosity, when disable not any
+                output will be printed out. Default to False.
             printer (function): A function to use to print out message. If not set,
                 ``verbose`` argument is useless. Default to None.
 
@@ -122,15 +119,15 @@ class TaskMethods:
         So "ping_-_foo_bar.mp4" will be converted to "ping_foo-bar.mp4".
 
         Arguments:
-            index (integer): Index integer for current item in the walked list. Mostly used
-                for print out message.
+            index (integer): Index integer for current item in the walked list. Mostly
+                used for print out message.
 
             source (pathlib.Path): Source Path object.
             **options (dict): Tasks options, this task does not expect any options.
 
         Keyword Arguments:
-            verbose (string): To enable or disable verbosity, when disable not any output
-                will be printed out. Default to False.
+            verbose (string): To enable or disable verbosity, when disable not any
+                output will be printed out. Default to False.
             printer (function): A function to use to print out message. If not set,
                 ``verbose`` argument is useless. Default to None.
 
@@ -155,15 +152,15 @@ class TaskMethods:
         Add a prefix before each file from given directory path.
 
         Arguments:
-            index (integer): Index integer for current item in the walked list. Mostly used
-                for print out message.
+            index (integer): Index integer for current item in the walked list. Mostly
+                used for print out message.
 
             source (pathlib.Path): Source Path object.
             **options (dict): Tasks options, expect an option "prefix".
 
         Keyword Arguments:
-            verbose (string): To enable or disable verbosity, when disable not any output
-                will be printed out. Default to False.
+            verbose (string): To enable or disable verbosity, when disable not any
+                output will be printed out. Default to False.
             printer (function): A function to use to print out message. If not set,
                 ``verbose`` argument is useless. Default to None.
 
@@ -192,16 +189,16 @@ class TaskMethods:
         divided from filename with given divider string.
 
         Arguments:
-            index (integer): Index integer for current item in the walked list. Mostly used
-                for print out message.
+            index (integer): Index integer for current item in the walked list. Mostly
+                used for print out message.
 
             source (pathlib.Path): Source Path object.
             **options (dict): Tasks options, expect option "zfill" and optional
                 "start" and "divider".
 
         Keyword Arguments:
-            verbose (string): To enable or disable verbosity, when disable not any output
-                will be printed out. Default to False.
+            verbose (string): To enable or disable verbosity, when disable not any
+                output will be printed out. Default to False.
             printer (function): A function to use to print out message. If not set,
                 ``verbose`` argument is useless. Default to None.
 
@@ -234,8 +231,8 @@ class TaskMethods:
         """
         Catch segments from filename.
 
-        Filename is splitted on a divider and only required segments from given rules are
-        retained then joined.
+        Filename is splitted on a divider and only required segments from given rules
+        are retained then joined.
 
         This only apply on the file name part, not the extension parts.
 
@@ -243,15 +240,15 @@ class TaskMethods:
         given is "-".
 
         Arguments:
-            index (integer): Index integer for current item in the walked list. Mostly used
-                for print out message.
+            index (integer): Index integer for current item in the walked list. Mostly
+                used for print out message.
             source (pathlib.Path): Source Path object.
-            **options (dict): Tasks options, require options "divider" and "slice_start" and
-                accept optional "slice_end" and "joiner".
+            **options (dict): Tasks options, require options "divider" and
+                "slice_start" and accept optional "slice_end" and "joiner".
 
         Keyword Arguments:
-            verbose (string): To enable or disable verbosity, when disable not any output
-                will be printed out. Default to False.
+            verbose (string): To enable or disable verbosity, when disable not any
+                output will be printed out. Default to False.
             printer (function): A function to use to print out message. If not set,
                 ``verbose`` argument is useless. Default to None.
 

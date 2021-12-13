@@ -6,11 +6,10 @@ TODO:
 """
 import click
 
-from deovi_client.logger import init_logger
-
-from deovi_client.cli.version import version_command
-from deovi_client.cli.greet import greet_command
-from deovi_client.cli.rename import rename_command
+from ..logger import init_logger
+from ..cli.version import version_command
+from ..cli.rename import rename_command
+from ..cli.job import job_command
 
 
 # Help alias on "-h" argument
@@ -62,5 +61,5 @@ def cli_frontend(ctx, verbose):
 
 # Attach commands methods to the main grouper
 cli_frontend.add_command(version_command, name="version")
-cli_frontend.add_command(greet_command, name="greet")
 cli_frontend.add_command(rename_command, name="rename")
+cli_frontend.add_command(job_command, name="job")

@@ -12,19 +12,19 @@
 #
 
 # Get the module version
-from deovi_client import __version__ as deovi_client_version
+from deovi import __version__ as deovi_version
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'deovi-client'
+project = 'deovi'
 copyright = '2021, David Thenon'
 author = 'David Thenon'
 
 # The short X.Y version
-version = deovi_client_version
+version = deovi_version
 # The full version, including alpha/beta/rc tags
-release = deovi_client_version
+release = deovi_version
 
 
 # -- General configuration ---------------------------------------------------

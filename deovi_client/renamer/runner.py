@@ -50,7 +50,7 @@ class JobRunner(PrinterInterface):
         1. Validate job parameters;
         2. Validate jobs tasks.
 
-        The first one block the second one since invalid job parameters may not be
+        The first one blocks the second one since invalid job parameters may not be
         suitable to open/parse for tasks.
 
         Arguments:
@@ -85,7 +85,8 @@ class JobRunner(PrinterInterface):
 
             # Check every job tasks
             for task_name, task_options in job.tasks:
-                # First check job file exists else store error but dont continue to task
+                # First check job file exists else store error but dont continue to
+                # task
                 if task_name not in task_infos:
                     if job_source not in task_by_job_errors:
                         task_by_job_errors[job_source] = []
@@ -96,7 +97,11 @@ class JobRunner(PrinterInterface):
 
                 # Finally validate job tasks
                 try:
-                    validate_task_options(task_name, task_infos[task_name], **task_options)
+                    validate_task_options(
+                        task_name,
+                        task_infos[task_name],
+                        **task_options
+                    )
                 except TaskValidationError as e:
                     if job_source not in task_by_job_errors:
                         task_by_job_errors[job_source] = []
@@ -129,4 +134,4 @@ class JobRunner(PrinterInterface):
 
         # Perform all tasks from each jobs
         for job in jobs:
-            results = job.run(task_manager, dry_run=dry_run)
+            job.run(task_manager, dry_run=dry_run)

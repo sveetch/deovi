@@ -1,11 +1,10 @@
 import json
-import logging
 from pathlib import Path
 
 import pytest
 
+from deovi_client.exceptions import JobValidationError
 from deovi_client.renamer.jobs import Job
-from deovi_client.renamer.runner import JobRunner
 
 
 def test_job_model():
@@ -30,6 +29,104 @@ def test_job_model():
     )
 
     assert job.name == "Hello world"
+
+
+@pytest.mark.parametrize("basepath, destination, expected_msg", [
+    (
+        "/home/foo",
+        None,
+        "🚨 Basepath does not exists or is not a directory: /home/foo",
+    ),
+    (
+        "{basic_sample}/files",
+        "{basic_sample}/files",
+        (
+            "🚨 Destination path must be a file, not an existing directory: "
+            "{basic_sample}/files"
+        ),
+    ),
+    (
+        "{basic_sample}/files",
+        "{basic_sample}/nope/foo.json",
+        (
+            "🚨 Destination path must point into an existing directory: "
+            "{basic_sample}/nope/foo.json"
+        ),
+    ),
+])
+def test_job_create_error(monkeypatch, basic_sample, basepath, destination,
+                          expected_msg):
+    """
+    Method should raise JobValidationError for invalid basepath or destination.
+    """
+    # Augment paths with sample tmp dir if required
+    basepath = basepath.format(basic_sample=basic_sample)
+    expected_msg = expected_msg.format(basic_sample=basic_sample)
+    if destination:
+        destination = destination.format(basic_sample=basic_sample)
+
+    # Mock cwd() to always return the sample tmp dir
+    def mockreturn():
+        return basic_sample
+
+    with monkeypatch.context() as m:
+        m.setattr(Path, "cwd", mockreturn)
+        with pytest.raises(JobValidationError) as excinfo:
+            Job.create(basepath, destination=destination)
+
+    assert str(excinfo.value) == expected_msg
+
+
+@pytest.mark.parametrize("basepath, destination, expected_path", [
+    (
+        "{basic_sample}/files",
+        None,
+        "{basic_sample}/files.json",
+    ),
+    (
+        "{basic_sample}/files",
+        "foo.json",
+        "{basic_sample}/foo.json",
+    ),
+    (
+        "{basic_sample}/files",
+        "files/foo.json",
+        "{basic_sample}/files/foo.json",
+    ),
+    (
+        "{basic_sample}/files",
+        "{basic_sample}/files/bar.json",
+        "{basic_sample}/files/bar.json",
+    ),
+])
+def test_job_create_success(monkeypatch, basic_sample, basepath, destination,
+                            expected_path):
+    """
+    Method should correctly create an empty but valid JSON job file.
+    """
+    # Augment paths with sample tmp dir if required
+    basepath = basepath.format(basic_sample=basic_sample)
+    expected_path = expected_path.format(basic_sample=basic_sample)
+    if destination:
+        destination = destination.format(basic_sample=basic_sample)
+
+    # Mock cwd() to always return the sample tmp dir
+    def mockreturn():
+        return basic_sample
+
+    with monkeypatch.context() as m:
+        m.setattr(Path, "cwd", mockreturn)
+        created = Job.create(basepath, destination=destination)
+
+    assert created == Path(expected_path)
+
+    job = Job.load(created)
+
+    assert job.basepath == Path(basepath)
+    assert job.tasks == []
+    assert job.extensions is None
+    assert job.reverse is False
+    assert job.sort is True
 
 
 def test_job_load(basic_sample):
@@ -123,7 +220,7 @@ def test_job_run_modes(caplog, info_logger, task_manager, basic_sample):
         Path(source),
         Path(basepath),
         extensions=[],
-        tasks = [
+        tasks=[
             ["capitalize", {}],
             ["add_prefix", {"prefix": "blip_"}],
         ],
@@ -238,7 +335,7 @@ def test_job_run_errors(caplog, debug_logger, task_manager, basic_sample):
         Path(source),
         Path(basepath),
         extensions=["mp4", "mpeg4", "avi"],
-        tasks = [
+        tasks=[
             ["uppercase", {}],
         ],
     )

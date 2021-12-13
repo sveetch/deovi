@@ -1,8 +1,9 @@
 import json
-import logging
 from pathlib import Path
 
-from ..exceptions import JobValidationError, TaskValidationError
+from slugify import slugify
+
+from ..exceptions import JobValidationError
 
 from .printer import PrinterInterface
 from .validators import is_allowed_file
@@ -11,8 +12,6 @@ from .validators import is_allowed_file
 class Job(PrinterInterface):
     """
     Model object to store job parameters.
-
-    Also transform every path string to Path object.
 
     Arguments:
         source (pathlib.Path): Job source filepath.
@@ -27,6 +26,13 @@ class Job(PrinterInterface):
         reverse (boolean): Enable reversion of file names when performing tasks.
     """
     DEFAULT_NAME = "Job from '{}'"
+    EMPTY_JOB_MATRIX = {
+        "name": None,
+        "basepath": None,
+        "extensions": None,
+        "reversed": False,
+        "tasks": [],
+    }
 
     def __init__(self, source, basepath, name=None, tasks=None, extensions=None,
                  reverse=False):
@@ -41,12 +47,75 @@ class Job(PrinterInterface):
         self.sort = True
 
     @classmethod
+    def create(cls, basepath, destination=None):
+        """
+        Create a new empty Job file for given basepath.
+
+        Arguments:
+            basepath (string or pathlib.Path): Basepath to set in Job file. It does not
+                matter if the basepath already exists or not. If given path is relative
+                it will be resolved to an absolute path. Path must be an existing
+                directory.
+
+        Keyword Arguments:
+            destination (string or pathlib.Path): Destination path for the Job file to
+                create. Default to None, so the destination will be the slugified last
+                basepath part (``foo`` from ``/home/foo``) at the current working
+                directory. This is validated to not be an already existing path.
+
+        Returns:
+            pathlib.Path: Path for created Job file.
+        """
+        if not isinstance(basepath, Path):
+            basepath = Path(basepath)
+
+        # If not absolute, force basepath to be absolute from current working directory
+        if not basepath.is_absolute():
+            basepath = Path.cwd() / basepath
+        basepath = basepath.resolve()
+
+        if not basepath.is_dir():
+            msg = "🚨 Basepath does not exists or is not a directory: {}"
+            raise JobValidationError(msg.format(basepath))
+
+        if not destination:
+            # Craft filename from slugified basepath last part
+            destination = Path(slugify(basepath.stem)).with_suffix(".json")
+        elif not isinstance(destination, Path):
+            destination = Path(destination)
+
+        # If not absolute, force destination to be absolute from current working
+        # directory
+        if not destination.is_absolute():
+            destination = Path.cwd() / destination
+        destination = destination.resolve()
+
+        # Finally check destination is a file and its directory exist
+        if destination.is_dir():
+            msg = "🚨 Destination path must be a file, not an existing directory: {}"
+            raise JobValidationError(msg.format(destination))
+        elif not destination.parents[0].exists():
+            msg = "🚨 Destination path must point into an existing directory: {}"
+            raise JobValidationError(msg.format(destination))
+
+        content = Job.EMPTY_JOB_MATRIX.copy()
+        content["basepath"] = str(basepath)
+
+        with destination.open("w") as fp:
+            json.dump(content, fp, indent=4)
+
+        return destination
+
+    @classmethod
     def load(cls, source):
         """
         Load Job parameters from a filepath and return a model instance.
 
         This assumes the job have already be validated before from
         ``validate_job_file`` validator.
+
+        Arguments:
+            source (string or pathlib.Path): Path to the Job file to load.
 
         Returns:
             Job: Instance of model configured with job parameters.
@@ -86,7 +155,6 @@ class Job(PrinterInterface):
         self.log_info(" • Allowed file extension(s): {}".format(", ".join(msg)))
 
         for filename in self.basepath.iterdir():
-            path = self.basepath / filename
             if is_allowed_file(filename, extensions=self.extensions):
                 files.append(filename)
 
@@ -167,7 +235,7 @@ class Job(PrinterInterface):
                         self.log_warning(msg, state="end", indent=indentation)
                     elif destination in rename_store:
                         msg = (
-                            "❗ This destination is already planned from another file: "
+                            "❗ This destination is already planned from another file:"
                             " {}"
                         ).format(
                             destination.name
@@ -198,7 +266,7 @@ class Job(PrinterInterface):
                     )
                     self.log_warning(msg, state="end", indent=indentation)
                     self.log_warning("")
-        except:
+        except:  # noqa: E722
             # Restore every renamed files before error
             msg = (
                 "🚨 An error occured during a job, every files will be "
@@ -210,7 +278,7 @@ class Job(PrinterInterface):
 
             # Restore renamed file to their original filenames
             for source, destination in reverse_store:
-                self.log_error("*", dst, "=>", src)
+                self.log_error("*", destination, "=>", source)
                 source.rename(destination, source)
             self.log_error("")
 
