@@ -4,6 +4,12 @@
 History
 =======
 
+Version 0.3.1 - 2021/12/19
+--------------------------
+
+This is a release fix for release version. No code change have been done.
+
+
 Version 0.3.0 - Unreleased
 --------------------------
 
