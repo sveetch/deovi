@@ -1,10 +1,14 @@
 """
 Pytest fixtures
 """
-import os
+import shutil
+from pathlib import Path
+
 import pytest
 
-import deovi_client
+import deovi
+from deovi.logger import init_logger
+from deovi.renamer.tasks import TaskMaster
 
 
 class FixturesSettingsTestMixin(object):
@@ -17,34 +21,21 @@ class FixturesSettingsTestMixin(object):
         package_path (str): Absolute path to the package directory.
         tests_dir (str): Directory name which include tests.
         tests_path (str): Absolute path to the tests directory.
-        fixtures_dir (str): Directory name which include tests datas.
-        fixtures_path (str): Absolute path to the tests datas.
+        datas_dir (str): Directory name which include tests datas.
+        datas_path (str): Absolute path to the tests datas.
     """
     def __init__(self):
-        # Base fixture datas directory
-        self.application_path = os.path.abspath(
-            os.path.dirname(deovi_client.__file__)
-        )
-        self.package_path = os.path.normpath(
-            os.path.join(
-                os.path.abspath(
-                    os.path.dirname(deovi_client.__file__)
-                ),
-                "..",
-            )
-        )
+        self.application_path = Path(
+            deovi.__file__
+        ).parents[0].resolve()
+
+        self.package_path = self.application_path.parent
 
         self.tests_dir = "tests"
-        self.tests_path = os.path.join(
-            self.package_path,
-            self.tests_dir,
-        )
+        self.tests_path = self.package_path / self.tests_dir
 
-        self.fixtures_dir = "data_fixtures"
-        self.fixtures_path = os.path.join(
-            self.tests_path,
-            self.fixtures_dir
-        )
+        self.datas_dir = "data_fixtures"
+        self.datas_path = self.tests_path / self.datas_dir
 
     def format(self, content):
         """
@@ -57,23 +48,23 @@ class FixturesSettingsTestMixin(object):
             str: Given string formatted with possible values.
         """
         return content.format(
-            HOMEDIR=os.path.expanduser("~"),
-            PACKAGE=self.package_path,
-            APPLICATION=self.application_path,
-            TESTS=self.tests_path,
-            FIXTURES=self.fixtures_path,
-            VERSION=deovi_client.__version__,
+            HOMEDIR=Path.home(),
+            PACKAGE=str(self.package_path),
+            APPLICATION=str(self.application_path),
+            TESTS=str(self.tests_path),
+            DATAS=str(self.datas_path),
+            VERSION=deovi.__version__,
         )
 
 
 @pytest.fixture(scope="function")
-def temp_builds_dir(tmpdir):
+def temp_builds_dir(tmp_path):
     """
     Prepare a temporary build directory.
 
-    DEPRECATED: You should use instead directly the "tmpdir" fixture in your tests.
+    DEPRECATED: You should use instead directly the "tmp_path" fixture in your tests.
     """
-    return tmpdir
+    return tmp_path
 
 
 @pytest.fixture(scope="module")
@@ -89,3 +80,101 @@ def settings():
                 print(settings.format("foo: {VERSION}"))
     """
     return FixturesSettingsTestMixin()
+
+
+@pytest.fixture(scope="function")
+def basic_sample(tmp_path, settings):
+    """
+    Copy the "basic sample" structure into a temporary directory.
+
+    Returns:
+        Path: The path to the copied structure in temp directory.
+    """
+    sample_dirname = "basic_sample"
+    basic_sample_path = settings.datas_path / sample_dirname
+    destination = tmp_path / sample_dirname
+
+    shutil.copytree(basic_sample_path, destination)
+
+    return destination
+
+
+@pytest.fixture(scope="function")
+def basic_suite(tmp_path, settings):
+    """
+    Copy the "basic_suite" structure into a temporary directory.
+
+    Returns:
+        Path: The path to the copied structure in temp directory.
+    """
+    sample_dirname = "basic_suite"
+    basic_sample_path = settings.datas_path / sample_dirname
+    destination = tmp_path / sample_dirname
+
+    shutil.copytree(basic_sample_path, destination)
+
+    return destination
+
+
+@pytest.fixture(scope="function")
+def various_filenames(tmp_path, settings):
+    """
+    Copy the "various_filenames" structure into a temporary directory.
+
+    Returns:
+        Path: The path to the copied structure in temp directory.
+    """
+    sample_dirname = "various_filenames"
+    basic_sample_path = settings.datas_path / sample_dirname
+    destination = tmp_path / sample_dirname
+
+    shutil.copytree(basic_sample_path, destination)
+
+    return destination
+
+
+@pytest.fixture(scope="function")
+def debug_logger():
+    """
+    Init the logger config at debug level.
+    """
+    return init_logger(
+        "deovi",
+        "DEBUG",
+        printout=False,
+    )
+
+
+@pytest.fixture(scope="function")
+def info_logger():
+    """
+    Init the logger config at info level.
+    """
+    return init_logger(
+        "deovi",
+        "INFO",
+        printout=False,
+    )
+
+
+@pytest.fixture(scope="function")
+def warning_logger():
+    """
+    Init the logger config at warning level.
+    """
+    return init_logger(
+        "deovi",
+        "WARNING",
+        printout=False,
+    )
+
+
+@pytest.fixture(scope="function")
+def task_manager():
+    """
+    Return initialized task manager
+
+    TODO: Since there is no more a formatter to init, this fixture seems useless. Keep
+    tests simple and just use "TaskMaster()" in them.
+    """
+    return TaskMaster()

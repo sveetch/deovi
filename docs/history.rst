@@ -4,7 +4,34 @@
 History
 =======
 
+Version 0.3.0 - Unreleased
+--------------------------
+
+First working version.
+
+* Finished refactoring;
+* Finished test coverage;
+* Finished new commandline with Click;
+* Everything from old Python script have been implemented and tested.
+* Added very few improvements on logging, job validation, task validation and output;
+* Some tasks have been renamed compared to the old Python script;
+
+
+Version 0.2.0 - Unreleased
+--------------------------
+
+Unworking version.
+
+* Lots of refactoring;
+* Starting test coverage;
+
+
 Version 0.1.0 - Unreleased
 --------------------------
 
-* First commit.
+First commit.
+
+Unworking version.
+
+This is a port of an old existing Python script so it can be packaged, correctly tested
+and maintained.

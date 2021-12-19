@@ -121,5 +121,5 @@ def write_frozen_requirements(package_name, filename="frozen.txt"):
 
 
 if __name__ == "__main__":
-    filename = write_frozen_requirements("deovi-client")
+    filename = write_frozen_requirements("deovi")
     print("Created file for frozen dependencies:", filename)

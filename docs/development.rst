@@ -17,7 +17,7 @@ Development
 Development requirements
 ************************
 
-deovi-client is developed with:
+deovi is developed with:
 
 * *Test Development Driven* (TDD) using `Pytest`_;
 * Respecting flake and pip8 rules using `Flake8`_;
@@ -36,11 +36,11 @@ Install for development
 First ensure you have `pip`_ and `virtualenv`_ packages installed then
 type: ::
 
-    git clone https://github.com/sveetch/deovi-client.git
-    cd deovi-client
+    git clone https://github.com/sveetch/deovi.git
+    cd deovi
     make install
 
-deovi-client will be installed in editable mode from the
+deovi will be installed in editable mode from the
 latest commit on master branch with some development tools.
 
 Unittests
@@ -60,7 +60,7 @@ been added. You are strongly encouraged to use it to test your pull requests.
 
 Just execute Tox: ::
 
-    make test
+    make tox
 
 This will run tests for all configured Tox environments, it may takes some time so you
 may use it only before releasing as a final check.

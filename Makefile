@@ -7,9 +7,9 @@ SPHINX_RELOAD=$(VENV_PATH)/bin/python sphinx_reload.py
 TOX=$(VENV_PATH)/bin/tox
 TWINE=$(VENV_PATH)/bin/twine
 
-PACKAGE_NAME=deovi-client
+PACKAGE_NAME=deovi
 PACKAGE_SLUG=`echo $(PACKAGE_NAME) | tr '-' '_'`
-APPLICATION_NAME=deovi_client
+APPLICATION_NAME=deovi
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -96,8 +96,8 @@ flake:
 	@echo ""
 	@echo "==== Flake ===="
 	@echo ""
-	$(FLAKE) --show-source $(APPLICATION_NAME)
-	$(FLAKE) --show-source tests
+	$(FLAKE) --statistics --show-source $(APPLICATION_NAME)
+	$(FLAKE) --statistics --show-source tests
 .PHONY: flake
 
 test:

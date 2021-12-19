@@ -1,0 +1,11 @@
+{
+    "name": "Valid sample for basic structure",
+    "basepath": "files/",
+    "extensions": ["mp4", "avi"],
+    "tasks": [
+        [
+            "capitalize",
+            {}
+        ]
+    ]
+}

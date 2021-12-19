@@ -39,14 +39,14 @@ server.watch(
 
 # Watch Python modules for autodoc review
 server.watch(
-    "deovi_client/*.py",
+    "deovi/*.py",
     shell(
         "make html",
         cwd="docs"
     )
 )
 server.watch(
-    "deovi_client/*/**.py",
+    "deovi/*/**.py",
     shell(
         "make html",
         cwd="docs"
