@@ -3,11 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from deovi_client.exceptions import TaskValidationError
-from deovi_client.renamer.validators import (
+from deovi.exceptions import TaskValidationError
+from deovi.renamer.validators import (
     validate_task_options, validate_job_file, validate_jobs, is_allowed_file,
 )
-from deovi_client.renamer.tasks import TaskMaster
+from deovi.renamer.tasks import TaskMaster
 
 
 @pytest.mark.parametrize("required, options", [

@@ -34,7 +34,6 @@ User’s Guide
 
    install.rst
    usage.rst
-   core/index.rst
 
 Developer’s Guide
 *****************

@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-import deovi_client
-from deovi_client.logger import init_logger
-from deovi_client.renamer.tasks import TaskMaster
+import deovi
+from deovi.logger import init_logger
+from deovi.renamer.tasks import TaskMaster
 
 
 class FixturesSettingsTestMixin(object):
@@ -26,7 +26,7 @@ class FixturesSettingsTestMixin(object):
     """
     def __init__(self):
         self.application_path = Path(
-            deovi_client.__file__
+            deovi.__file__
         ).parents[0].resolve()
 
         self.package_path = self.application_path.parent
@@ -53,7 +53,7 @@ class FixturesSettingsTestMixin(object):
             APPLICATION=str(self.application_path),
             TESTS=str(self.tests_path),
             DATAS=str(self.datas_path),
-            VERSION=deovi_client.__version__,
+            VERSION=deovi.__version__,
         )
 
 
@@ -139,7 +139,7 @@ def debug_logger():
     Init the logger config at debug level.
     """
     return init_logger(
-        "deovi-client",
+        "deovi",
         "DEBUG",
         printout=False,
     )
@@ -151,7 +151,7 @@ def info_logger():
     Init the logger config at info level.
     """
     return init_logger(
-        "deovi-client",
+        "deovi",
         "INFO",
         printout=False,
     )
@@ -163,7 +163,7 @@ def warning_logger():
     Init the logger config at warning level.
     """
     return init_logger(
-        "deovi-client",
+        "deovi",
         "WARNING",
         printout=False,
     )

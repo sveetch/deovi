@@ -1,6 +1,6 @@
 from click.testing import CliRunner
 
-from deovi_client.cli.entrypoint import cli_frontend
+from deovi.cli.entrypoint import cli_frontend
 
 
 def test_version_ping(caplog):

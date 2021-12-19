@@ -10,7 +10,7 @@ class PrinterInterface:
     """
 
     def __init__(self, *args, **kwargs):
-        self.logger = logging.getLogger("deovi-client")
+        self.logger = logging.getLogger("deovi")
         self.max_label = 0
 
     def set_label_length(self, tasks):

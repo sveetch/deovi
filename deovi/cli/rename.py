@@ -28,7 +28,7 @@ def rename_command(context, jobs, commit):
     Finally, if any job task fails all renamed file will be reversed to their
     original filename.
     """
-    logger = logging.getLogger("deovi-client")
+    logger = logging.getLogger("deovi")
 
     if not jobs:
         logger.critical("There is no job file to process.")

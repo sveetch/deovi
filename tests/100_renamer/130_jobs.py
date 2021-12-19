@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from deovi_client.exceptions import JobValidationError
-from deovi_client.renamer.jobs import Job
+from deovi.exceptions import JobValidationError
+from deovi.renamer.jobs import Job
 
 
 def test_job_model():

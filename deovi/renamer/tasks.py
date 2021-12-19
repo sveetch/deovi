@@ -23,7 +23,9 @@ class TaskMethods:
 
     def task_capitalize(self, index, source, **options):
         """
-        Capitalize file name (work on the whole filename including extension).
+        Capitalize file name.
+
+        Work on the whole filename including extension.
 
         Arguments:
             index (integer): Index integer for current item in the walked list. Mostly
@@ -49,7 +51,9 @@ class TaskMethods:
 
     def task_lowercase(self, index, source, **options):
         """
-        Lowercase file name(work on the whole filename including extension).
+        Lowercase file name.
+
+        Work on the whole filename including extension.
 
         Arguments:
             index (integer): Index integer for current item in the walked list. Mostly
@@ -80,7 +84,9 @@ class TaskMethods:
 
     def task_uppercase(self, index, source, **options):
         """
-        Uppercase file name(work on the whole filename including extension).
+        Uppercase file name.
+
+        Work on the whole filename including extension.
 
         Arguments:
             index (integer): Index integer for current item in the walked list. Mostly
@@ -111,12 +117,14 @@ class TaskMethods:
 
     def task_underscore_to_dash(self, index, source, **options):
         """
-        Convert every filenames with rules.
+        Convert some strings into another ones:
 
         * "_" to "-";
         * "---" to "_";
 
         So "ping_-_foo_bar.mp4" will be converted to "ping_foo-bar.mp4".
+
+        Work on the whole filename including extension.
 
         Arguments:
             index (integer): Index integer for current item in the walked list. Mostly
@@ -149,7 +157,9 @@ class TaskMethods:
 
     def task_add_prefix(self, index, source, **options):
         """
-        Add a prefix before each file from given directory path.
+        Add a prefix before filename.
+
+        Work on the whole filename including extension.
 
         Arguments:
             index (integer): Index integer for current item in the walked list. Mostly

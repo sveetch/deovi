@@ -3,10 +3,10 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from deovi_client.cli.entrypoint import cli_frontend
+from deovi.cli.entrypoint import cli_frontend
 
 
-APPLABEL = "deovi-client"
+APPLABEL = "deovi"
 
 
 def test_job_required_basepath(caplog):

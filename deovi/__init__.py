@@ -1,6 +1,4 @@
-"""
-Utility to rename files and collect their filepaths
-"""
+"""An utility to rename files using tasks from a job"""
 from __future__ import absolute_import, unicode_literals
 
 import os
@@ -23,4 +21,4 @@ def _extract_version(package_name):
     return _conf["metadata"]["version"]
 
 
-__version__ = _extract_version("deovi-client")
+__version__ = _extract_version("deovi")

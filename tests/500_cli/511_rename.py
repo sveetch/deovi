@@ -3,10 +3,10 @@ import logging
 
 from click.testing import CliRunner
 
-from deovi_client.cli.entrypoint import cli_frontend
+from deovi.cli.entrypoint import cli_frontend
 
 
-APPLABEL = "deovi-client"
+APPLABEL = "deovi"
 
 
 def test_rename_required_job_option(caplog):

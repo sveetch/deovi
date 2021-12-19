@@ -102,7 +102,7 @@ def test_uppercase(caplog, debug_logger, task_manager):
 def test_underscore_to_dash(caplog, debug_logger, task_manager, source,
                             expected, expected_logs):
     """
-    Method should catch the divider segment and join them according to options.
+    Task 'underscore_to_dash' replace all strings "_-_" by a simple character "-".
     """
     result = task_manager.task_underscore_to_dash(1, Path(source))
 
@@ -211,7 +211,7 @@ def test_add_prefix(caplog, debug_logger, task_manager):
 def test_numerate(caplog, debug_logger, task_manager, index, source, options, expected,
                   expected_logs):
     """
-    Method should format index and add it at the start of the string.
+    Task 'numerate' prefix file name with a string of index position padded with zero.
     """
     result = task_manager.task_numerate(index, Path(source), **options)
 
@@ -338,7 +338,8 @@ def test_numerate(caplog, debug_logger, task_manager, index, source, options, ex
 def test_catch_segments(caplog, debug_logger, task_manager, source, options, expected,
                         expected_logs):
     """
-    Method should catch the divider segment and join them according to options.
+    Task 'catch_segments' divide filename from given divider string
+    and join resulting segments according to options.
     """
     result = task_manager.task_catch_segments(1, Path(source), **options)
 
@@ -391,7 +392,7 @@ def test_catch_segments(caplog, debug_logger, task_manager, source, options, exp
 def test_replace(caplog, debug_logger, task_manager, source, options, expected,
                  expected_logs):
     """
-    Method should replace every occurences of a string in source by another one.
+    Task 'replace' replace every occurences of a string in filename by another one.
     """
     result = task_manager.task_replace(1, Path(source), **options)
 

@@ -2,11 +2,11 @@ import json
 
 import pytest
 
-from deovi_client.exceptions import JobValidationError
-from deovi_client.renamer.jobs import Job
-from deovi_client.renamer.runner import JobRunner
-from deovi_client.renamer.printer import PrinterInterface
-from deovi_client.renamer.tasks import TaskMaster
+from deovi.exceptions import JobValidationError
+from deovi.renamer.jobs import Job
+from deovi.renamer.runner import JobRunner
+from deovi.renamer.printer import PrinterInterface
+from deovi.renamer.tasks import TaskMaster
 
 
 class DummyTestTaskMaster(PrinterInterface):

@@ -35,7 +35,7 @@ APP_LOGGER_CONF = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", None)
 @click.pass_context
 def cli_frontend(ctx, verbose):
     """
-    Sample tool for deovi-client
+    Entrypoint for commandline interface for deovi
     """
     printout = True
     if verbose == 0:
@@ -47,7 +47,7 @@ def cli_frontend(ctx, verbose):
     levels.reverse()
     # Init the logger config
     root_logger = init_logger(
-        "deovi-client",
+        "deovi",
         levels[verbose],
         printout=printout
     )

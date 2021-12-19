@@ -60,7 +60,7 @@ been added. You are strongly encouraged to use it to test your pull requests.
 
 Just execute Tox: ::
 
-    make test
+    make tox
 
 This will run tests for all configured Tox environments, it may takes some time so you
 may use it only before releasing as a final check.

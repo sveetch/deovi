@@ -17,7 +17,7 @@ def job_command(context, basepath, destination):
     search files). If no destination is given, it will be the last basepath directory
     name slugified with ".json" extension.
     """
-    logger = logging.getLogger("deovi-client")
+    logger = logging.getLogger("deovi")
 
     logger.debug("Basepath: {}".format(basepath))
 

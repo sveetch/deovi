@@ -10,4 +10,4 @@ def version_command(context):
     """
     Print out version information.
     """
-    click.echo("deovi-client {}".format(__version__))
+    click.echo("deovi {}".format(__version__))
