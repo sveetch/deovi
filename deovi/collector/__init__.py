@@ -1,0 +1,11 @@
+from .collect import (
+    MEDIAS_CONTAINERS, MEDIAS_DEFAULT_CONTAINER_NAME, MEDIAS_EXTENSIONS, Collector,
+)
+
+
+__all__ = [
+    "MEDIAS_CONTAINERS",
+    "MEDIAS_DEFAULT_CONTAINER_NAME",
+    "MEDIAS_EXTENSIONS",
+    "Collector",
+]

@@ -31,6 +31,13 @@ class TaskValidationError(DeoviClientBaseException):
     pass
 
 
+class CollectorError(DeoviClientBaseException):
+    """
+    For any media file collector error.
+    """
+    pass
+
+
 class JobValidationError(DeoviClientBaseException):
     """
     When a job is not valid.

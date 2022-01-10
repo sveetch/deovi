@@ -10,6 +10,7 @@ from ..logger import init_logger
 from ..cli.version import version_command
 from ..cli.rename import rename_command
 from ..cli.job import job_command
+from ..cli.collect import collect_command
 
 
 # Help alias on "-h" argument
@@ -63,3 +64,4 @@ def cli_frontend(ctx, verbose):
 cli_frontend.add_command(version_command, name="version")
 cli_frontend.add_command(rename_command, name="rename")
 cli_frontend.add_command(job_command, name="job")
+cli_frontend.add_command(collect_command, name="collect")
