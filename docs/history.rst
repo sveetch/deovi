@@ -4,6 +4,13 @@
 History
 =======
 
+Version 0.4.0 - 2022/01/16
+--------------------------
+
+Added new command ``collect`` to recursively collect media file informations for a
+given directory.
+
+
 Version 0.3.1 - 2021/12/19
 --------------------------
 
