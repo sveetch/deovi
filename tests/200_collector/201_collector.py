@@ -4,7 +4,30 @@ import pytest
 
 from deovi.collector import Collector
 from deovi.exceptions import CollectorError
-# from deovi.utils.jsons import ExtendedJsonEncoder
+from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat
+
+
+@pytest.mark.parametrize("timestamp, expected", [
+    (
+        1642296817.279053,
+        "2022-01-16T02:33:37",
+    ),
+    (
+        1642296817.3030524,
+        "2022-01-16T02:33:37",
+    ),
+    (
+        1541793812.3030524,
+        "2018-11-09T21:03:32",
+    ),
+])
+def test_collector_timestamp_to_isoformat(timestamp, expected):
+    """
+    Given timestamp should be correctly formatted to datetime in ISO format.
+    """
+    collector = Collector(None)
+
+    assert collector.timestamp_to_isoformat(timestamp) == expected
 
 
 @pytest.mark.parametrize("path, expected", [
@@ -19,7 +42,7 @@ from deovi.exceptions import CollectorError
             "extension": "mkv",
             "container": "Matroska",
             "size": 1052413,
-            "mtime": "2022-01-09T22:02:54",
+            "mtime": DUMMY_ISO_DATETIME,
         },
     ),
     (
@@ -33,7 +56,7 @@ from deovi.exceptions import CollectorError
             "extension": "mp4",
             "container": "MPEG-4",
             "size": 1057149,
-            "mtime": "2022-01-09T22:02:27",
+            "mtime": DUMMY_ISO_DATETIME,
         },
     ),
     (
@@ -47,14 +70,16 @@ from deovi.exceptions import CollectorError
             "extension": "3gp",
             "container": "3GPP",
             "size": 1038741,
-            "mtime": "2022-01-09T22:05:10",
+            "mtime": DUMMY_ISO_DATETIME,
         },
     ),
 ])
-def test_collector_scan_file(media_sample, path, expected):
+def test_collector_scan_file(monkeypatch, media_sample, path, expected):
     """
     Scanning a file should return the right media file datas.
     """
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
+
     # Rewrite path strings to Path objects
     path = media_sample / path
     expected["path"] = media_sample / expected["path"]
@@ -110,11 +135,13 @@ def test_collector_scan_directory_allowempty(media_sample, allowed, expected):
     assert collector.stats == expected
 
 
-def test_collector_scan_directory_full(media_sample):
+def test_collector_scan_directory_full(monkeypatch, media_sample):
     """
     Scanning from basepath should return recursive data for directories with media
     files.
     """
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
+
     expected = {
         "ping/pong": {
             "path": media_sample / "ping/pong",
@@ -122,7 +149,7 @@ def test_collector_scan_directory_full(media_sample):
             "absolute_dir": media_sample / "ping",
             "relative_dir": Path("ping/pong"),
             "size": 4096,
-            "mtime": "2022-01-09T22:09:39",
+            "mtime": DUMMY_ISO_DATETIME,
             "children_files": [
                 "SampleVideo_720x480_1mb.mkv",
                 "SampleVideo_720x480_2mb.mkv",
@@ -134,7 +161,7 @@ def test_collector_scan_directory_full(media_sample):
             "absolute_dir": media_sample / "foo",
             "relative_dir": Path("foo/bar"),
             "size": 4096,
-            "mtime": "2022-01-09T22:08:29",
+            "mtime": DUMMY_ISO_DATETIME,
             "children_files": [
                 "SampleVideo_360x240_1mb.mkv",
             ],
@@ -145,7 +172,7 @@ def test_collector_scan_directory_full(media_sample):
             "absolute_dir": media_sample.parent,
             "relative_dir": Path("."),
             "size": 4096,
-            "mtime": "2022-01-09T22:09:48",
+            "mtime": DUMMY_ISO_DATETIME,
             "children_files": [
                 "SampleVideo_1280x720_1mb.mkv",
             ],
@@ -176,10 +203,12 @@ def test_collector_scan_directory_full(media_sample):
     }
 
 
-def test_collector_scan_directory_single(media_sample):
+def test_collector_scan_directory_single(monkeypatch, media_sample):
     """
     Scanning a single directory should return the right directory data and media files.
     """
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
+
     expected = {
         "foo/bar": {
             "path": media_sample / "foo/bar",
@@ -187,7 +216,7 @@ def test_collector_scan_directory_single(media_sample):
             "absolute_dir": media_sample / "foo",
             "relative_dir": Path("foo/bar"),
             "size": 4096,
-            "mtime": "2022-01-09T22:08:29",
+            "mtime": DUMMY_ISO_DATETIME,
             "children_files": [
                 "SampleVideo_360x240_1mb.mkv"
             ]

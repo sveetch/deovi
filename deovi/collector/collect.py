@@ -94,6 +94,19 @@ class Collector(PrinterInterface):
         key = str(data["path"].relative_to(self.basepath))
         self.registry[key] = data
 
+    def timestamp_to_isoformat(self, timestamp):
+        """
+        Return datetime formatted from given timestamp.
+
+        Arguments:
+            timestamp (float): A timestamp as expected from date returned in
+                ``Path.stat()``.
+
+        Returns:
+            string: Datetime formatted in ISO format without microseconds.
+        """
+        return datetime.datetime.fromtimestamp(timestamp).isoformat(timespec="seconds")
+
     def scan_file(self, path):
         """
         Scan a media file to get its informations.
@@ -124,13 +137,6 @@ class Collector(PrinterInterface):
         if extension in MEDIAS_CONTAINERS:
             container = MEDIAS_CONTAINERS[extension]
 
-        # Get ISO formatted datetime but without microseconds
-        mtime = datetime.datetime.fromtimestamp(
-            stats.st_mtime
-        ).isoformat(
-            timespec="seconds"
-        )
-
         data = {
             "path": path,
             "name": path.name,
@@ -140,7 +146,7 @@ class Collector(PrinterInterface):
             "extension": extension,
             "container": container,
             "size": stats.st_size,
-            "mtime": mtime,
+            "mtime": self.timestamp_to_isoformat(stats.st_mtime),
         }
 
         self.stats["files"] += 1
@@ -174,20 +180,13 @@ class Collector(PrinterInterface):
         # Get directory stats informations
         stats = path.stat()
 
-        # Get ISO formatted datetime but without microseconds
-        mtime = datetime.datetime.fromtimestamp(
-            stats.st_mtime
-        ).isoformat(
-            timespec="seconds"
-        )
-
         data = {
             "path": path,
             "name": path.name,
             "absolute_dir": path.parents[0],
             "relative_dir": relative_dir,
             "size": stats.st_size,
-            "mtime": mtime,
+            "mtime": self.timestamp_to_isoformat(stats.st_mtime),
             "children_files": [],
         }
 

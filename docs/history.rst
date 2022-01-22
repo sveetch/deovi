@@ -4,6 +4,13 @@
 History
 =======
 
+Version 0.4.1 - 2022/01/22
+--------------------------
+
+Fixed tests on collector which failed because of file datetimes which can change from
+an installation to another. So we mocked up the method to get the formatted datetime.
+
+
 Version 0.4.0 - 2022/01/16
 --------------------------
 

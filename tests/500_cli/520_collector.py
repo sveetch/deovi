@@ -3,7 +3,9 @@ import logging
 
 from click.testing import CliRunner
 
+from deovi.collector import Collector
 from deovi.cli.entrypoint import cli_frontend
+from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat
 
 
 APPLABEL = "deovi"
@@ -31,11 +33,13 @@ def test_job_required_arguments(caplog, media_sample):
     assert caplog.record_tuples == []
 
 
-def test_job_success(caplog, media_sample):
+def test_job_success(monkeypatch, caplog, media_sample):
     """
     With correct required arguments, command should succeed to write a registry from
     given source into a JSON file at given destination.
     """
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
+
     runner = CliRunner()
 
     source = media_sample / "foo/bar"
@@ -98,7 +102,7 @@ def test_job_success(caplog, media_sample):
             "absolute_dir": str(media_sample / "foo"),
             "relative_dir": ".",
             "size": 4096,
-            "mtime": "2022-01-09T22:08:29",
+            "mtime": DUMMY_ISO_DATETIME,
             "children_files": [
                 {
                     "path": str(source / "SampleVideo_360x240_1mb.mkv"),
@@ -109,7 +113,7 @@ def test_job_success(caplog, media_sample):
                     "extension": "mkv",
                     "container": "Matroska",
                     "size": 1055721,
-                    "mtime": "2022-01-09T22:05:00"
+                    "mtime": DUMMY_ISO_DATETIME
                 }
             ]
         }
