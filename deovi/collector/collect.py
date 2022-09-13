@@ -105,7 +105,7 @@ class Collector(PrinterInterface):
         Returns:
             string: Datetime formatted in ISO format without microseconds.
         """
-        return datetime.datetime.fromtimestamp(timestamp).isoformat(timespec="seconds")
+        return datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc).isoformat(timespec="seconds")
 
     def scan_file(self, path):
         """
