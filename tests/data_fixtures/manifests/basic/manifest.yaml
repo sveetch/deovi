@@ -1,0 +1,18 @@
+# Simple sting
+foo: "bar"
+
+# A dict of variables
+ping:
+    pong: true
+    pang: 4
+
+# None attempt
+nope: null
+
+# Booleans mixed with a string in oneline list
+plop: [true, false, on, off, "plip"]
+
+# List format variant
+pika:
+    - chu
+    - pika: "map"

@@ -151,6 +151,23 @@ def media_sample(tmp_path, settings):
 
 
 @pytest.fixture(scope="function")
+def manifests_sample(tmp_path, settings):
+    """
+    Copy the "manifests" structure into a temporary directory.
+
+    Returns:
+        Path: The path to the copied structure in temp directory.
+    """
+    sample_dirname = "manifests"
+    basic_sample_path = settings.datas_path / sample_dirname
+    destination = tmp_path / sample_dirname
+
+    shutil.copytree(basic_sample_path, destination)
+
+    return destination
+
+
+@pytest.fixture(scope="function")
 def debug_logger():
     """
     Init the logger config at debug level.

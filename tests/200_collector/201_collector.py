@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from deovi.collector import Collector
+from deovi.collector import MANIFEST_FILENAME, MANIFEST_FORBIDDEN_VARS, Collector
 from deovi.exceptions import CollectorError
 from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat
 
@@ -99,6 +99,91 @@ def test_collector_scan_file(monkeypatch, media_sample, path, expected):
     assert expected == data
 
 
+def test_collector_get_dir_manifest_nofile(manifests_sample):
+    """
+    Collector should silently fail if there is no manifest.
+    """
+    collector = Collector(None)
+    manifest = collector.get_dir_manifest(manifests_sample)
+
+    assert manifest == {}
+
+
+def test_collector_get_dir_manifest_invalid(caplog, warning_logger, manifests_sample):
+    """
+    Collector should not break process if found manifest file is invalid and emits
+    a warning log.
+    """
+    collector = Collector(None)
+    sample_dir = manifests_sample / "invalid"
+    manifest_path = sample_dir / MANIFEST_FILENAME
+    manifest = collector.get_dir_manifest(sample_dir)
+
+    assert manifest == {}
+
+    assert caplog.record_tuples == [
+        (
+            "deovi",
+            30,
+            "No YAML object could be decoded for manifest: {}".format(manifest_path)
+        ),
+    ]
+
+
+def test_collector_get_dir_manifest_forbidden(caplog, warning_logger, manifests_sample):
+    """
+    Collector should not break process if manifest contains forbidden keywords but it
+    results to a warning and ignored manifest.
+    """
+    collector = Collector(None)
+    sample_dir = manifests_sample / "forbidden"
+    manifest_path = sample_dir / MANIFEST_FILENAME
+    manifest = collector.get_dir_manifest(sample_dir)
+
+    assert manifest == {}
+
+    assert caplog.record_tuples == [
+        (
+            "deovi",
+            30,
+            "Keywords '{}' are forbidden from manifest: {}".format(
+                ", ".join(MANIFEST_FORBIDDEN_VARS),
+                manifest_path,
+            )
+        ),
+    ]
+
+
+def test_collector_get_dir_manifest_basic(manifests_sample):
+    """
+    Collector should find manifest if any and correctly load it.
+    """
+    collector = Collector(None)
+    manifest = collector.get_dir_manifest(manifests_sample / "basic")
+
+    assert manifest == {
+        "foo": "bar",
+        "ping": {
+            "pong": True,
+            "pang": 4
+        },
+        "nope": None,
+        "plop": [
+            True,
+            False,
+            True,
+            False,
+            "plip"
+        ],
+        "pika": [
+            "chu",
+            {
+                "pika": "map"
+            }
+        ]
+    }
+
+
 def test_collector_scan_directory_outofbasepath(media_sample):
     """
     Trying to scan a directory which is out of give basepath should raise an error.
@@ -168,6 +253,7 @@ def test_collector_scan_directory_full(monkeypatch, media_sample):
         },
         ".": {
             "path": media_sample,
+            "title": "Media sample root",
             "name": "media_sample",
             "absolute_dir": media_sample.parent,
             "relative_dir": Path("."),

@@ -2,8 +2,7 @@
 .. _Click: https://click.palletsprojects.com
 .. _Python Slugify: https://github.com/un33k/python-slugify
 .. _Unidecode: https://github.com/avian2/unidecode/tree/master/unidecode
-
-.. deovi documentation master file, created by David Thenon
+.. _PyYAML: https://github.com/yaml/pyyaml/
 
 =====
 Deovi
@@ -25,6 +24,7 @@ Dependancies
 * `Click`_>=8.0;
 * `Python Slugify`_>= 5.0.0;
 * `Unidecode`_;
+* `PyYAML`_;
 
 User’s Guide
 ************

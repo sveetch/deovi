@@ -1,6 +1,8 @@
 import datetime
 import json
 
+import yaml
+
 from ..renamer.printer import PrinterInterface
 from ..utils.jsons import ExtendedJsonEncoder
 from ..exceptions import CollectorError
@@ -34,6 +36,22 @@ MEDIAS_CONTAINERS = {
 MEDIAS_DEFAULT_CONTAINER_NAME = "Unknow"
 
 
+# Manifest filename to search for in a directory
+MANIFEST_FILENAME = "manifest.yaml"
+
+
+# Forbidden/reserved keyword from manifest
+MANIFEST_FORBIDDEN_VARS = {
+    "path",
+    "name",
+    "absolute_dir",
+    "relative_dir",
+    "size",
+    "mtime",
+    "children_files"
+}
+
+
 # List of unique file extensions for medias
 MEDIAS_EXTENSIONS = set(MEDIAS_CONTAINERS.keys())
 
@@ -61,10 +79,12 @@ class Collector(PrinterInterface):
             direct media children are collected, the other directories are ignored from
             registry (but still scanned for children directories).
     """
-    def __init__(self, basepath, extensions=MEDIAS_EXTENSIONS, allow_empty_dir=False):
+    def __init__(self, basepath, extensions=MEDIAS_EXTENSIONS,
+                 manifest=MANIFEST_FILENAME, allow_empty_dir=False):
         super().__init__()
 
         self.basepath = basepath
+        self.manifest_filename = manifest
         self.extensions = extensions
         self.allow_empty_dir = allow_empty_dir
         self.reset()
@@ -105,7 +125,10 @@ class Collector(PrinterInterface):
         Returns:
             string: Datetime formatted in ISO format without microseconds.
         """
-        return datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc).isoformat(timespec="seconds")
+        return datetime.datetime.fromtimestamp(
+            timestamp,
+            tz=datetime.timezone.utc
+        ).isoformat(timespec="seconds")
 
     def scan_file(self, path):
         """
@@ -154,12 +177,52 @@ class Collector(PrinterInterface):
 
         return data
 
+    def get_dir_manifest(self, path):
+        """
+        Search for a directory YAML manifest to load.
+
+        Arguments:
+            path (pathlib.Path): A Path object for the directory where to find
+                manifest.
+
+        Returns:
+            dict: Manifest content.
+        """
+        manifest = {}
+        manifest_path = path / self.manifest_filename
+
+        if manifest_path.exists():
+            try:
+                manifest = yaml.load(manifest_path.read_text(), Loader=yaml.FullLoader)
+            except yaml.YAMLError as exc:
+                msg = "No YAML object could be decoded for manifest: {}"
+                self.log_warning(msg.format(str(manifest_path)))
+            else:
+                # Validate top level items against reserved keywords to avoid overriding
+                # computed data from directory scan
+                reserved = [
+                    name
+                    for name in MANIFEST_FORBIDDEN_VARS
+                    if name in manifest
+                ]
+                if len(reserved) > 0:
+                    msg = "Keywords '{}' are forbidden from manifest: {}"
+                    self.log_warning(msg.format(
+                        ", ".join(reserved),
+                        str(manifest_path),
+                    ))
+                    manifest = {}
+
+        return manifest
+
     def scan_directory(self, path):
         """
         Scan a directory to get its media files.
 
         Does not return anything, the directories informations (and possible media files
         informations) are stored in ``Collector.registry``.
+
+        TODO: Search also for a manifest file
 
         Arguments:
             path (pathlib.Path): Directory to scan for informations, for direct children
@@ -190,6 +253,9 @@ class Collector(PrinterInterface):
             "children_files": [],
         }
 
+        # Get possible manifest to extend data
+        data.update(**self.get_dir_manifest(path))
+
         for child in path.iterdir():
             if child.is_dir():
                 self.scan_directory(child)
@@ -197,9 +263,12 @@ class Collector(PrinterInterface):
                 if child.suffix and child.suffix.lower()[1:] in self.extensions:
                     data["children_files"].append(self.scan_file(child))
 
+        # Only append directory datas if there is at least one file or empty dir is
+        # allowed
         if self.allow_empty_dir or len(data["children_files"]) > 0:
             self.stats["directories"] += 1
             self.stats["size"] += data["size"]
+
             self.store(data)
 
     def run(self, destination=None):

@@ -4,6 +4,13 @@
 History
 =======
 
+Version 0.5.0 - Unreleased
+--------------------------
+
+Improved collector so it can retrieve extra informations from a YAML manifest for each
+directory.
+
+
 Version 0.4.1 - 2022/01/22
 --------------------------
 
