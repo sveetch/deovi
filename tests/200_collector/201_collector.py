@@ -184,6 +184,28 @@ def test_collector_get_dir_manifest_basic(manifests_sample):
     }
 
 
+@pytest.mark.parametrize("name, expected", [
+    (
+        "",
+        "cover.png",
+    ),
+])
+def test_collector_get_dir_cover(media_sample, name, expected):
+    """
+    Collector should find elligible cover image file from a directory.
+    """
+    collector = Collector(None)
+    cover = collector.get_dir_cover(media_sample / name)
+
+    print()
+    print(cover)
+    print()
+
+    assert cover == (media_sample / expected)
+
+    assert 1 == 42
+
+
 def test_collector_scan_directory_outofbasepath(media_sample):
     """
     Trying to scan a directory which is out of give basepath should raise an error.
@@ -243,6 +265,7 @@ def test_collector_scan_directory_full(monkeypatch, media_sample):
         "foo/bar": {
             "path": media_sample / "foo/bar",
             "name": "bar",
+            "title": "Foo bar",
             "absolute_dir": media_sample / "foo",
             "relative_dir": Path("foo/bar"),
             "size": 4096,
@@ -299,6 +322,7 @@ def test_collector_scan_directory_single(monkeypatch, media_sample):
         "foo/bar": {
             "path": media_sample / "foo/bar",
             "name": "bar",
+            "title": "Foo bar",
             "absolute_dir": media_sample / "foo",
             "relative_dir": Path("foo/bar"),
             "size": 4096,
@@ -320,10 +344,6 @@ def test_collector_scan_directory_single(monkeypatch, media_sample):
                 item["name"]
                 for item in collector.registry[k]["children_files"]
             ]
-
-    # print(json.dumps(expected, indent=4, cls=ExtendedJsonEncoder))
-    # print("--- AGAINST ---")
-    # print(json.dumps(collector.registry, indent=4, cls=ExtendedJsonEncoder))
 
     assert expected == collector.registry
     assert collector.stats == {

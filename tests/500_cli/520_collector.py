@@ -99,6 +99,7 @@ def test_job_success(monkeypatch, caplog, media_sample):
         ".": {
             "path": str(source),
             "name": "bar",
+            "title": "Foo bar",
             "absolute_dir": str(media_sample / "foo"),
             "relative_dir": ".",
             "size": 4096,

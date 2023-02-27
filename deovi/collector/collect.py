@@ -36,6 +36,10 @@ MEDIAS_CONTAINERS = {
 MEDIAS_DEFAULT_CONTAINER_NAME = "Unknow"
 
 
+# List of unique file extensions for medias
+MEDIAS_EXTENSIONS = set(MEDIAS_CONTAINERS.keys())
+
+
 # Manifest filename to search for in a directory
 MANIFEST_FILENAME = "manifest.yaml"
 
@@ -52,8 +56,18 @@ MANIFEST_FORBIDDEN_VARS = {
 }
 
 
-# List of unique file extensions for medias
-MEDIAS_EXTENSIONS = set(MEDIAS_CONTAINERS.keys())
+# File name to use with allowed extensions to search for a cover
+COVER_NAME = "cover"
+
+
+# Allowed file extensions to search for a cover. The order define the priority when
+# there is multiple cover files in the same directory. The first extension will always
+# have highest priority against other extensions.
+COVER_EXTENSIONS = [
+    ".png",
+    ".jpg",
+    ".jpeg",
+]
 
 
 class Collector(PrinterInterface):
@@ -78,15 +92,28 @@ class Collector(PrinterInterface):
             still collected in registry. Default is False, so only directories with
             direct media children are collected, the other directories are ignored from
             registry (but still scanned for children directories).
+        manifest (string): Manifest filename to search for in a directory.
+        cover_name (string): Cover file name (without extension) used to search for
+            cover files.
+        cover_extensions (list): Cover file extensions (with leading dot) used to
+            search for cover files.
     """
-    def __init__(self, basepath, extensions=MEDIAS_EXTENSIONS,
-                 manifest=MANIFEST_FILENAME, allow_empty_dir=False):
+    def __init__(self, basepath, extensions=MEDIAS_EXTENSIONS, allow_empty_dir=False,
+                 manifest=MANIFEST_FILENAME, cover_name=COVER_NAME,
+                 cover_extensions=COVER_EXTENSIONS):
         super().__init__()
 
         self.basepath = basepath
-        self.manifest_filename = manifest
         self.extensions = extensions
         self.allow_empty_dir = allow_empty_dir
+        self.manifest_filename = manifest
+        self.cover_name = cover_name
+        self.cover_extensions = cover_extensions
+        self.cover_files = [
+            self.cover_name + item
+            for item in self.cover_extensions
+        ]
+
         self.reset()
 
     def reset(self):
@@ -215,6 +242,25 @@ class Collector(PrinterInterface):
 
         return manifest
 
+    def get_dir_cover(self, path):
+        """
+        TODO
+
+        Search for a directory cover image.
+
+        Arguments:
+            path (pathlib.Path): A Path object for the directory where to find
+                cover image file.
+
+        Returns:
+            dict: TODO: The cover file path or the base64 image ?
+        """
+        for filename in self.cover_files:
+            if (path / filename).exists():
+                return (path / filename)
+
+        return None
+
     def scan_directory(self, path):
         """
         Scan a directory to get its media files.
@@ -222,7 +268,7 @@ class Collector(PrinterInterface):
         Does not return anything, the directories informations (and possible media files
         informations) are stored in ``Collector.registry``.
 
-        TODO: Search also for a manifest file
+        TODO: Search also for a cover image.
 
         Arguments:
             path (pathlib.Path): Directory to scan for informations, for direct children
@@ -253,9 +299,6 @@ class Collector(PrinterInterface):
             "children_files": [],
         }
 
-        # Get possible manifest to extend data
-        data.update(**self.get_dir_manifest(path))
-
         for child in path.iterdir():
             if child.is_dir():
                 self.scan_directory(child)
@@ -268,6 +311,9 @@ class Collector(PrinterInterface):
         if self.allow_empty_dir or len(data["children_files"]) > 0:
             self.stats["directories"] += 1
             self.stats["size"] += data["size"]
+
+            # Get possible manifest to extend data
+            data.update(**self.get_dir_manifest(path))
 
             self.store(data)
 
