@@ -1,5 +1,9 @@
 import datetime
 import json
+import shutil
+from pathlib import Path
+from hashlib import blake2b
+from uuid import uuid4
 
 import yaml
 
@@ -9,7 +13,7 @@ from ..exceptions import CollectorError
 
 
 # Non exhaustive list of Video containers with their file extension and name
-# Should also describe some music only containers
+# TODO: Should also describe some music only containers
 MEDIAS_CONTAINERS = {
     "3gp": "3GPP",
     "asf": "Advanced Systems Format",
@@ -40,11 +44,12 @@ MEDIAS_DEFAULT_CONTAINER_NAME = "Unknow"
 MEDIAS_EXTENSIONS = set(MEDIAS_CONTAINERS.keys())
 
 
-# Manifest filename to search for in a directory
+# Manifest filename to search in a directory
 MANIFEST_FILENAME = "manifest.yaml"
 
 
-# Forbidden/reserved keyword from manifest
+# Forbidden/reserved keyword from manifest corresponding to computed values from
+# collection (obviously excepted the ones from manifest)
 MANIFEST_FORBIDDEN_VARS = {
     "path",
     "name",
@@ -78,6 +83,11 @@ class Collector(PrinterInterface):
         registry (dict): The registry where is collected all informations from scanning.
         stats (dict): Global statistics for all collected directories, files and total
             size.
+        file_storage_directory (string): A directory path where to store collected
+            files. It will be filled from ``run()`` method using the dump filename as
+            its base name.
+        file_storage_queue (list): A list where each item is a tuple with source and
+            destination to use for copying files.
 
     Arguments:
         basepath (pathlib.Path): The base directory for all directories to scan.
@@ -97,10 +107,12 @@ class Collector(PrinterInterface):
             cover files.
         cover_extensions (list): Cover file extensions (with leading dot) used to
             search for cover files.
+        allow_media_cover (boolean): If False, cover files will be ignored from dump.
+            By default this is True and so covers are managed and dumped.
     """
     def __init__(self, basepath, extensions=MEDIAS_EXTENSIONS, allow_empty_dir=False,
                  manifest=MANIFEST_FILENAME, cover_name=COVER_NAME,
-                 cover_extensions=COVER_EXTENSIONS):
+                 cover_extensions=COVER_EXTENSIONS, allow_media_cover=True):
         super().__init__()
 
         self.basepath = basepath
@@ -109,6 +121,12 @@ class Collector(PrinterInterface):
         self.manifest_filename = manifest
         self.cover_name = cover_name
         self.cover_extensions = cover_extensions
+        self.allow_media_cover = allow_media_cover
+        self.file_storage_directory = None
+        self.file_storage_queue = []
+
+        # Build elligible file names for cover from cover base file name and enabled
+        # cover extensions
         self.cover_files = [
             self.cover_name + item
             for item in self.cover_extensions
@@ -124,22 +142,15 @@ class Collector(PrinterInterface):
         ``scan_directory`` for different basepath since registry and global states are
         cumulative.
         """
+        self.file_storage_directory = None
+        self.file_storage_queue = []
+
         self.registry = {}
         self.stats = {
             "directories": 0,
             "files": 0,
             "size": 0,
         }
-
-    def store(self, data):
-        """
-        Store given directory data.
-
-        Arguments:
-            data (dict):
-        """
-        key = str(data["path"].relative_to(self.basepath))
-        self.registry[key] = data
 
     def timestamp_to_isoformat(self, timestamp):
         """
@@ -156,6 +167,32 @@ class Collector(PrinterInterface):
             timestamp,
             tz=datetime.timezone.utc
         ).isoformat(timespec="seconds")
+
+    def _process_file_fields(self, fields, data):
+        """
+        Process field fields
+
+        File field are collected as a tuple with file source path and destination path
+        but only the destination path will be stored. The source path will just be
+        used to copy the file source to its destination.
+
+        Copying source file to destination is done through a queue to be performed
+        after the end of collection, storage and dump.
+
+        At this stage, we don't validate if a file item exist or not, since it has
+        already by done during collection.
+
+        Returns:
+            dict: Given data possibly patched on file fields. Patch fields are
+                transformed to just keep the final file path (not the original one).
+        """
+        for field in fields:
+            if data.get(field):
+                source, destination = data.get(field)
+                self.file_storage_queue.append((source, destination))
+                data[field] = destination
+
+        return data
 
     def scan_file(self, path):
         """
@@ -204,9 +241,46 @@ class Collector(PrinterInterface):
 
         return data
 
-    def get_dir_manifest(self, path):
+    def get_directory_cover(self, path):
         """
-        Search for a directory YAML manifest to load.
+        Search for a directory cover image in given path.
+
+        The filename must match an expected cover filename and must exists.
+
+        Arguments:
+            path (pathlib.Path): A Path object for the directory where to find
+                cover image file.
+
+        Returns:
+            tuple: A tuple of two items ``(source, destination)`` where source is the
+                source cover file (Path object) and destination a filename (Path object)
+                with a uuid4 instead of source file name but keeping source extension.
+        """
+        if self.allow_media_cover:
+            for filename in self.cover_files:
+                filepath = path / filename
+
+                if filepath.exists():
+                    base_storage = (
+                        ""
+                        if not self.file_storage_directory
+                        else self.file_storage_directory
+                    )
+                    return (
+                        filepath.resolve(),
+                        base_storage / Path(
+                            "".join([str(uuid4()), filepath.suffix])
+                        ),
+                    )
+
+        return None
+
+    def get_directory_manifest(self, path):
+        """
+        Search for a YAML manifest to load medias informations related to
+        given directory path.
+
+        It should be safe to run with invalid manifests.
 
         Arguments:
             path (pathlib.Path): A Path object for the directory where to find
@@ -233,33 +307,36 @@ class Collector(PrinterInterface):
                     if name in manifest
                 ]
                 if len(reserved) > 0:
-                    msg = "Keywords '{}' are forbidden from manifest: {}"
+                    msg = (
+                        "Ignored manifest because it has forbidden keywords '{}': {}"
+                    )
                     self.log_warning(msg.format(
                         ", ".join(reserved),
                         str(manifest_path),
                     ))
                     manifest = {}
 
+                # Manifest has been correctly loaded, we can try to get meta files
+                self.get_directory_cover(path)
+
         return manifest
 
-    def get_dir_cover(self, path):
+    def store(self, data):
         """
-        TODO
-
-        Search for a directory cover image.
+        Store given directory data.
 
         Arguments:
-            path (pathlib.Path): A Path object for the directory where to find
-                cover image file.
+            data (dict): The data payload to store. It must have at least a ``path``
+                item which will be used as the item key in the store.
 
         Returns:
-            dict: TODO: The cover file path or the base64 image ?
+            string: Item key name used to store the data.
         """
-        for filename in self.cover_files:
-            if (path / filename).exists():
-                return (path / filename)
+        key = str(data["path"].relative_to(self.basepath))
 
-        return None
+        self.registry[key] = self._process_file_fields(["cover"], data)
+
+        return key
 
     def scan_directory(self, path):
         """
@@ -268,7 +345,8 @@ class Collector(PrinterInterface):
         Does not return anything, the directories informations (and possible media files
         informations) are stored in ``Collector.registry``.
 
-        TODO: Search also for a cover image.
+        TODO: Ongoing implementation of directory manifest (for more infos like cover
+              image).
 
         Arguments:
             path (pathlib.Path): Directory to scan for informations, for direct children
@@ -313,9 +391,61 @@ class Collector(PrinterInterface):
             self.stats["size"] += data["size"]
 
             # Get possible manifest to extend data
-            data.update(**self.get_dir_manifest(path))
+            data.update(**self.get_directory_manifest(path))
 
+            # Store collected data
             self.store(data)
+
+    def get_file_storage(self, filepath):
+        """
+        Compute storage directory name from given filename and current datetime.
+
+        Keyword Arguments:
+            filepath (pathlib.Path): A file path, commonly without any directory path,
+                if there is any directory path it is ignored, only the filename is used
+                to compute return filename.
+
+        Returns:
+            string: A filename composed from the filepath filename (without dirs or
+            extension) and a computed unique hash.
+        """
+        if not filepath:
+            return None
+
+        file_hash = blake2b(
+            "{}_{}".format(
+                filepath.name,
+                datetime.datetime.now().isoformat(),
+            ).encode("utf-8"),
+            digest_size=10
+        ).hexdigest()
+
+        return "{}_{}".format(filepath.stem, file_hash)
+
+    def store_files(self, files):
+        """
+        TODO:
+        Store files from given list to their destination.
+
+        Returns:
+            list: List of stored file in their final destination.
+        """
+        stored = []
+
+
+        if len(files) > 0:
+            if not self.file_storage_directory.exists():
+                self.file_storage_directory.mkdir(parents=True, exist_ok=True)
+
+            for source, destination in files:
+                if not source.exists():
+                    msg = "File to store does not exists: {}"
+                    raise CollectorError(msg.format(source))
+                #print("shutil.copy({}, {})".format(source, destination))
+                shutil.copy(source, destination)
+                stored.append(destination)
+
+        return stored
 
     def run(self, destination=None):
         """
@@ -330,11 +460,16 @@ class Collector(PrinterInterface):
         Returns:
             dict: Dictionnary of global states for collected directories and files.
         """
+        self.file_storage_directory = self.get_file_storage(destination)
+
         self.scan_directory(self.basepath)
 
         if self.registry and destination:
             with destination.open("w") as fp:
                 json.dump(self.registry, fp, indent=4, cls=ExtendedJsonEncoder)
                 self.log_info("Registry saved to: {}".format(str(destination)))
+
+            # Proceed to copy queued files into storage dir
+            self.store_files(self.file_storage_queue)
 
         return self.stats

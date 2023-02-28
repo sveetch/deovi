@@ -90,26 +90,20 @@ def test_collector_scan_file(monkeypatch, media_sample, path, expected):
 
     data = collector.scan_file(path)
 
-    # print()
-    # print(data)
-    # print()
-    # print(json.dumps(data, indent=4, cls=ExtendedJsonEncoder))
-    # print()
-
     assert expected == data
 
 
-def test_collector_get_dir_manifest_nofile(manifests_sample):
+def test_collector_get_directory_manifest_nofile(manifests_sample):
     """
     Collector should silently fail if there is no manifest.
     """
     collector = Collector(None)
-    manifest = collector.get_dir_manifest(manifests_sample)
+    manifest = collector.get_directory_manifest(manifests_sample)
 
     assert manifest == {}
 
 
-def test_collector_get_dir_manifest_invalid(caplog, warning_logger, manifests_sample):
+def test_collector_get_directory_manifest_invalid(caplog, warning_logger, manifests_sample):
     """
     Collector should not break process if found manifest file is invalid and emits
     a warning log.
@@ -117,7 +111,7 @@ def test_collector_get_dir_manifest_invalid(caplog, warning_logger, manifests_sa
     collector = Collector(None)
     sample_dir = manifests_sample / "invalid"
     manifest_path = sample_dir / MANIFEST_FILENAME
-    manifest = collector.get_dir_manifest(sample_dir)
+    manifest = collector.get_directory_manifest(sample_dir)
 
     assert manifest == {}
 
@@ -130,7 +124,7 @@ def test_collector_get_dir_manifest_invalid(caplog, warning_logger, manifests_sa
     ]
 
 
-def test_collector_get_dir_manifest_forbidden(caplog, warning_logger, manifests_sample):
+def test_collector_get_directory_manifest_forbidden(caplog, warning_logger, manifests_sample):
     """
     Collector should not break process if manifest contains forbidden keywords but it
     results to a warning and ignored manifest.
@@ -138,28 +132,26 @@ def test_collector_get_dir_manifest_forbidden(caplog, warning_logger, manifests_
     collector = Collector(None)
     sample_dir = manifests_sample / "forbidden"
     manifest_path = sample_dir / MANIFEST_FILENAME
-    manifest = collector.get_dir_manifest(sample_dir)
+    manifest = collector.get_directory_manifest(sample_dir)
 
     assert manifest == {}
 
+    msg = "Ignored manifest because it has forbidden keywords '{}': {}"
     assert caplog.record_tuples == [
         (
             "deovi",
             30,
-            "Keywords '{}' are forbidden from manifest: {}".format(
-                ", ".join(MANIFEST_FORBIDDEN_VARS),
-                manifest_path,
-            )
+            msg.format(", ".join(MANIFEST_FORBIDDEN_VARS), manifest_path)
         ),
     ]
 
 
-def test_collector_get_dir_manifest_basic(manifests_sample):
+def test_collector_get_directory_manifest_basic(manifests_sample):
     """
     Collector should find manifest if any and correctly load it.
     """
     collector = Collector(None)
-    manifest = collector.get_dir_manifest(manifests_sample / "basic")
+    manifest = collector.get_directory_manifest(manifests_sample / "basic")
 
     assert manifest == {
         "foo": "bar",
@@ -184,26 +176,126 @@ def test_collector_get_dir_manifest_basic(manifests_sample):
     }
 
 
-@pytest.mark.parametrize("name, expected", [
-    (
-        "",
-        "cover.png",
-    ),
+@pytest.mark.parametrize("basepath, storage, expected_found", [
+    ("", "", "cover.png"),
+    ("ping/pong/pang", "", "cover.jpg"),
+    ("foo/bar", "", None),
+    ("", "thumbs", "cover.png"),
+    ("ping/pong/pang", "thumbs", "cover.jpg"),
+    ("foo/bar", "thumbs", None),
 ])
-def test_collector_get_dir_cover(media_sample, name, expected):
+def test_collector_get_directory_cover(media_sample, basepath, storage, expected_found):
     """
     Collector should find elligible cover image file from a directory.
+
+    Every basepath are searched in media_sample dir from fixtures.
     """
     collector = Collector(None)
-    cover = collector.get_dir_cover(media_sample / name)
+    collector.file_storage_directory = storage
+    dir_path = media_sample / basepath
+    cover = collector.get_directory_cover(dir_path)
 
-    print()
-    print(cover)
-    print()
+    # None is expected when no cover has been found
+    if expected_found is None:
+        assert cover is None
+    # For expected found cover tuple
+    else:
+        cover_source, cover_destination = cover
+        assert cover_source == (dir_path / expected_found)
+        # We got the uuid of expected length as destination file name
+        assert len(cover_destination.stem) == 36
+        # Destination adopted the source file extension
+        assert cover_destination.suffix == Path(expected_found).suffix
+        # Destination is prefixed with possible storage directory
+        assert cover_destination.parents[0] == Path(storage)
 
-    assert cover == (media_sample / expected)
 
-    assert 1 == 42
+@pytest.mark.parametrize("filepath", [
+    "dump.json",
+    "foo/dump.json",
+    "foo/dump.bar.json",
+])
+def test_collector_get_file_storage(filepath):
+    """
+    A directory should be computed from given filename plus a hashid with an exact
+    length.
+    """
+    collector = Collector(None)
+    dirname = collector.get_file_storage(Path(filepath))
+
+    name, hashid = dirname.split("_")
+
+    assert name == Path(filepath).stem
+    assert len(hashid) == 20
+
+
+@pytest.mark.parametrize("fields, payload, expected_queue, expected_payload", [
+    (
+        ["cover"],
+        {
+            "foo": "foo",
+            "cover": None,
+        },
+        [],
+        {
+            "foo": "foo",
+            "cover": None,
+        },
+    ),
+    (
+        ["cover"],
+        {
+            "foo": "foo",
+            "cover": (Path("source.jpg"), Path("destination.jpg")),
+        },
+        [(Path("source.jpg"), Path("destination.jpg"))],
+        {
+            "foo": "foo",
+            "cover": Path("destination.jpg"),
+        },
+    ),
+    (
+        ["cover", "detail"],
+        {
+            "foo": "foo",
+            "cover": (Path("source.jpg"), Path("destination.jpg")),
+        },
+        [(Path("source.jpg"), Path("destination.jpg"))],
+        {
+            "foo": "foo",
+            "cover": Path("destination.jpg"),
+        },
+    ),
+    (
+        ["cover", "detail"],
+        {
+            "foo": "foo",
+            "cover": (Path("source.jpg"), Path("destination.jpg")),
+            "detail": (Path("from.jpg"), Path("to.jpg")),
+        },
+        [
+            (Path("source.jpg"), Path("destination.jpg")),
+            (Path("from.jpg"), Path("to.jpg")),
+        ],
+        {
+            "foo": "foo",
+            "cover": Path("destination.jpg"),
+            "detail": Path("to.jpg"),
+        },
+    ),
+])
+def test_collector_process_file_fields(fields, payload, expected_queue,
+                                       expected_payload):
+    """
+    Method should push file field values to a queue list and alter payload to let only
+    the source path as the field value.
+    """
+    collector = Collector(None)
+
+    data = collector._process_file_fields(fields, payload)
+
+    assert collector.file_storage_queue == expected_queue
+    assert data == expected_payload
 
 
 def test_collector_scan_directory_outofbasepath(media_sample):
@@ -240,6 +332,43 @@ def test_collector_scan_directory_allowempty(media_sample, allowed, expected):
     collector.scan_directory(media_sample)
 
     assert collector.stats == expected
+
+
+@pytest.mark.parametrize("files, expected_stored", [
+    (
+        [
+            (Path("cover.png"), Path("dst_cover.png")),
+            (Path("ping/pong/pang/cover.jpg"), Path("dst_cover.jpg")),
+        ],
+        [
+            Path("dst_cover.png"),
+            Path("dst_cover.jpg"),
+        ],
+    ),
+])
+def test_store_files(media_sample, files, expected_stored):
+    """
+    Files from queue list should be stored in storage directory (created if not
+    exists).
+    """
+    collector = Collector(None)
+    collector.file_storage_directory = media_sample / Path("thumbs")
+
+    # Augment each source with sample path and destination with tmp destination dir
+    stored = collector.store_files([
+        ((media_sample / k), (collector.file_storage_directory / v))
+        for k, v in files
+    ])
+
+    assert stored == [
+        collector.file_storage_directory / item
+        for item in expected_stored
+    ]
+
+    assert list(collector.file_storage_directory.iterdir()) == [
+        collector.file_storage_directory / item
+        for item in expected_stored
+    ]
 
 
 def test_collector_scan_directory_full(monkeypatch, media_sample):
