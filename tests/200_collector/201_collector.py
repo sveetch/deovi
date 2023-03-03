@@ -400,7 +400,7 @@ def test_collector_scan_directory_full(monkeypatch, media_sample):
                 "SampleVideo_720x480_1mb.mkv",
                 "SampleVideo_720x480_2mb.mkv",
             ],
-            "cover": None,
+            "cover": Path("dummy_uuid4.gif"),
         },
         "foo/bar": {
             "path": media_sample / "foo/bar",
@@ -532,6 +532,7 @@ def test_collector_run_dirmanifest(monkeypatch, media_sample):
     assert list(directory_storage.iterdir()) == [
         directory_storage / "dummy_uuid4.png",
         directory_storage / "dummy_uuid4.jpg",
+        directory_storage / "dummy_uuid4.gif",
     ]
 
     # Expected directories with a cover
@@ -541,6 +542,9 @@ def test_collector_run_dirmanifest(monkeypatch, media_sample):
     assert dumped_registry["moo"]["cover"] == str(
         directory_storage / "dummy_uuid4.png"
     )
+    assert dumped_registry["ping/pong"]["cover"] == str(
+        directory_storage / "dummy_uuid4.gif"
+    )
     assert dumped_registry["ping/pong/pang"]["cover"] == str(
         directory_storage / "dummy_uuid4.jpg"
     )
@@ -549,5 +553,5 @@ def test_collector_run_dirmanifest(monkeypatch, media_sample):
     assert any([
         data["cover"]
         for path, data in dumped_registry.items()
-        if path not in (".", "moo", "ping/pong/pang")
+        if path not in (".", "moo", "ping/pong", "ping/pong/pang")
     ]) is False

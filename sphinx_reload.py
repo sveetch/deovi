@@ -19,7 +19,14 @@ from livereload import Server, shell
 
 server = Server()
 
-# Watch root documents (not recursive)
+# Watch documents
+server.watch(
+    "README.rst",
+    shell(
+        "make html",
+        cwd="docs"
+    )
+)
 server.watch(
     "docs/*.rst",
     shell(
@@ -27,10 +34,8 @@ server.watch(
         cwd="docs"
     )
 )
-
-# Watch application documents
 server.watch(
-    "docs/core/*.rst",
+    "docs/*/**.rst",
     shell(
         "make html",
         cwd="docs"

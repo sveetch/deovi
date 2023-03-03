@@ -8,7 +8,7 @@
 Deovi
 =====
 
-An utility to rename files using tasks from a job.
+A set of utilities to collect and rename media files.
 
 Links
 *****

@@ -1,8 +1,8 @@
-.. _intro_usage:
+.. _intro_rename:
 
-=====
-Usage
-=====
+=======
+Renamer
+=======
 
 Principle is to run tasks from a Job to rename files from a directory (not recursively).
 
@@ -10,7 +10,7 @@ Job
 ***
 
 Job file is what defines the ``basepath`` to search for file to rename, some options
-and renaming tasks.
+and tasks.
 
 It should be something like this: ::
 
@@ -47,16 +47,20 @@ Job options
 **name**
     Optional name, you can set it to ``null``. It is not used or displayed
     anywhere because this is just a description for your needs;
+
 **basepath**
     The directory path where the Job will search for file to rename. It can
     be a relative path which will be resolved to your current directory and it must be
     an existing and valid directory.
+
 **reversed**
     Set it to ``true`` to reverse the file listing if needed, else let it to ``False``.
+
 **extensions**
     A list of file extensions to filter file listing, if set only the files which end
     with one of enabled extension will be renamed, other ones will be ignored. Set its
     value to ``null`` accept any file extensions.
+
 **tasks**
     A list of tasks and their options to execute on a file. This is an error to have
     an empty list of tasks.
@@ -87,8 +91,10 @@ Capitalize file name.
 
 Scope
     File name and extension.
+
 Options
     None.
+
 Rule
     ::
 
@@ -96,6 +102,7 @@ Rule
             "capitalize",
             {}
         ]
+
 Sample
     ``HOME_foo.MP4`` will be converted to ``Home_foo.mp4``.
 
@@ -107,8 +114,10 @@ Lowercase file name, work on the whole filename including extension.
 
 Scope
     File name and extension.
+
 Options
     None.
+
 Rule
     ::
 
@@ -116,6 +125,7 @@ Rule
             "lowercase",
             {}
         ]
+
 Sample
     ``HOME_foo.MP4`` will be converted to ``home_foo.mp4``.
 
@@ -127,8 +137,10 @@ Uppercase file name.
 
 Scope
     File name and extension.
+
 Options
     None.
+
 Rule
     ::
 
@@ -136,6 +148,7 @@ Rule
             "uppercase",
             {}
         ]
+
 Sample
     ``HOME_foo.mp4`` will be converted to ``HOME_FOO.MP4``.
 
@@ -150,8 +163,10 @@ Convert some strings into another ones:
 
 Scope
     File name and extension.
+
 Options
     None.
+
 Rule
     ::
 
@@ -159,6 +174,7 @@ Rule
             "underscore_to_dash",
             {}
         ]
+
 Sample
     ``ping_-_foo_bar.mp4`` will be converted to ``ping_foo-bar.mp4``.
 
@@ -172,8 +188,10 @@ Works on the whole filename including extension.
 
 Scope
     File name only.
+
 Options
     ``prefix`` is a required string for the value to add.
+
 Rule
     ::
 
@@ -183,6 +201,7 @@ Rule
                 "prefix": STRING*
             }
         ]
+
 Sample
     With prefix option value to ``Plop_`` the source string ``foo-bar.mp4`` will be
     converted to ``Plop_foo-bar.mp4``.
@@ -195,12 +214,14 @@ Prefix file name with a string of index position padded with zero.
 
 Scope
     File name only.
+
 Options
     * ``zfill`` is a required integer. It defines padding length to fill;
     * ``start`` is an optional integer. It defines a number to add to the current
       file position. Default to zero;
     * ``divider`` is an optional string. If not empty, this string will be used between
       computed position string and filename. Default to ``_``;
+
 Rule
     ::
 
@@ -212,6 +233,7 @@ Rule
                 "divider": STRING
             }
         ]
+
 Sample
     With options ``zfill`` set to ``2``. For a list of files ``Foo.txt``, ``Bar.txt``
     and ``Ping.txt``.
@@ -230,6 +252,7 @@ options.
 
 Scope
     File name only.
+
 Options
     * ``divider`` is a required string. The filename will be splitted on this string;
     * ``slice_start`` is a required integer. It defines the first segment to start,
@@ -239,6 +262,7 @@ Options
       on the Python list slicing end, it may not work as you could expect it;
     * ``joiner`` is an optional string. This string will be used to join segments.
       Default to ``-``;
+
 Rule
     ::
 
@@ -251,6 +275,7 @@ Rule
                 "joiner": STRING
             }
         ]
+
 Sample
     For source string ``One.two.three.four.five.six.txt``. With options ``divider`` set
     to ``.``, ``slice_start`` set to ``0``, ``slice_end`` set to ``3`` and ``joiner``
@@ -327,6 +352,6 @@ There is the base tool help: ::
 
     deovi -h
 
-And then each tool command has its own help: ::
+And then the "rename" command specific help: ::
 
     deovi rename -h

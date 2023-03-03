@@ -73,6 +73,7 @@ COVER_EXTENSIONS = [
     ".png",
     ".jpg",
     ".jpeg",
+    ".gif",
 ]
 
 
@@ -295,7 +296,7 @@ class Collector(PrinterInterface):
         if manifest_path.exists():
             try:
                 manifest = yaml.load(manifest_path.read_text(), Loader=yaml.FullLoader)
-            except yaml.YAMLError as exc:
+            except yaml.YAMLError:
                 msg = "No YAML object could be decoded for manifest: {}"
                 self.log_warning(msg.format(str(manifest_path)))
             else:
@@ -398,10 +399,6 @@ class Collector(PrinterInterface):
         """
         Compute storage directory name from given filename and current datetime.
 
-        TODO: Bogus, currently file_storage_directory dir is directly created at current
-        directory, not in the temp basepath. This is because we ignore the filepath
-        parents to just compute and return a filename path.
-
         Keyword Arguments:
             filepath (pathlib.Path): A file path, commonly without any directory path,
                 if there is any directory path it is ignored, only the filename is used
@@ -456,9 +453,6 @@ class Collector(PrinterInterface):
         Recursively scan everything from basepath to produce a registry of collected
         informations.
 
-        TODO: As directory manifest is almost finished, we need to test finally on
-              collection run.
-
         Keyword Arguments:
             destination (pathlib.Path): Destination path to write a JSON file with
                 every collected informations. Default is ``None`` so no JSON registry
@@ -467,8 +461,6 @@ class Collector(PrinterInterface):
         Returns:
             dict: Dictionnary of global states for collected directories and files.
         """
-        # TODO: Bogus, currently file_storage_directory dir is directly created at current
-        # directory, not in the temp basepath
         self.file_storage_directory = self.get_directory_storage(destination)
 
         self.scan_directory(self.basepath)

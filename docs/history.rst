@@ -4,11 +4,11 @@
 History
 =======
 
-Version 0.5.0 - Unreleased
+Version 0.5.0 - 2023/03/03
 --------------------------
 
-Improved collector so it can retrieve extra informations from a YAML manifest for each
-directory.
+Improved collector so it can retrieve extra informations from a YAML manifest and cover
+image for each directory.
 
 
 Version 0.4.1 - 2022/01/22
