@@ -116,6 +116,7 @@ def test_job_success(monkeypatch, caplog, media_sample):
                     "size": 1055721,
                     "mtime": DUMMY_ISO_DATETIME
                 }
-            ]
+            ],
+            "cover": None,
         }
     }

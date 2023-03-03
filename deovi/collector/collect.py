@@ -1,9 +1,9 @@
 import datetime
+import hashlib
 import json
 import shutil
+import uuid
 from pathlib import Path
-from hashlib import blake2b
-from uuid import uuid4
 
 import yaml
 
@@ -57,7 +57,8 @@ MANIFEST_FORBIDDEN_VARS = {
     "relative_dir",
     "size",
     "mtime",
-    "children_files"
+    "children_files",
+    "cover",
 }
 
 
@@ -256,22 +257,21 @@ class Collector(PrinterInterface):
                 source cover file (Path object) and destination a filename (Path object)
                 with a uuid4 instead of source file name but keeping source extension.
         """
-        if self.allow_media_cover:
-            for filename in self.cover_files:
-                filepath = path / filename
+        for filename in self.cover_files:
+            filepath = path / filename
 
-                if filepath.exists():
-                    base_storage = (
-                        ""
-                        if not self.file_storage_directory
-                        else self.file_storage_directory
-                    )
-                    return (
-                        filepath.resolve(),
-                        base_storage / Path(
-                            "".join([str(uuid4()), filepath.suffix])
-                        ),
-                    )
+            if filepath.exists():
+                base_storage = (
+                    ""
+                    if not self.file_storage_directory
+                    else self.file_storage_directory
+                )
+                return (
+                    filepath.resolve(),
+                    base_storage / Path(
+                        "".join([str(uuid.uuid4()), filepath.suffix])
+                    ),
+                )
 
         return None
 
@@ -316,9 +316,6 @@ class Collector(PrinterInterface):
                     ))
                     manifest = {}
 
-                # Manifest has been correctly loaded, we can try to get meta files
-                self.get_directory_cover(path)
-
         return manifest
 
     def store(self, data):
@@ -344,9 +341,6 @@ class Collector(PrinterInterface):
 
         Does not return anything, the directories informations (and possible media files
         informations) are stored in ``Collector.registry``.
-
-        TODO: Ongoing implementation of directory manifest (for more infos like cover
-              image).
 
         Arguments:
             path (pathlib.Path): Directory to scan for informations, for direct children
@@ -393,12 +387,20 @@ class Collector(PrinterInterface):
             # Get possible manifest to extend data
             data.update(**self.get_directory_manifest(path))
 
+            # Discover cover if any
+            if self.allow_media_cover:
+                data["cover"] = self.get_directory_cover(path)
+
             # Store collected data
             self.store(data)
 
-    def get_file_storage(self, filepath):
+    def get_directory_storage(self, filepath):
         """
         Compute storage directory name from given filename and current datetime.
+
+        TODO: Bogus, currently file_storage_directory dir is directly created at current
+        directory, not in the temp basepath. This is because we ignore the filepath
+        parents to just compute and return a filename path.
 
         Keyword Arguments:
             filepath (pathlib.Path): A file path, commonly without any directory path,
@@ -406,13 +408,13 @@ class Collector(PrinterInterface):
                 to compute return filename.
 
         Returns:
-            string: A filename composed from the filepath filename (without dirs or
-            extension) and a computed unique hash.
+            pathlib.Path: A filename composed from the filepath filename (without dirs
+            or extension) and a computed unique hash.
         """
         if not filepath:
             return None
 
-        file_hash = blake2b(
+        file_hash = hashlib.blake2b(
             "{}_{}".format(
                 filepath.name,
                 datetime.datetime.now().isoformat(),
@@ -420,18 +422,20 @@ class Collector(PrinterInterface):
             digest_size=10
         ).hexdigest()
 
-        return "{}_{}".format(filepath.stem, file_hash)
+        return filepath.parent / Path("{}_{}".format(filepath.stem, file_hash))
 
     def store_files(self, files):
         """
-        TODO:
         Store files from given list to their destination.
+
+        Arguments:
+            files (list): List of tuple ``(source, destination)`` where both items are
+                Path objects as returned from ``Collector.get_directory_cover()``.
 
         Returns:
             list: List of stored file in their final destination.
         """
         stored = []
-
 
         if len(files) > 0:
             if not self.file_storage_directory.exists():
@@ -439,9 +443,9 @@ class Collector(PrinterInterface):
 
             for source, destination in files:
                 if not source.exists():
-                    msg = "File to store does not exists: {}"
-                    raise CollectorError(msg.format(source))
-                #print("shutil.copy({}, {})".format(source, destination))
+                    msg = "File to store does not exists from your filesystem: {}"
+                    self.log_warning(msg.format(source))
+
                 shutil.copy(source, destination)
                 stored.append(destination)
 
@@ -452,6 +456,9 @@ class Collector(PrinterInterface):
         Recursively scan everything from basepath to produce a registry of collected
         informations.
 
+        TODO: As directory manifest is almost finished, we need to test finally on
+              collection run.
+
         Keyword Arguments:
             destination (pathlib.Path): Destination path to write a JSON file with
                 every collected informations. Default is ``None`` so no JSON registry
@@ -460,7 +467,9 @@ class Collector(PrinterInterface):
         Returns:
             dict: Dictionnary of global states for collected directories and files.
         """
-        self.file_storage_directory = self.get_file_storage(destination)
+        # TODO: Bogus, currently file_storage_directory dir is directly created at current
+        # directory, not in the temp basepath
+        self.file_storage_directory = self.get_directory_storage(destination)
 
         self.scan_directory(self.basepath)
 

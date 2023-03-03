@@ -1,3 +1,6 @@
+import json
+import uuid
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -124,7 +127,8 @@ def test_collector_get_directory_manifest_invalid(caplog, warning_logger, manife
     ]
 
 
-def test_collector_get_directory_manifest_forbidden(caplog, warning_logger, manifests_sample):
+def test_collector_get_directory_manifest_forbidden(caplog, warning_logger,
+                                                    manifests_sample):
     """
     Collector should not break process if manifest contains forbidden keywords but it
     results to a warning and ignored manifest.
@@ -210,22 +214,23 @@ def test_collector_get_directory_cover(media_sample, basepath, storage, expected
         assert cover_destination.parents[0] == Path(storage)
 
 
-@pytest.mark.parametrize("filepath", [
-    "dump.json",
-    "foo/dump.json",
-    "foo/dump.bar.json",
+@pytest.mark.parametrize("filepath, parent, basename", [
+    ("dump.json", Path("."), "dump"),
+    ("foo/dump.json", Path("foo"), "dump"),
+    ("/home/foo/dump.bar.json", Path("/home/foo"), "dump"),
 ])
-def test_collector_get_file_storage(filepath):
+def test_collector_get_directory_storage(filepath, parent, basename):
     """
     A directory should be computed from given filename plus a hashid with an exact
     length.
     """
     collector = Collector(None)
-    dirname = collector.get_file_storage(Path(filepath))
+    dirname = collector.get_directory_storage(Path(filepath))
 
-    name, hashid = dirname.split("_")
+    name, hashid = str(dirname).split("_")
 
-    assert name == Path(filepath).stem
+    assert dirname.parent == parent
+    assert Path(name).stem == basename
     assert len(hashid) == 20
 
 
@@ -378,6 +383,11 @@ def test_collector_scan_directory_full(monkeypatch, media_sample):
     """
     monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
 
+    def dummy_uuid4():
+        return "dummy_uuid4"
+
+    monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
+
     expected = {
         "ping/pong": {
             "path": media_sample / "ping/pong",
@@ -390,6 +400,7 @@ def test_collector_scan_directory_full(monkeypatch, media_sample):
                 "SampleVideo_720x480_1mb.mkv",
                 "SampleVideo_720x480_2mb.mkv",
             ],
+            "cover": None,
         },
         "foo/bar": {
             "path": media_sample / "foo/bar",
@@ -402,6 +413,7 @@ def test_collector_scan_directory_full(monkeypatch, media_sample):
             "children_files": [
                 "SampleVideo_360x240_1mb.mkv",
             ],
+            "cover": None,
         },
         ".": {
             "path": media_sample,
@@ -414,6 +426,7 @@ def test_collector_scan_directory_full(monkeypatch, media_sample):
             "children_files": [
                 "SampleVideo_1280x720_1mb.mkv",
             ],
+            "cover": Path("dummy_uuid4.png"),
         },
     }
     collector = Collector(media_sample, extensions=["mkv"])
@@ -458,7 +471,8 @@ def test_collector_scan_directory_single(monkeypatch, media_sample):
             "mtime": DUMMY_ISO_DATETIME,
             "children_files": [
                 "SampleVideo_360x240_1mb.mkv"
-            ]
+            ],
+            "cover": None,
         },
     }
     collector = Collector(media_sample, extensions=["mkv"])
@@ -480,3 +494,60 @@ def test_collector_scan_directory_single(monkeypatch, media_sample):
         "files": 1,
         "size": 1059817,
     }
+
+
+def test_collector_run_dirmanifest(monkeypatch, media_sample):
+    """
+    Collector should correctly find directory manifest files, directory covers and
+    add them to directory payload.
+
+    We mock the hash modules to be able to retrieve created cover directory and cover
+    files.
+    """
+    def dummy_uuid4():
+        return "dummy_uuid4"
+
+    class dummy_blake2b():
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def hexdigest(self, *args, **kwargs):
+            return "dummy_blake2b"
+
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
+    monkeypatch.setattr(hashlib, "blake2b", dummy_blake2b)
+
+    collector = Collector(media_sample)
+
+    dump_destination = media_sample / "dump.json"
+    directory_storage = media_sample / "dump_dummy_blake2b"
+    stats = collector.run(dump_destination)
+    dumped_registry = json.loads(dump_destination.read_text())
+
+    assert dumped_registry["."]["title"] == "Media sample root"
+    assert dumped_registry["foo/bar"]["title"] == "Foo bar"
+
+    # Expected cover files
+    assert list(directory_storage.iterdir()) == [
+        directory_storage / "dummy_uuid4.png",
+        directory_storage / "dummy_uuid4.jpg",
+    ]
+
+    # Expected directories with a cover
+    assert dumped_registry["."]["cover"] == str(
+        directory_storage / "dummy_uuid4.png"
+    )
+    assert dumped_registry["moo"]["cover"] == str(
+        directory_storage / "dummy_uuid4.png"
+    )
+    assert dumped_registry["ping/pong/pang"]["cover"] == str(
+        directory_storage / "dummy_uuid4.jpg"
+    )
+
+    # Expected directories without a cover
+    assert any([
+        data["cover"]
+        for path, data in dumped_registry.items()
+        if path not in (".", "moo", "ping/pong/pang")
+    ]) is False
