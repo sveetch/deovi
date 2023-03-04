@@ -43,7 +43,7 @@ def rename_command(context, jobs, commit):
         jobber = JobRunner(task_class=TaskMaster)
 
         try:
-            jobs = jobber.run(jobs, dry_run=not(commit))
+            jobs = jobber.run(jobs, dry_run=not(commit))  # noqa: E275
         except JobValidationError as e:
             logger.error("🚨 {}".format(str(e)))
             logger.error("")

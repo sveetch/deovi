@@ -7,8 +7,10 @@ History
 Version 0.5.0 - 2023/03/03
 --------------------------
 
-Improved collector so it can retrieve extra informations from a YAML manifest and cover
-image for each directory.
+* Improved collector so it can retrieve extra informations from a YAML manifest and
+  cover image for each directory;
+* Improved ``setup.cfg`` to move extra requirements in specific sections so Tox is
+  faster to install without unecessary requirements;
 
 
 Version 0.4.1 - 2022/01/22

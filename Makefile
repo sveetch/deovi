@@ -1,5 +1,7 @@
 PYTHON_INTERPRETER=python3
 VENV_PATH=.venv
+
+PYTHON_BIN=$(VENV_PATH)/bin/python
 PIP=$(VENV_PATH)/bin/pip
 FLAKE=$(VENV_PATH)/bin/flake8
 PYTEST=$(VENV_PATH)/bin/pytest
@@ -10,6 +12,11 @@ TWINE=$(VENV_PATH)/bin/twine
 PACKAGE_NAME=deovi
 PACKAGE_SLUG=`echo $(PACKAGE_NAME) | tr '-' '_'`
 APPLICATION_NAME=deovi
+
+# Formatting variables, FORMATRESET is always to be used last to close formatting
+FORMATBLUE:=$(shell tput setab 4)
+FORMATBOLD:=$(shell tput bold)
+FORMATRESET:=$(shell tput sgr0)
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -36,8 +43,9 @@ help:
 
 clean-pycache:
 	@echo ""
-	@echo "==== Clear Python cache ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Clearing Python cache <---$(FORMATRESET)\n"
 	@echo ""
+	rm -Rf .tox
 	rm -Rf .pytest_cache
 	find . -type d -name "__pycache__"|xargs rm -Rf
 	find . -name "*\.pyc"|xargs rm -f
@@ -45,7 +53,7 @@ clean-pycache:
 
 clean-install:
 	@echo ""
-	@echo "==== Clear installation ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Clearing installation <---$(FORMATRESET)\n"
 	@echo ""
 	rm -Rf $(VENV_PATH)
 	rm -Rf $(PACKAGE_SLUG).egg-info
@@ -53,7 +61,7 @@ clean-install:
 
 clean-doc:
 	@echo ""
-	@echo "==== Clear documentation ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Clearing documentation <---$(FORMATRESET)\n"
 	@echo ""
 	rm -Rf docs/_build
 .PHONY: clean-doc
@@ -63,7 +71,7 @@ clean: clean-doc clean-install clean-pycache
 
 venv:
 	@echo ""
-	@echo "==== Install virtual environment ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Installing virtual environment <---$(FORMATRESET)\n"
 	@echo ""
 	virtualenv -p $(PYTHON_INTERPRETER) $(VENV_PATH)
 	# This is required for those ones using old distribution
@@ -73,50 +81,49 @@ venv:
 
 install: venv
 	@echo ""
-	@echo "==== Install everything for development ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Installing everything for development <---$(FORMATRESET)\n"
 	@echo ""
-	$(PIP) install -e .[dev]
+	$(PIP) install -e .[dev,quality,doc,release]
 .PHONY: install
 
 docs:
 	@echo ""
-	@echo "==== Build documentation ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Building documentation <---$(FORMATRESET)\n"
 	@echo ""
 	cd docs && make html
 .PHONY: docs
 
 livedocs:
 	@echo ""
-	@echo "==== Watching documentation sources ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Watching documentation sources <---$(FORMATRESET)\n"
 	@echo ""
 	$(SPHINX_RELOAD)
 .PHONY: livedocs
 
 flake:
 	@echo ""
-	@echo "==== Flake ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Running Flake check <---$(FORMATRESET)\n"
 	@echo ""
-	$(FLAKE) --statistics --show-source $(APPLICATION_NAME)
-	$(FLAKE) --statistics --show-source tests
+	$(FLAKE) --statistics --show-source $(APPLICATION_NAME) tests
 .PHONY: flake
 
 test:
 	@echo ""
-	@echo "==== Tests ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Running Tests <---$(FORMATRESET)\n"
 	@echo ""
 	$(PYTEST) -vv tests/
 .PHONY: test
 
 freeze-dependencies:
 	@echo ""
-	@echo "==== Freeze dependencies versions ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Freezing dependencies versions <---$(FORMATRESET)\n"
 	@echo ""
 	$(VENV_PATH)/bin/python freezer.py
 .PHONY: freeze-dependencies
 
 build-package:
 	@echo ""
-	@echo "==== Build package ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Building package <---$(FORMATRESET)\n"
 	@echo ""
 	rm -Rf dist
 	$(VENV_PATH)/bin/python setup.py sdist
@@ -124,21 +131,21 @@ build-package:
 
 release: build-package
 	@echo ""
-	@echo "==== Release ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Releasing <---$(FORMATRESET)\n"
 	@echo ""
 	$(TWINE) upload dist/*
 .PHONY: release
 
 check-release: build-package
 	@echo ""
-	@echo "==== Check package ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Checking package <---$(FORMATRESET)\n"
 	@echo ""
 	$(TWINE) check dist/*
 .PHONY: check-release
 
 tox:
 	@echo ""
-	@echo "==== Launch all Tox environments ===="
+	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Launching all Tox environments <---$(FORMATRESET)\n"
 	@echo ""
 	$(TOX)
 .PHONY: tox
