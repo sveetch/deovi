@@ -46,12 +46,19 @@ def test_collector_get_directory_manifest_forbidden(caplog, warning_logger,
 
     assert manifest == {}
 
+    # Forbidden keywords
+    names = ", ".join([
+        item
+        for item in MANIFEST_FORBIDDEN_VARS
+        if item not in ["checksum"]
+    ])
+
     msg = "Ignored manifest because it has forbidden keywords '{}': {}"
     assert caplog.record_tuples == [
         (
             "deovi",
             30,
-            msg.format(", ".join(MANIFEST_FORBIDDEN_VARS), manifest_path)
+            msg.format(names, manifest_path)
         ),
     ]
 

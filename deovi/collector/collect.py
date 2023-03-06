@@ -57,6 +57,7 @@ MANIFEST_FORBIDDEN_VARS = {
     "relative_dir",
     "size",
     "mtime",
+    "checksum",
     "children_files",
     "cover",
 }
@@ -336,7 +337,7 @@ class Collector(PrinterInterface):
 
         return key
 
-    def scan_directory(self, path):
+    def scan_directory(self, path, checksum=False):
         """
         Scan a directory to get its media files.
 
@@ -350,6 +351,9 @@ class Collector(PrinterInterface):
         Raises:
             CollectorError: If given path is not a directory inside
                 basepath directory.
+
+        Returns:
+            dict: Directory information payload.
         """
         self.log_debug("Scanning {}".format(str(path)))
 
@@ -394,6 +398,8 @@ class Collector(PrinterInterface):
 
             # Store collected data
             self.store(data)
+
+        return data
 
     def get_directory_storage(self, filepath):
         """
@@ -448,7 +454,7 @@ class Collector(PrinterInterface):
 
         return stored
 
-    def run(self, destination=None):
+    def run(self, destination=None, checksum=False):
         """
         Recursively scan everything from basepath to produce a registry of collected
         informations.
@@ -463,7 +469,7 @@ class Collector(PrinterInterface):
         """
         self.file_storage_directory = self.get_directory_storage(destination)
 
-        self.scan_directory(self.basepath)
+        self.scan_directory(self.basepath, checksum=checksum)
 
         if self.registry and destination:
             with destination.open("w") as fp:
