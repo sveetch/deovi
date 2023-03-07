@@ -9,6 +9,7 @@ import yaml
 
 from ..renamer.printer import PrinterInterface
 from ..utils.jsons import ExtendedJsonEncoder
+from ..utils.checksum import directory_payload_checksum
 from ..exceptions import CollectorError
 
 
@@ -341,6 +342,8 @@ class Collector(PrinterInterface):
         """
         Scan a directory to get its media files.
 
+        TODO: Implement directory checksum
+
         Does not return anything, the directories informations (and possible media files
         informations) are stored in ``Collector.registry``.
 
@@ -378,7 +381,7 @@ class Collector(PrinterInterface):
 
         for child in path.iterdir():
             if child.is_dir():
-                self.scan_directory(child)
+                self.scan_directory(child, checksum=checksum)
             else:
                 if child.suffix and child.suffix.lower()[1:] in self.extensions:
                     data["children_files"].append(self.scan_file(child))
@@ -395,6 +398,14 @@ class Collector(PrinterInterface):
             # Discover cover if any
             if self.allow_media_cover:
                 data["cover"] = self.get_directory_cover(path)
+
+            # Perform content checksum if enabled
+            if checksum:
+                data["checksum"] = directory_payload_checksum(
+                    data,
+                    files_fields=["cover"],
+                    storage=self.file_storage_directory,
+                )
 
             # Store collected data
             self.store(data)

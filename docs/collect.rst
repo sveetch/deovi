@@ -89,6 +89,18 @@ Forbidden item names are:
 * ``size``;
 
 
+Directory checksum
+******************
+
+If this options is enable a checksum will be computed from all gathered informations
+from directory. This means basic directory informations (paths, size, etc..) but also
+additional data from possible manifest and cover file.
+
+The directory checksum is included in directory payload from dump and the cover file
+checksum also. Cover checksum is used to compute the directory one but is available
+also in directory payload as an helper to just check for cover file change.
+
+
 Usage
 *****
 
@@ -99,27 +111,32 @@ Command requires two positionnal arguments in this order:
   you have directory covers, a new directory will be created along the JSON dump file
   to store all the cover files;
 
+And possible keyword arguments:
+
+* ``--checksum``: If given this will enable directory checksum. On default checksum
+  is disabled;
+
 So with the following command: ::
 
-    deovi collect my_device plop.json
+    deovi collect --checksum my_device plop.json
 
 For the following ``my_device/`` directory content: ::
 
     my_device/
     ├── cover.png
+    ├── manifest.yaml
+    ├── SampleVideo_1280x720_1mb.mkv
     ├── foo/
     │   ├── bar/
     │   │   └── nope.txt
     │   ├── cover.png
     │   ├── manifest.yaml
     │   └── SampleVideo_720x480_1mb.mp4
-    ├── manifest.yaml
-    ├── ping/
-    │   └── pong/
-    │       ├── cover.gif
-    │       ├── SampleVideo_720x480_1mb.mkv
-    │       └── SampleVideo_720x480_2mb.mkv
-    └── SampleVideo_1280x720_1mb.mkv
+    └── ping/
+        └── pong/
+            ├── cover.gif
+            ├── SampleVideo_720x480_1mb.mkv
+            └── SampleVideo_720x480_2mb.mkv
 
 It would create a ``plop.json`` file with a JSON collection dump alike this: ::
 
@@ -145,7 +162,9 @@ It would create a ``plop.json`` file with a JSON collection dump alike this: ::
                 }
             ],
             "title": "Foo bar",
-            "cover": "my_device_7a4067f264f889051f91/c6a67d9c-1590-4c67-9c93-37a4da5a01f9.png"
+            "cover": "my_device_7a4067f264f889051f91/c6a67d9c-1590-4c67-9c93-37a4da5a01f9.png",
+            "cover_checksum": "...",
+            "checksum": "..."
         },
         "ping/pong": {
             "path": "/home/donald/my_device/ping/pong",
@@ -179,6 +198,8 @@ It would create a ``plop.json`` file with a JSON collection dump alike this: ::
                 }
             ],
             "cover": "my_device_7a4067f264f889051f91/c92308e0-c385-441b-ba7c-a79babf94c6e.gif"
+            "cover_checksum": "...",
+            "checksum": "..."
         },
         ".": {
             "path": "my_device",
@@ -202,6 +223,8 @@ It would create a ``plop.json`` file with a JSON collection dump alike this: ::
             ],
             "title": "Media sample root",
             "cover": "my_device_7a4067f264f889051f91/54d4d2a3-5c13-4c8e-9b8f-d4877edf24d6.png"
+            "cover_checksum": "...",
+            "checksum": "..."
         }
     }
 

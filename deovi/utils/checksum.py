@@ -16,12 +16,12 @@ def checksum_file(filepath):
     Returns:
         string: The file checksum as 40 characters.
     """
-    h  = hashlib.blake2b()
-    b  = bytearray(128*1024)
+    h = hashlib.blake2b()
+    b = bytearray(128 * 1024)
     mv = memoryview(b)
 
     with open(filepath, "rb", buffering=0) as f:
-        for n in iter(lambda : f.readinto(mv), 0):
+        for n in iter(lambda: f.readinto(mv), 0):
             h.update(mv[:n])
 
     return h.hexdigest()
@@ -54,9 +54,11 @@ def directory_payload_checksum(payload, files_fields=[], storage=None):
         # Proceed on non empty field
         if payload.get(fieldname):
             # Get proper file path
-            filepath = payload[fieldname]
+            source, destination = payload[fieldname]
             if storage:
-                filepath = storage / filepath
+                filepath = storage / source
+            else:
+                filepath = source
 
             # Checksum the file if it exists
             key = "{}_checksum".format(fieldname)

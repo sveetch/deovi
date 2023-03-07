@@ -3,26 +3,7 @@ import hashlib
 from pathlib import Path
 
 from deovi.utils.checksum import directory_payload_checksum
-
-
-class dummy_blake2b():
-    """
-    Instead of generating a hash, will just returns given content unchanged.
-
-    Support basic string content, or 'update()' method and 'memoryview' so to be able
-    to work with efficient memory/buffer way from 'checksum_file()'
-    """
-    def __init__(self, *args, **kwargs):
-        self.content = args[0] if args else bytes()
-
-    def update(self, content):
-        if isinstance(content, memoryview):
-            self.content += bytes(content)
-        else:
-            self.content += content
-
-    def hexdigest(self, *args, **kwargs):
-        return self.content.decode("utf-8")
+from deovi.utils.tests import dummy_blake2b
 
 
 def test_directory_checksum_content(monkeypatch, media_sample):
@@ -39,8 +20,10 @@ def test_directory_checksum_content(monkeypatch, media_sample):
         "children_files": [
             "SampleVideo_360x240_1mb.mkv",
         ],
-        # We use plain text so it's more reliable to check against
-        "cover": Path("moo/boo/foo.txt"),
+        # We use a plain text file so it's more reliable to check against.
+        # Also payload must have a tuple for field file, but checksum only care about
+        # the source one, so second item is dummy
+        "cover": (Path("moo/boo/foo.txt"), "Dummy"),
     }, files_fields=["cover"], storage=media_sample)
 
     assert json.loads(checksum) == {
@@ -50,6 +33,9 @@ def test_directory_checksum_content(monkeypatch, media_sample):
         "children_files": [
             "SampleVideo_360x240_1mb.mkv"
         ],
-        "cover": "moo/boo/foo.txt",
+        "cover": [
+            "moo/boo/foo.txt",
+            "Dummy"
+        ],
         "cover_checksum": "dummy foo.txt\n",
     }

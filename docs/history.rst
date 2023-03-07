@@ -4,6 +4,13 @@
 History
 =======
 
+Version 0.5.1 - Unreleased
+--------------------------
+
+Added checksum feature to collector. Directory checksum is computed from the directory
+payload as built from collector.
+
+
 Version 0.5.0 - 2023/03/03
 --------------------------
 

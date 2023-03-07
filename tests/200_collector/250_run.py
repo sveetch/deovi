@@ -3,19 +3,20 @@ import uuid
 import hashlib
 from pathlib import Path
 
+from freezegun import freeze_time
+
 from deovi.collector import Collector
-from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat
+from deovi.utils.tests import (
+    DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_uuid4, dummy_blake2b
+)
 
 
-def test_collector_run_full(monkeypatch, media_sample):
+def test_collector_run_basic(monkeypatch, media_sample):
     """
     Scanning from basepath should return recursive data for directories with media
     files.
     """
     monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
-
-    def dummy_uuid4():
-        return "dummy_uuid4"
 
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
 
@@ -64,8 +65,8 @@ def test_collector_run_full(monkeypatch, media_sample):
 
     stats = collector.run()
 
-    # Alter registry to only retain the file names in children, so the expected data to
-    # assert is lighter
+    # Alter registry to only retain the file names from children instead of their whole
+    # payload, so the expected data to assert is lighter
     for k, v in collector.registry.items():
         if "children_files" in v:
             collector.registry[k]["children_files"] = [
@@ -85,6 +86,7 @@ def test_collector_run_full(monkeypatch, media_sample):
     }
 
 
+@freeze_time("2012-10-15 10:00:00")
 def test_collector_run_manifest(monkeypatch, media_sample):
     """
     Collector should correctly find directory manifest files, directory covers and
@@ -93,16 +95,6 @@ def test_collector_run_manifest(monkeypatch, media_sample):
     We mock the hash modules to be able to retrieve created cover directory and cover
     files.
     """
-    def dummy_uuid4():
-        return "dummy_uuid4"
-
-    class dummy_blake2b():
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def hexdigest(self, *args, **kwargs):
-            return "dummy_blake2b"
-
     monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
     monkeypatch.setattr(hashlib, "blake2b", dummy_blake2b)
@@ -110,7 +102,8 @@ def test_collector_run_manifest(monkeypatch, media_sample):
     collector = Collector(media_sample)
 
     dump_destination = media_sample / "dump.json"
-    directory_storage = media_sample / "dump_dummy_blake2b"
+    # Storage dir is created from mocked blake2b so we got the dump file along datetime
+    directory_storage = media_sample / "dump_dump.json_2012-10-15T10:00:00"
     collector.run(dump_destination)
     dumped_registry = json.loads(dump_destination.read_text())
 
@@ -144,3 +137,22 @@ def test_collector_run_manifest(monkeypatch, media_sample):
         for path, data in dumped_registry.items()
         if path not in (".", "moo", "ping/pong", "ping/pong/pang")
     ]) is False
+
+
+def test_collector_run_checksum(monkeypatch, media_sample):
+    """
+    When checksum is enabled, the collector should generate a directory checksum and
+    a field file checksum also if there is some
+    """
+    collector = Collector(media_sample)
+
+    dump_destination = media_sample / "dump.json"
+    collector.run(dump_destination, checksum=True)
+    dumped_registry = json.loads(dump_destination.read_text())
+
+    # All entries should have a checksum
+    for dirpath, dirdata in dumped_registry.items():
+        assert ("checksum" in dirdata) is True
+        # If directory has a cover file, its checksum should be there also
+        if dirdata.get("cover"):
+            assert dirdata.get("cover_checksum") is not None
