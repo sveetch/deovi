@@ -4,7 +4,7 @@
 History
 =======
 
-Version 0.5.1 - Unreleased
+Version 0.5.1 - 2023/03/07
 --------------------------
 
 Added checksum feature to collector. Directory checksum is computed from the directory
