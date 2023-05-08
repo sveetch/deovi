@@ -4,6 +4,15 @@
 History
 =======
 
+Version 0.5.2 - Unreleased
+--------------------------
+
+- [ ] [collect] Dumped cover filepath is incorrect #4;
+- [ ] [collect] Directory checksum should not use computed cover filename with UUID #5;
+- [ ] [rename] Documentation does not describe the "--commit" option #3;
+- [ ] [rename] "rename" command description is wrong #2;
+
+
 Version 0.5.1 - 2023/03/07
 --------------------------
 

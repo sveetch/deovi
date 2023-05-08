@@ -1,3 +1,6 @@
+import datetime
+
+
 DUMMY_ISO_DATETIME = "1977-06-02T07:35:15"
 
 
@@ -38,4 +41,74 @@ class dummy_blake2b():
             self.content += content
 
     def hexdigest(self, *args, **kwargs):
-        return self.content.decode("utf-8")
+        """
+        Arguments and keyword arguments are the same than original method.
+
+        Returns:
+            string: Given content, eventually decoded to string if it was a bytes.
+        """
+        # Convert to byte since hashlib do not accept string/unicode
+        if isinstance(self.content, bytes):
+            print("🐛 dummy_blake2b:", self.content, type(self.content))
+            return self.content.decode("utf-8")
+
+        return self.content
+
+
+def dummy_checksum_file(cls, filepath):
+    """
+    A function to mockup ``checksum_file()``
+
+    Instead of generating a hash from a file it just return the given file path.
+
+    This may be required in tests which involves checksum_file with real file that
+    will result to UnicodeDecodeError because of trying to decode binary as utf-8.
+
+    Arguments:
+        filepath (pathlib.Path): File path to open and checksum.
+
+    Returns:
+        string: The given file path.
+    """
+    print("🔖 dummy_checksum_file:", filepath, type(filepath))
+    return str(filepath)
+
+
+def dummy_checksumoperator_filepath(cls, filepath):
+    """
+    Support both ChecksumOperator.file and ChecksumOperator.filepath for monkey
+    patching.
+
+    Arguments and keyword arguments are the same than original methods.
+
+    since the two
+    receive a file Path object and will return path.
+
+    Returns:
+        string: Path from given file Path object.
+    """
+    content = "{}_{}".format(
+        filepath.name,
+        datetime.datetime.now().isoformat(),
+    )
+
+    print("✨ dummy_checksumoperator_filepath:", content, type(content))
+
+    return content
+
+
+def dummy_checksumoperator_directory_payload(cls, payload, files_fields=[],
+                                             storage=None):
+    """
+    Support ``ChecksumOperator.directory_payload`` for monkey patching.
+
+    Arguments and keyword arguments are the same than original method.
+
+    Returns:
+        string: JSON payload as done from ``ChecksumOperator.payload_files()``.
+    """
+    return cls.payload_files(
+        payload,
+        files_fields=files_fields,
+        storage=storage
+    )

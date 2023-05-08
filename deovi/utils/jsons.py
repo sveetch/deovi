@@ -8,6 +8,8 @@ class ExtendedJsonEncoder(json.JSONEncoder):
     Additional opiniated support for more basic object types.
     """
     def default(self, obj):
+        if isinstance(obj, bytes):
+            return obj.decode("utf-8")
         # Support for pathlib.Path to a string
         if isinstance(obj, Path):
             return str(obj)

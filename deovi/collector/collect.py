@@ -1,20 +1,17 @@
 import datetime
-import hashlib
 import json
-import shutil
-import uuid
 from pathlib import Path
 
 import yaml
 
 from ..renamer.printer import PrinterInterface
 from ..utils.jsons import ExtendedJsonEncoder
-from ..utils.checksum import directory_payload_checksum
+from ..utils.checksum import ChecksumOperator
 from ..exceptions import CollectorError
-
+from .storage import AssetStorage
 
 # Non exhaustive list of Video containers with their file extension and name
-# TODO: Should also describe some music only containers
+# NOTE: May also describe some music only containers
 MEDIAS_CONTAINERS = {
     "3gp": "3GPP",
     "asf": "Advanced Systems Format",
@@ -87,9 +84,6 @@ class Collector(PrinterInterface):
         registry (dict): The registry where is collected all informations from scanning.
         stats (dict): Global statistics for all collected directories, files and total
             size.
-        file_storage_directory (string): A directory path where to store collected
-            files. It will be filled from ``run()`` method using the dump filename as
-            its base name.
         file_storage_queue (list): A list where each item is a tuple with source and
             destination to use for copying files.
 
@@ -119,6 +113,7 @@ class Collector(PrinterInterface):
                  cover_extensions=COVER_EXTENSIONS, allow_media_cover=True):
         super().__init__()
 
+        self.checksum_op = ChecksumOperator()
         self.basepath = basepath
         self.extensions = extensions
         self.allow_empty_dir = allow_empty_dir
@@ -126,7 +121,6 @@ class Collector(PrinterInterface):
         self.cover_name = cover_name
         self.cover_extensions = cover_extensions
         self.allow_media_cover = allow_media_cover
-        self.file_storage_directory = None
         self.file_storage_queue = []
 
         # Build elligible file names for cover from cover base file name and enabled
@@ -146,7 +140,7 @@ class Collector(PrinterInterface):
         ``scan_directory`` for different basepath since registry and global states are
         cumulative.
         """
-        self.file_storage_directory = None
+        self.storage = AssetStorage(allowed_cover_filenames=self.cover_files)
         self.file_storage_queue = []
 
         self.registry = {}
@@ -181,10 +175,10 @@ class Collector(PrinterInterface):
         used to copy the file source to its destination.
 
         Copying source file to destination is done through a queue to be performed
-        after the end of collection, storage and dump.
+        after the end of collection.
 
         At this stage, we don't validate if a file item exist or not, since it has
-        already by done during collection.
+        already be done during collection.
 
         Returns:
             dict: Given data possibly patched on file fields. Patch fields are
@@ -244,39 +238,6 @@ class Collector(PrinterInterface):
         self.stats["size"] += data["size"]
 
         return data
-
-    def get_directory_cover(self, path):
-        """
-        Search for a directory cover image in given path.
-
-        The filename must match an expected cover filename and must exists.
-
-        Arguments:
-            path (pathlib.Path): A Path object for the directory where to find
-                cover image file.
-
-        Returns:
-            tuple: A tuple of two items ``(source, destination)`` where source is the
-                source cover file (Path object) and destination a filename (Path object)
-                with a uuid4 instead of source file name but keeping source extension.
-        """
-        for filename in self.cover_files:
-            filepath = path / filename
-
-            if filepath.exists():
-                base_storage = (
-                    ""
-                    if not self.file_storage_directory
-                    else self.file_storage_directory
-                )
-                return (
-                    filepath.resolve(),
-                    base_storage / Path(
-                        "".join([str(uuid.uuid4()), filepath.suffix])
-                    ),
-                )
-
-        return None
 
     def get_directory_manifest(self, path):
         """
@@ -342,8 +303,6 @@ class Collector(PrinterInterface):
         """
         Scan a directory to get its media files.
 
-        TODO: Implement directory checksum
-
         Does not return anything, the directories informations (and possible media files
         informations) are stored in ``Collector.registry``.
 
@@ -397,73 +356,20 @@ class Collector(PrinterInterface):
 
             # Discover cover if any
             if self.allow_media_cover:
-                data["cover"] = self.get_directory_cover(path)
+                data["cover"] = self.storage.get_directory_cover(path)
 
             # Perform content checksum if enabled
             if checksum:
-                data["checksum"] = directory_payload_checksum(
+                data["checksum"] = self.checksum_op.directory_payload(
                     data,
                     files_fields=["cover"],
-                    storage=self.file_storage_directory,
+                    storage=self.storage.storage_path,
                 )
 
             # Store collected data
             self.store(data)
 
         return data
-
-    def get_directory_storage(self, filepath):
-        """
-        Compute storage directory name from given filename and current datetime.
-
-        Keyword Arguments:
-            filepath (pathlib.Path): A file path, commonly without any directory path,
-                if there is any directory path it is ignored, only the filename is used
-                to compute return filename.
-
-        Returns:
-            pathlib.Path: A filename composed from the filepath filename (without dirs
-            or extension) and a computed unique hash.
-        """
-        if not filepath:
-            return None
-
-        file_hash = hashlib.blake2b(
-            "{}_{}".format(
-                filepath.name,
-                datetime.datetime.now().isoformat(),
-            ).encode("utf-8"),
-            digest_size=10
-        ).hexdigest()
-
-        return filepath.parent / Path("{}_{}".format(filepath.stem, file_hash))
-
-    def store_files(self, files):
-        """
-        Store files from given list to their destination.
-
-        Arguments:
-            files (list): List of tuple ``(source, destination)`` where both items are
-                Path objects as returned from ``Collector.get_directory_cover()``.
-
-        Returns:
-            list: List of stored file in their final destination.
-        """
-        stored = []
-
-        if len(files) > 0:
-            if not self.file_storage_directory.exists():
-                self.file_storage_directory.mkdir(parents=True, exist_ok=True)
-
-            for source, destination in files:
-                if not source.exists():
-                    msg = "File to store does not exists from your filesystem: {}"
-                    self.log_warning(msg.format(source))
-
-                shutil.copy(source, destination)
-                stored.append(destination)
-
-        return stored
 
     def run(self, destination=None, checksum=False):
         """
@@ -472,13 +378,16 @@ class Collector(PrinterInterface):
 
         Keyword Arguments:
             destination (pathlib.Path): Destination path to write a JSON file with
-                every collected informations. Default is ``None`` so no JSON registry
+                every collected informations. Default is ``None`` so no JSON dump
                 file will be written to the filesystem.
+            checksum (boolean): Whether to enable directory checksums or not. Default
+                to False, no checksum are done.
 
         Returns:
             dict: Dictionnary of global states for collected directories and files.
         """
-        self.file_storage_directory = self.get_directory_storage(destination)
+        # Set storage basepath from destination location
+        self.storage.set_basepath(destination, checksum=checksum)
 
         self.scan_directory(self.basepath, checksum=checksum)
 
@@ -488,6 +397,6 @@ class Collector(PrinterInterface):
                 self.log_info("Registry saved to: {}".format(str(destination)))
 
             # Proceed to copy queued files into storage dir
-            self.store_files(self.file_storage_queue)
+            self.storage.store_assets(self.file_storage_queue)
 
         return self.stats

@@ -7,6 +7,9 @@ class PrinterInterface:
 
     This is a common interface for objects to use logging and optional message
     formatting.
+
+    TODO: This is common to other module, it need to be moved to utils or elsewhere
+    more "common".
     """
 
     def __init__(self, *args, **kwargs):

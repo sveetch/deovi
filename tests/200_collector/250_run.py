@@ -6,11 +6,15 @@ from pathlib import Path
 from freezegun import freeze_time
 
 from deovi.collector import Collector
+from deovi.utils.checksum import ChecksumOperator
 from deovi.utils.tests import (
-    DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_uuid4, dummy_blake2b
+    DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_uuid4, dummy_blake2b,
+    dummy_checksumoperator_filepath, dummy_checksumoperator_directory_payload,
 )
+from deovi.utils.jsons import ExtendedJsonEncoder
 
 
+@freeze_time("2012-10-15 10:00:00")
 def test_collector_run_basic(monkeypatch, media_sample):
     """
     Scanning from basepath should return recursive data for directories with media
@@ -19,6 +23,8 @@ def test_collector_run_basic(monkeypatch, media_sample):
     monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
 
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
+
+    expect_asset_storagedir = Path("attachment_20121015T100000")
 
     expected = {
         "ping/pong": {
@@ -32,7 +38,7 @@ def test_collector_run_basic(monkeypatch, media_sample):
                 "SampleVideo_720x480_1mb.mkv",
                 "SampleVideo_720x480_2mb.mkv",
             ],
-            "cover": Path("dummy_uuid4.gif"),
+            "cover": expect_asset_storagedir / Path("dummy_uuid4.gif"),
         },
         "foo/bar": {
             "path": media_sample / "foo/bar",
@@ -58,7 +64,7 @@ def test_collector_run_basic(monkeypatch, media_sample):
             "children_files": [
                 "SampleVideo_1280x720_1mb.mkv",
             ],
-            "cover": Path("dummy_uuid4.png"),
+            "cover": expect_asset_storagedir / Path("dummy_uuid4.png"),
         },
     }
     collector = Collector(media_sample, extensions=["mkv"])
@@ -97,38 +103,46 @@ def test_collector_run_manifest(monkeypatch, media_sample):
     """
     monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
-    monkeypatch.setattr(hashlib, "blake2b", dummy_blake2b)
+    # Use the right precise mockups for the right content behaviors
+    monkeypatch.setattr(ChecksumOperator, "directory_payload",
+                        dummy_checksumoperator_directory_payload)
+    monkeypatch.setattr(ChecksumOperator, "file", dummy_checksumoperator_filepath)
+    monkeypatch.setattr(ChecksumOperator, "filepath", dummy_checksumoperator_filepath)
 
     collector = Collector(media_sample)
 
+    # Storage dir is created from mocked blake2b so we already know the storage dirname
     dump_destination = media_sample / "dump.json"
-    # Storage dir is created from mocked blake2b so we got the dump file along datetime
-    directory_storage = media_sample / "dump_dump.json_2012-10-15T10:00:00"
-    collector.run(dump_destination)
+    assets_storage = Path("dump_dump.json_2012-10-15T10:00:00")
+    absolute_assets_storage = media_sample / assets_storage
+
+    # Run collect and load dump
+    collector.run(dump_destination, checksum=True)
     dumped_registry = json.loads(dump_destination.read_text())
 
+    # Expected item titles
     assert dumped_registry["."]["title"] == "Media sample root"
     assert dumped_registry["foo/bar"]["title"] == "Foo bar"
 
-    # Expected cover files
-    assert list(directory_storage.iterdir()) == [
-        directory_storage / "dummy_uuid4.png",
-        directory_storage / "dummy_uuid4.jpg",
-        directory_storage / "dummy_uuid4.gif",
+    # Expected item cover files
+    assert list(absolute_assets_storage.iterdir()) == [
+        absolute_assets_storage / "dummy_uuid4.png",
+        absolute_assets_storage / "dummy_uuid4.jpg",
+        absolute_assets_storage / "dummy_uuid4.gif",
     ]
 
-    # Expected directories with a cover
+    # Expected item directories with a cover
     assert dumped_registry["."]["cover"] == str(
-        directory_storage / "dummy_uuid4.png"
+        assets_storage / "dummy_uuid4.png"
     )
     assert dumped_registry["moo"]["cover"] == str(
-        directory_storage / "dummy_uuid4.png"
+        assets_storage / "dummy_uuid4.png"
     )
     assert dumped_registry["ping/pong"]["cover"] == str(
-        directory_storage / "dummy_uuid4.gif"
+        assets_storage / "dummy_uuid4.gif"
     )
     assert dumped_registry["ping/pong/pang"]["cover"] == str(
-        directory_storage / "dummy_uuid4.jpg"
+        assets_storage / "dummy_uuid4.jpg"
     )
 
     # Expected directories without a cover
@@ -139,7 +153,7 @@ def test_collector_run_manifest(monkeypatch, media_sample):
     ]) is False
 
 
-def test_collector_run_checksum(monkeypatch, media_sample):
+def test_collector_run_checksum(media_sample):
     """
     When checksum is enabled, the collector should generate a directory checksum and
     a field file checksum also if there is some

@@ -3,6 +3,7 @@ from .collect import (
     MANIFEST_FILENAME, MANIFEST_FORBIDDEN_VARS, COVER_NAME,
     COVER_EXTENSIONS, Collector,
 )
+from .storage import AssetStorage
 
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "COVER_NAME",
     "COVER_EXTENSIONS",
     "Collector",
+    "AssetStorage",
 ]
