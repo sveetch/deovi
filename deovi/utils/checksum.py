@@ -126,9 +126,11 @@ class ChecksumOperator:
                 payload[fieldname] = source
 
         # Serialize to JSON
-        serialized = json.dumps(payload, indent=4, sort_keys=True, cls=ExtendedJsonEncoder)
-        #print("⬇️⬇️⬇️⬇️⬇️⬇️")
-        #print(serialized)
-        #print()
+        serialized = json.dumps(
+            payload,
+            indent=4,
+            sort_keys=True,
+            cls=ExtendedJsonEncoder
+        )
 
         return hashlib.blake2b(serialized.encode("utf-8")).hexdigest()

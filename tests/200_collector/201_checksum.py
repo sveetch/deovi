@@ -1,18 +1,9 @@
-import hashlib
-import json
-import uuid
 from pathlib import Path
-
-import pytest
 
 from freezegun import freeze_time
 
 from deovi.utils.checksum import ChecksumOperator
-from deovi.utils.jsons import ExtendedJsonEncoder
-from deovi.utils.tests import (
-    dummy_uuid4, dummy_blake2b, dummy_checksumoperator_filepath,
-)
-
+from deovi.utils.tests import dummy_checksumoperator_filepath
 
 
 def test_checksum_file(media_sample):

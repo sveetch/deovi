@@ -1,6 +1,5 @@
 import json
 import uuid
-import hashlib
 from pathlib import Path
 
 from freezegun import freeze_time
@@ -8,10 +7,9 @@ from freezegun import freeze_time
 from deovi.collector import Collector
 from deovi.utils.checksum import ChecksumOperator
 from deovi.utils.tests import (
-    DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_uuid4, dummy_blake2b,
-    dummy_checksumoperator_filepath, dummy_checksumoperator_directory_payload,
+    DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_uuid4,
+    dummy_checksumoperator_filepath,
 )
-from deovi.utils.jsons import ExtendedJsonEncoder
 
 
 @freeze_time("2012-10-15 10:00:00")
@@ -170,7 +168,6 @@ def test_collector_run_checksum(monkeypatch, media_sample):
     for dirpath, dirdata in dumped_registry.items():
         assert ("checksum" in dirdata) is True
         # If directory has a cover file, its checksum should be there also
-        #print(dirdata)
         if dirdata.get("cover"):
             assert dirdata.get("cover_checksum") is not None
 

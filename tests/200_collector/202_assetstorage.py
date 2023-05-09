@@ -7,9 +7,7 @@ import pytest
 from freezegun import freeze_time
 
 from deovi.collector import AssetStorage
-from deovi.utils.tests import (
-    DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_uuid4, dummy_blake2b
-)
+from deovi.utils.tests import dummy_uuid4, dummy_blake2b
 
 
 @freeze_time("2012-10-15 10:00:00")
@@ -148,7 +146,10 @@ def test_storage_store_assets(monkeypatch, media_sample):
 
     basepath = media_sample / "dump.json"
 
-    storage = AssetStorage(basepath, allowed_cover_filenames=["cover.jpg", "cover.png"])
+    storage = AssetStorage(
+        basepath,
+        allowed_cover_filenames=["cover.jpg", "cover.png"],
+    )
 
     # Get full path to the assets directory
     assets_destination = media_sample / storage.storage_assets

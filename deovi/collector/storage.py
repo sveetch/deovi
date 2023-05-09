@@ -27,7 +27,7 @@ class AssetStorage(PrinterInterface):
             cover file.
     """
     # Name used when given basepath is an empty Path
-    DEFAULT_BASE_PATH =  "attachment"
+    DEFAULT_BASE_PATH = "attachment"
 
     def __init__(self, basepath=None, checksum=False, allowed_cover_filenames=None):
         super().__init__()
@@ -35,7 +35,6 @@ class AssetStorage(PrinterInterface):
         self.checksum_op = ChecksumOperator()
 
         self.set_basepath(basepath, checksum=checksum)
-
 
         self.allowed_cover_filenames = allowed_cover_filenames or []
 
