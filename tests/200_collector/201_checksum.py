@@ -79,7 +79,7 @@ def test_checksum_filepath_mocked(monkeypatch, media_sample):
     assert checksum == "SampleVideo_1280x720_1mb.mkv_2012-10-15T10:00:00"
 
 
-def test_checksum_payload_files_no_file(media_sample):
+def test_checksum_payload_files_no_file_item(media_sample):
     """
     When there is not file item defined, payload is left unchanged.
     """
@@ -97,19 +97,14 @@ def test_checksum_payload_files_no_file(media_sample):
         ],
     }
 
-    # Nothing has been changed since there is no defined file item
     result = checksum_op.payload_files(payload_source.copy())
-    assert json.dumps(
-        payload_source,
-        indent=4,
-        sort_keys=True,
-        cls=ExtendedJsonEncoder
-    ) == result
+
+    assert payload_source == result
 
 
 def test_checksum_payload_files_notfound(media_sample):
     """
-    When a file item contain a path which can not be found, payload will be patch
+    When a file item contain a path which can not be found, payload is patched
     to include ``***_checksum`` field but empty since file can not be found to perform
     checksum.
     """
@@ -127,21 +122,18 @@ def test_checksum_payload_files_notfound(media_sample):
         ],
     }
 
-    # "thumb_checksum" item have been added since thumb is defined as a file item but
-    # it is None and no checksum have been done since given path can not be found
     result = checksum_op.payload_files(
         payload_source.copy(),
         files_fields=["thumb", "nope"],
         storage=None
     )
+
+    # In expected payload file item should only keep the file destination and have a
+    # new item for file checksum (but empty since source file does not exist)
     expected = payload_source.copy()
     expected["thumb_checksum"] = None
-    assert json.dumps(
-        expected,
-        indent=4,
-        sort_keys=True,
-        cls=ExtendedJsonEncoder
-    ) == result
+
+    assert expected == result
 
 
 def test_checksum_payload_files_checksumed(media_sample):
@@ -165,16 +157,21 @@ def test_checksum_payload_files_checksumed(media_sample):
         files_fields=["cover"],
         storage=None
     )
-    patched = json.loads(result)
+
     # Take checksum item apart
-    cover_checksum = patched.pop("cover_checksum")
-    assert patched == {
+    cover_checksum = result.pop("cover_checksum")
+
+    assert result == {
         "title": "Foo bar",
         "cover": [
-            str(media_sample / "cover.png"),
-            "foo.jpg",
+            media_sample / "cover.png",
+            Path("foo.jpg"),
         ],
-        "thumb": ["source.jpg", "destination.jpg"],
+        # Thumb is not defined as a file item, so it is ignored and left unchanged
+        "thumb": [
+            Path("source.jpg"),
+            Path("destination.jpg")
+        ],
     }
     assert isinstance(cover_checksum, str) is True
     assert len(cover_checksum) == 128
@@ -198,34 +195,56 @@ def test_checksum_payload_files_storage(media_sample):
         files_fields=["cover"],
         storage=media_sample,
     )
-    patched = json.loads(result)
+    patched = result.copy()
     cover_checksum = patched.pop("cover_checksum")
 
-    # Path in payload is left unchanged
-    assert patched["cover"] == ["cover.png", "foo.jpg"]
+    # Destination is well removed from cover item
+    assert patched["cover"] == ["cover.png", Path("foo.jpg")]
 
     # However given storage is enough to find file and checksum it correctly
     assert isinstance(cover_checksum, str) is True
     assert len(cover_checksum) == 128
 
 
-def test_checksum_directory_payload(media_sample):
+def test_checksum_directory_payload_stable_checksum(media_sample):
     """
-    Given JSON payload should be checksumed to a string of exactly 128 characters.
+    Given JSON payload should be altered to remove file destination (since they may
+    contain variadic content like UUID) and finally used to make a checksum to a
+    string of exactly 128 characters.
     """
     checksum_op = ChecksumOperator()
 
-    result = checksum_op.directory_payload(
+    first = checksum_op.directory_payload(
         {
-            "title": "Foo bar",
             "cover": [
                 "cover.png",
-                Path("foo.jpg"),
+                Path("foo_1.jpg"),
             ],
+            "cover_checksum": "plip4plop",
         },
         files_fields=["cover"],
         storage=media_sample,
     )
 
-    assert isinstance(result, str) is True
-    assert len(result) == 128
+    assert isinstance(first, str) is True
+    assert len(first) == 128
+
+    # Use similar payload but with different cover destination
+    second = checksum_op.directory_payload(
+        {
+            "cover": [
+                "cover.png",
+                Path("foo_2.jpg"),
+            ],
+            "cover_checksum": "plip4plop",
+        },
+        files_fields=["cover"],
+        storage=media_sample,
+    )
+
+    assert isinstance(second, str) is True
+    assert len(second) == 128
+
+    # File destination is ignored from checksum operation, so even with different
+    # destination the resulting checksum is the same
+    assert first == second

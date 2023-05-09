@@ -192,6 +192,23 @@ class Collector(PrinterInterface):
 
         return data
 
+    def store(self, data):
+        """
+        Store given directory data.
+
+        Arguments:
+            data (dict): The data payload to store. It must have at least a ``path``
+                item which will be used as the item key in the store.
+
+        Returns:
+            string: Item key name used to store the data.
+        """
+        key = str(data["path"].relative_to(self.basepath))
+
+        self.registry[key] = self._process_file_fields(["cover"], data)
+
+        return key
+
     def scan_file(self, path):
         """
         Scan a media file to get its informations.
@@ -282,29 +299,9 @@ class Collector(PrinterInterface):
 
         return manifest
 
-    def store(self, data):
-        """
-        Store given directory data.
-
-        Arguments:
-            data (dict): The data payload to store. It must have at least a ``path``
-                item which will be used as the item key in the store.
-
-        Returns:
-            string: Item key name used to store the data.
-        """
-        key = str(data["path"].relative_to(self.basepath))
-
-        self.registry[key] = self._process_file_fields(["cover"], data)
-
-        return key
-
     def scan_directory(self, path, checksum=False):
         """
         Scan a directory to get its media files.
-
-        Does not return anything, the directories informations (and possible media files
-        informations) are stored in ``Collector.registry``.
 
         Arguments:
             path (pathlib.Path): Directory to scan for informations, for direct children
@@ -360,6 +357,13 @@ class Collector(PrinterInterface):
 
             # Perform content checksum if enabled
             if checksum:
+                # Add file checksums
+                self.checksum_op.payload_files(
+                    data,
+                    files_fields=["cover"],
+                    storage=self.storage.storage_path,
+                )
+                # Then build directory info checksum
                 data["checksum"] = self.checksum_op.directory_payload(
                     data,
                     files_fields=["cover"],

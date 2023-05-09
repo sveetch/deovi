@@ -54,8 +54,14 @@ class ChecksumOperator:
         """
         Patch directory payload to include file checksum.
 
+        TODO: Payload should be patched to remove the file destination, since it may
+              contains UUID4 and lead to directory checksum to always change, even
+              directory has no changes. => NO, no removing destination here since
+              collect expect it and also the checksum
+
         Arguments:
-            payload (dict): The directory information payload to patch.
+            payload (dict): The directory information payload to patch. Note than given
+                dictionnary is mutated by the patch.
 
         Keyword Arguments:
             files_fields (list): A list of item names assumed to be file items to
@@ -65,7 +71,7 @@ class ChecksumOperator:
                 payload so a filepath can be resolved using this base storage path.
 
         Returns:
-            string: Payload patched and serialized to JSON.
+            dict: Patched payload.
         """
         # Before serialize, files_fields have to checksumed and payload altered with
         # their checksum
@@ -86,13 +92,13 @@ class ChecksumOperator:
                 else:
                     payload[key] = None
 
-        return json.dumps(payload, indent=4, sort_keys=True, cls=ExtendedJsonEncoder)
+        return payload
 
-
-    def directory_payload(self, payload, files_fields=[], storage=None):
+    def directory_payload(self, payload_source, files_fields=[], storage=None):
         """
         Checksum directory informations including its files with blake2b.
 
+        NOTE:
         File item are checksumed apart so they would change payload checksum if they
         change, we keep the file item untouched so if the file name change, this also
         triggers a payload checksum difference.
@@ -110,11 +116,19 @@ class ChecksumOperator:
         Returns:
             string: The payload checksum as 40 characters.
         """
-        # Once payload is ready, serialize it to JSON to give as a content to hash
-        serialized = self.payload_files(
-            payload,
-            files_fields=files_fields,
-            storage=storage
-        )
+        # We do not want mutating of given payload
+        payload = payload_source.copy()
+
+        # Patch file item to only retain source path
+        for fieldname in files_fields:
+            if payload.get(fieldname):
+                source, destination = payload[fieldname]
+                payload[fieldname] = source
+
+        # Serialize to JSON
+        serialized = json.dumps(payload, indent=4, sort_keys=True, cls=ExtendedJsonEncoder)
+        #print("⬇️⬇️⬇️⬇️⬇️⬇️")
+        #print(serialized)
+        #print()
 
         return hashlib.blake2b(serialized.encode("utf-8")).hexdigest()

@@ -99,13 +99,11 @@ def test_collector_run_manifest(monkeypatch, media_sample):
     add them to directory payload.
 
     We mock the hash modules to be able to retrieve created cover directory and cover
-    files.
+    files since we enable checksum mechanism but don't want the variadic values.
     """
     monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
     # Use the right precise mockups for the right content behaviors
-    monkeypatch.setattr(ChecksumOperator, "directory_payload",
-                        dummy_checksumoperator_directory_payload)
     monkeypatch.setattr(ChecksumOperator, "file", dummy_checksumoperator_filepath)
     monkeypatch.setattr(ChecksumOperator, "filepath", dummy_checksumoperator_filepath)
 
@@ -153,14 +151,18 @@ def test_collector_run_manifest(monkeypatch, media_sample):
     ]) is False
 
 
-def test_collector_run_checksum(media_sample):
+def test_collector_run_checksum(monkeypatch, media_sample):
     """
     When checksum is enabled, the collector should generate a directory checksum and
-    a field file checksum also if there is some
+    a field file checksum. Also, the directories checksum should be identical for two
+    run on the same unchanged content.
     """
-    collector = Collector(media_sample)
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
 
     dump_destination = media_sample / "dump.json"
+
+    # First run
+    collector = Collector(media_sample)
     collector.run(dump_destination, checksum=True)
     dumped_registry = json.loads(dump_destination.read_text())
 
@@ -168,5 +170,29 @@ def test_collector_run_checksum(media_sample):
     for dirpath, dirdata in dumped_registry.items():
         assert ("checksum" in dirdata) is True
         # If directory has a cover file, its checksum should be there also
+        #print(dirdata)
         if dirdata.get("cover"):
             assert dirdata.get("cover_checksum") is not None
+
+    # Store some dir checksum for later compare
+    first_root_checksum = dumped_registry["."]["checksum"]
+    first_moo_checksum = dumped_registry["moo"]["checksum"]
+    first_ping_pong_checksum = dumped_registry["ping/pong"]["checksum"]
+    first_foo_bar_checksum = dumped_registry["foo/bar"]["checksum"]
+
+    # Run collect a second time
+    collector = Collector(media_sample)
+    collector.run(dump_destination, checksum=True)
+    dumped_registry = json.loads(dump_destination.read_text())
+
+    # Store some dir checksum for later compare
+    second_root_checksum = dumped_registry["."]["checksum"]
+    second_moo_checksum = dumped_registry["moo"]["checksum"]
+    second_ping_pong_checksum = dumped_registry["ping/pong"]["checksum"]
+    second_foo_bar_checksum = dumped_registry["foo/bar"]["checksum"]
+
+    # Checksum should be identical since nothing has changed in processed directories
+    assert first_root_checksum == second_root_checksum
+    assert second_moo_checksum == first_moo_checksum
+    assert second_ping_pong_checksum == first_ping_pong_checksum
+    assert second_foo_bar_checksum == first_foo_bar_checksum
