@@ -4,7 +4,7 @@
 History
 =======
 
-Version 0.5.2 - Unreleased
+Version 0.5.2 - 2023/05/09
 --------------------------
 
 * [collect] Fixed dumped cover item filepath to be relative to the dump file;
