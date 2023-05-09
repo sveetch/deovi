@@ -345,6 +345,12 @@ Or multiple ones: ::
 
     deovi rename foo.json bar.json /home/foo/plop/plip.json
 
+Note that default job behavior does not write anything on files and just output
+expected results. This is to avoid errors when writing your job configuration. To
+commit file writing you must add the argument ``--commit``: ::
+
+    deovi rename --commit foo.json
+
 Help
 ****
 

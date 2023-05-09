@@ -22,10 +22,7 @@ def rename_command(context, jobs, commit):
     Default behavior is to not change anything, just list task it would do and
     you need to enable commit with the '--commit' argument.
 
-    You can't mix job and init modes and so mix Job filepath and directory
-    paths.
-
-    Finally, if any job task fails all renamed file will be reversed to their
+    Finally, if any job task fails all renamed files will be reversed to their
     original filename.
     """
     logger = logging.getLogger("deovi")

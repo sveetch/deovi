@@ -7,28 +7,25 @@ History
 Version 0.5.2 - Unreleased
 --------------------------
 
-* Fixed dumped cover item filepath to be relative to the dump file;
-* Fixed directory checksum to be done with cover source path, so no UUID is involved
-  and the checksum is stable if directory has not changed;
-
-- [x] [collect] Dumped cover filepath is incorrect #4;
-- [x] [collect] Directory checksum should not use computed cover filename with UUID #5;
-- [ ] [rename] Documentation does not describe the "--commit" option #3;
-- [ ] [rename] "rename" command description is wrong #2;
+* [collect] Fixed dumped cover item filepath to be relative to the dump file;
+* [collect] Fixed directory checksum to be done with cover source path, so no UUID is
+  involved and the checksum is stable if directory has not changed;
+* [rename] Fixed documentation for rename command;
+* [rename] Fixed rename command help;
 
 
 Version 0.5.1 - 2023/03/07
 --------------------------
 
-Added checksum feature to collector. Directory checksum is computed from the directory
-payload as built from collector.
+[collect] Added checksum feature to collector. Directory checksum is computed from the
+directory payload as built from collector.
 
 
 Version 0.5.0 - 2023/03/03
 --------------------------
 
-* Improved collector so it can retrieve extra informations from a YAML manifest and
-  cover image for each directory;
+* [collect] Improved collector so it can retrieve extra informations from a YAML
+  manifest and cover image for each directory;
 * Improved ``setup.cfg`` to move extra requirements in specific sections so Tox is
   faster to install without unecessary requirements;
 
@@ -36,8 +33,8 @@ Version 0.5.0 - 2023/03/03
 Version 0.4.1 - 2022/01/22
 --------------------------
 
-Fixed tests on collector which failed because of file datetimes which can change from
-an installation to another. So we mocked up the method to get the formatted datetime.
+[collect] Fixed tests on collector which failed because of file datetimes which can
+change from an installation to another. So we mocked up the method to get the formatted datetime.
 
 
 Version 0.4.0 - 2022/01/16
