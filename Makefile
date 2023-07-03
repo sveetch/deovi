@@ -19,9 +19,10 @@ FORMATBOLD:=$(shell tput bold)
 FORMATRESET:=$(shell tput sgr0)
 
 help:
-	@echo "Please use \`make <target>' where <target> is one of"
+	@echo "Please use 'make <target>' where <target> is one of"
 	@echo
 	@echo "  install             -- to install this project with virtualenv and Pip"
+	@echo "  install-backend     -- to install backend requirements with Virtualenv and Pip (usable to update requirements)"
 	@echo "  freeze-dependencies -- to write a frozen.txt file with installed dependencies versions"
 	@echo
 	@echo "  clean               -- to clean EVERYTHING (Warning)"
@@ -79,11 +80,14 @@ venv:
 	$(PIP) install --upgrade setuptools
 .PHONY: venv
 
-install: venv
+install-backend:
 	@echo ""
 	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Installing everything for development <---$(FORMATRESET)\n"
 	@echo ""
-	$(PIP) install -e .[dev,quality,doc,release]
+	$(PIP) install -e .[scrapping,dev,quality,doc,release]
+.PHONY: install-backend
+
+install: venv install-backend
 .PHONY: install
 
 docs:
