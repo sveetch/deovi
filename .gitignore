@@ -18,6 +18,7 @@ htmlcov/
 nosetests.xml
 coverage.xml
 .tox
+/tmdb-api-key.txt
 
 # VS Code
 .vscode

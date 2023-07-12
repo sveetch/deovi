@@ -10,6 +10,8 @@ import deovi
 from deovi.logger import init_logger
 from deovi.renamer.tasks import TaskMaster
 
+from tests.utils import get_tmdbapi_key
+
 
 class FixturesSettingsTestMixin(object):
     """
@@ -55,6 +57,17 @@ class FixturesSettingsTestMixin(object):
             DATAS=str(self.datas_path),
             VERSION=deovi.__version__,
         )
+
+    def tmdbapi_key(self):
+        """
+        Get TMDb API key retrieved from file ``tmdb-api-key.txt`` at this project
+        root.
+
+        Returns:
+            string: Either the API key found from file if it exists else return
+            None.
+        """
+        return get_tmdbapi_key()
 
 
 @pytest.fixture(scope="function")

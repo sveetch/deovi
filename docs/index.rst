@@ -10,6 +10,8 @@ User’s Guide
    install.rst
    rename.rst
    collect.rst
+   scrapping.rst
+
 
 Developer’s Guide
 *****************

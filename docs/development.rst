@@ -51,6 +51,13 @@ to start them on your current development install: ::
 
     make test
 
+Some tests involve usage of TMDb API and so require an API key to work but this is not
+mandatory to run the test suite, if no API key is available the API tests will just be
+skipped.
+
+Finally if you aim to run the API tests, you just need to get a valid API key and put
+it into a file named ``tmdb-api-key.txt`` at root of your local repository, it will be
+automatically discovered.
 
 Tox
 ---

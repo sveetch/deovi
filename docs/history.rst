@@ -4,6 +4,14 @@
 History
 =======
 
+Version 0.6.0 - 2023/07/12
+--------------------------
+
+[scrap] Added a new command ``scrap`` which uses TMDb API to retrieve TV serie details
+and write them to a manifest. The manifest is compatible with collector from
+``collect`` command.
+
+
 Version 0.5.2 - 2023/05/09
 --------------------------
 
@@ -34,7 +42,8 @@ Version 0.4.1 - 2022/01/22
 --------------------------
 
 [collect] Fixed tests on collector which failed because of file datetimes which can
-change from an installation to another. So we mocked up the method to get the formatted datetime.
+change from an installation to another. So we mocked up the method to get the formatted
+datetime.
 
 
 Version 0.4.0 - 2022/01/16

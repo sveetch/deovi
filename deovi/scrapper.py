@@ -1,8 +1,8 @@
-import json
-import time
 import requests
 import shutil
 from pathlib import Path
+
+from deepdiff import DeepDiff
 
 from tmdbv3api import Configuration, TMDb, TV
 
@@ -10,24 +10,47 @@ import yaml
 
 
 class TmdbScrapper:
+    """
+    Class to scrap informations from TMDb API.
+
+    Arguments:
+        api_key (string): Private key needed to use API.
+
+    Keyword Arguments:
+        language (string): Used language for payload content.
+        poster_size (string): Size name as supported from TMDb API.
+        poster_filename (string): Filename to use to write download poster image,
+            without any extension.
+    """
     def __init__(self, api_key, language="fr", poster_size="w780",
                  poster_filename="cover"):
-        # Private account key needed to use API
-        self.api_key = api_key
-        # Used language for payload content
-        self.language = language
-        # Size name as supported from TMDb API
         self.poster_size = poster_size
-        # Filename to use to write download poster image, without any extension
         self.poster_filename = poster_filename
 
-        # Set TMDb client
-        tmdb = TMDb()
-        tmdb.api_key = self.api_key
-        tmdb.language = self.language
-        tmdb.debug = True
+        # Set TMDb client options
+        self.client = self.get_client(api_key, language)
 
         # Get some config attributes from API
+        self.get_api_configurations()
+
+    def get_client(self, api_key, language):
+        """
+        Get client and set some options
+        """
+        # Set TMDb client
+        tmdb = TMDb()
+        tmdb.api_key = api_key
+        tmdb.language = language
+        tmdb.debug = True
+
+        return tmdb
+
+    def get_api_configurations(self):
+        """
+        Get configuration options returned by API
+
+        This can only be done once the client has been initialized.
+        """
         _api_configuration = Configuration()
         _api_infos = _api_configuration.info()
 
@@ -50,11 +73,9 @@ class TmdbScrapper:
             path
         ])
 
-    def serialize_tv_payload(self, provider, directory, tv_id):
+    def serialize_tv_payload(self, provider, tv_id):
         """
-        Get informations payload and medias for given TV ID.
-
-        This downloads media files and build a YAML manifest to the given directory.
+        Get informations payload for given TV ID.
         """
         # Fetch payload from API
         payload = provider.details(tv_id)
@@ -70,7 +91,6 @@ class TmdbScrapper:
         # print("- poster_path:", payload.poster_path)
         # print("- genres:", [item["name"] for item in payload.genres])
         # print("- poster_url:", self.get_poster_url(payload.poster_path))
-        # print("* destination directory:", directory)
 
         return {
             "tmdb_id": tv_id,
@@ -108,7 +128,30 @@ class TmdbScrapper:
 
         return destination
 
-    def fetch_tv(self, directory, tv_id):
+    def write_manifest(self, sourcepath, data, write_diff=False):
+        """
+        Write given data to manifest and possibly create a log file about differences
+        with previous manifest file if any.
+        """
+        diff_lines = []
+
+        # Write differences if any
+        if sourcepath.exists():
+            original = yaml.load(sourcepath.read_text(), Loader=yaml.FullLoader)
+            diffs = DeepDiff(original, data)
+            diff_lines = diffs.pretty().splitlines()
+            if write_diff and diff_lines:
+                diffpath = sourcepath.with_suffix(".diff.txt")
+                diffpath.write_text("\n".join(diff_lines))
+
+        # Write/overwrite manifest
+        sourcepath.write_text(
+            yaml.dump(data, Dumper=yaml.Dumper)
+        )
+
+        return diff_lines
+
+    def fetch_tv(self, directory, tv_id, write_diff=False):
         """
         Get informations payload and medias for given TV ID.
 
@@ -117,25 +160,23 @@ class TmdbScrapper:
         provider = self.get_provider()
 
         # Fetch and serialize TV show informations
-        data = self.serialize_tv_payload(provider, directory, tv_id)
+        data = self.serialize_tv_payload(provider, tv_id)
 
         # Download possible poster image file in destination directory
         fetched_poster = None
         if data.get("poster_path", None):
             poster_path = data.pop("poster_path")
             fetched_poster = self.fetch_poster(poster_path, directory)
-            # print("* Fetched poster:", fetched_poster)
 
         # Build YAML manifest file to destination directory
         manifest = directory / "manifest.yaml"
-        manifest.write_text(
-            yaml.dump(data, Dumper=yaml.Dumper)
-        )
+        diff = self.write_manifest(manifest, data, write_diff=write_diff)
 
         return (
             data,
             manifest,
             fetched_poster,
+            diff,
         )
 
 
@@ -143,11 +184,12 @@ if __name__ == "__main__":
     API_KEY = "c8a1f464dca620cde9037eda3f105425"
     connector = TmdbScrapper(API_KEY, language="fr")
 
-    #connector.serialize_tv_payload(
+    print()
     connector.fetch_tv(
         Path("/home/emencia/Projects/Apps/deovi/dist/StarTrek_Strange-New-Worlds"),
         "103516"
     )
+    print()
     connector.fetch_tv(
         Path("/home/emencia/Projects/Apps/deovi/dist/Au dela du reel"),
         "21567"

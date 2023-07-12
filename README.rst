@@ -3,6 +3,9 @@
 .. _Python Slugify: https://github.com/un33k/python-slugify
 .. _Unidecode: https://github.com/avian2/unidecode/tree/master/unidecode
 .. _PyYAML: https://github.com/yaml/pyyaml/
+.. _deepdiff: https://github.com/seperman/deepdiff
+.. _tmdbv3api: https://github.com/AnthonyBloomer/tmdbv3api
+.. _requests: https://requests.readthedocs.io/en/latest/
 
 =====
 Deovi
@@ -20,8 +23,14 @@ Links
 Dependancies
 ************
 
-* `Python`_>=3.8;
-* `Click`_>=8.0;
-* `Python Slugify`_>= 5.0.0;
+* `Python`_ >=3.8;
+* `Click`_ >=8.0;
+* `Python Slugify`_ >=5.0.0;
 * `Unidecode`_;
 * `PyYAML`_;
+
+And optional dependancies when ``scrapping`` feature is enabled:
+
+* `deepdiff`_;
+* `tmdbv3api`_ ==1.7.7;
+* `requests`_;
