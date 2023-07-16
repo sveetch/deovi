@@ -87,6 +87,7 @@ def test_collector_run_basic(monkeypatch, media_sample):
         "directories": 3,
         "files": 4,
         "size": 5277604,
+        "asset_storage": None,
     }
 
 

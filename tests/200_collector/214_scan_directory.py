@@ -20,11 +20,11 @@ def test_collector_scan_directory_outofbasepath(media_sample):
 @pytest.mark.parametrize("allowed, expected", [
     (
         False,
-        {"directories": 3, "files": 3, "size": 4233015},
+        {"directories": 3, "files": 3, "size": 4233015, "asset_storage": None},
     ),
     (
         True,
-        {"directories": 8, "files": 3, "size": 4253495},
+        {"directories": 8, "files": 3, "size": 4253495, "asset_storage": None},
     ),
 ])
 def test_collector_scan_directory_allowempty(media_sample, allowed, expected):
@@ -82,4 +82,5 @@ def test_collector_scan_directory_single(monkeypatch, media_sample):
         "directories": 1,
         "files": 1,
         "size": 1059817,
+        "asset_storage": None,
     }

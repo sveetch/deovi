@@ -147,6 +147,7 @@ class Collector(PrinterInterface):
             "directories": 0,
             "files": 0,
             "size": 0,
+            "asset_storage": None,
         }
 
     def timestamp_to_isoformat(self, timestamp):
@@ -400,6 +401,8 @@ class Collector(PrinterInterface):
                 self.log_info("Registry saved to: {}".format(str(destination)))
 
             # Proceed to copy queued files into storage dir
-            self.storage.store_assets(self.file_storage_queue)
+            container, stored = self.storage.store_assets(self.file_storage_queue)
+            if container:
+                self.stats["asset_storage"] = container
 
         return self.stats

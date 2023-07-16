@@ -178,19 +178,3 @@ class TmdbScrapper:
             fetched_poster,
             diff,
         )
-
-
-if __name__ == "__main__":
-    API_KEY = "c8a1f464dca620cde9037eda3f105425"
-    connector = TmdbScrapper(API_KEY, language="fr")
-
-    print()
-    connector.fetch_tv(
-        Path("/home/emencia/Projects/Apps/deovi/dist/StarTrek_Strange-New-Worlds"),
-        "103516"
-    )
-    print()
-    connector.fetch_tv(
-        Path("/home/emencia/Projects/Apps/deovi/dist/Au dela du reel"),
-        "21567"
-    )

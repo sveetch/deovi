@@ -4,6 +4,13 @@
 History
 =======
 
+Version 0.6.1 - Unreleased
+--------------------------
+
+* [collect] ``AssetStorage.store_assets()`` now returns also the asset storage
+  directory along stored asset filepath list in a tuple;
+
+
 Version 0.6.0 - 2023/07/12
 --------------------------
 

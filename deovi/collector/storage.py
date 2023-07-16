@@ -165,8 +165,10 @@ class AssetStorage(PrinterInterface):
                 Path objects as returned from ``Collector.get_directory_asset()``.
 
         Returns:
-            list: List of stored file in their final destination.
+            tuple: The asset storage path and the list of stored files in their final
+            destination.
         """
+        container = None
         stored = []
 
         if len(assets) > 0:
@@ -185,4 +187,7 @@ class AssetStorage(PrinterInterface):
                 shutil.copy(source, self.storage_path / destination)
                 stored.append(self.storage_path / destination)
 
-        return stored
+        return (
+            container,
+            stored,
+        )

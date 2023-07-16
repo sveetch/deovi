@@ -164,10 +164,13 @@ def test_storage_store_assets(monkeypatch, media_sample):
     ]
 
     # Stored file are named with an uuid (but here it's a fake one from mockup)
-    assert storage.store_assets(assets) == [
-        assets_destination / "dummy_uuid4.png",
-        assets_destination / "dummy_uuid4.jpg",
-    ]
+    assert storage.store_assets(assets) == (
+        assets_destination,
+        [
+            assets_destination / "dummy_uuid4.png",
+            assets_destination / "dummy_uuid4.jpg",
+        ],
+    )
 
     # Ensure stored files have correctly written in the right dir
     assert list(assets_destination.iterdir()) == [
