@@ -21,9 +21,11 @@ class TmdbScrapper:
         poster_size (string): Size name as supported from TMDb API.
         poster_filename (string): Filename to use to write download poster image,
             without any extension.
+        dry (boolean): If enabled nothing will be written or removed.
     """
     def __init__(self, api_key, language="fr", poster_size="w780",
-                 poster_filename="cover"):
+                 poster_filename="cover", dry=False):
+        self.dry = dry
         self.poster_size = poster_size
         self.poster_filename = poster_filename
 
@@ -119,12 +121,13 @@ class TmdbScrapper:
 
         # Go download the file
         with requests.get(url, stream=True) as r:
-            # Create destination directory if missing
-            if not basepath.exists():
-                basepath.mkdir(parents=True, exist_ok=True)
-            # Write file from stream
-            with open(destination, "wb") as f:
-                shutil.copyfileobj(r.raw, f)
+            if not self.dry:
+                # Create destination directory if missing
+                if not basepath.exists():
+                    basepath.mkdir(parents=True, exist_ok=True)
+                # Write file from stream
+                with open(destination, "wb") as f:
+                    shutil.copyfileobj(r.raw, f)
 
         return destination
 
@@ -140,14 +143,15 @@ class TmdbScrapper:
             original = yaml.load(sourcepath.read_text(), Loader=yaml.FullLoader)
             diffs = DeepDiff(original, data)
             diff_lines = diffs.pretty().splitlines()
-            if write_diff and diff_lines:
+            if not self.dry and write_diff and diff_lines:
                 diffpath = sourcepath.with_suffix(".diff.txt")
                 diffpath.write_text("\n".join(diff_lines))
 
         # Write/overwrite manifest
-        sourcepath.write_text(
-            yaml.dump(data, Dumper=yaml.Dumper)
-        )
+        if not self.dry:
+            sourcepath.write_text(
+                yaml.dump(data, Dumper=yaml.Dumper)
+            )
 
         return diff_lines
 

@@ -78,8 +78,16 @@ else:
             "manifest difference file may be overwritten from a scrap job to another."
         ),
     )
+    @click.option(
+        "--dry",
+        is_flag=True,
+        help=(
+            "If enabled, everything is runned but nothing will be written or removed."
+        ),
+    )
     @click.pass_context
-    def scrap_command(context, tvid, destination, key, filekey, language, write_diff):
+    def scrap_command(context, tvid, destination, key, filekey, language, write_diff,
+                      dry):
         """
         Scrap TV show informations and poster image from TMDb API.
 
@@ -112,7 +120,7 @@ else:
             "from file" if filekey else "from string",
         ))
 
-        connector = TmdbScrapper(key, language=language)
+        connector = TmdbScrapper(key, language=language, dry=dry)
 
         data, manifest, poster, diffs = connector.fetch_tv(
             destination,
