@@ -4,7 +4,7 @@
 History
 =======
 
-Version 0.6.1 - Unreleased
+Version 0.6.1 - 2023/07/16
 --------------------------
 
 * [collect] ``AssetStorage.store_assets()`` now returns also the asset storage
