@@ -122,10 +122,10 @@ def test_collector_run_manifest(monkeypatch, media_sample):
     assert dumped_registry["foo/bar"]["title"] == "Foo bar"
 
     # Expected item cover files
-    assert list(absolute_assets_storage.iterdir()) == [
-        absolute_assets_storage / "dummy_uuid4.png",
-        absolute_assets_storage / "dummy_uuid4.jpg",
+    assert sorted(list(absolute_assets_storage.iterdir())) == [
         absolute_assets_storage / "dummy_uuid4.gif",
+        absolute_assets_storage / "dummy_uuid4.jpg",
+        absolute_assets_storage / "dummy_uuid4.png",
     ]
 
     # Expected item directories with a cover
