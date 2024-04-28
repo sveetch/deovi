@@ -115,7 +115,8 @@ def test_collector_run_manifest(monkeypatch, media_sample):
 
     # Run collect and load dump
     collector.run(dump_destination, checksum=True)
-    dumped_registry = json.loads(dump_destination.read_text())
+    payload = json.loads(dump_destination.read_text())
+    dumped_registry = payload["registry"]
 
     # Expected item titles
     assert dumped_registry["."]["title"] == "Media sample root"
@@ -163,7 +164,8 @@ def test_collector_run_checksum(monkeypatch, media_sample):
     # First run
     collector = Collector(media_sample)
     collector.run(dump_destination, checksum=True)
-    dumped_registry = json.loads(dump_destination.read_text())
+    payload = json.loads(dump_destination.read_text())
+    dumped_registry = payload["registry"]
 
     # All entries should have a checksum
     for dirpath, dirdata in dumped_registry.items():
@@ -181,7 +183,8 @@ def test_collector_run_checksum(monkeypatch, media_sample):
     # Run collect a second time
     collector = Collector(media_sample)
     collector.run(dump_destination, checksum=True)
-    dumped_registry = json.loads(dump_destination.read_text())
+    payload = json.loads(dump_destination.read_text())
+    dumped_registry = payload["registry"]
 
     # Store some dir checksum for later compare
     second_root_checksum = dumped_registry["."]["checksum"]

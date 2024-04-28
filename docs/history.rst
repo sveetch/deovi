@@ -4,6 +4,16 @@
 History
 =======
 
+Version 0.7.0 - Unreleased
+--------------------------
+
+* [collect] Breaking changes: The collection dump structure has change to include
+  device statistics in item ``device`` and all collected directory items (previously at
+  root) have been moved into item ``registry``;
+* [collect] Fixed inconsistant collector test because of arbitrary order from
+  ``Path.iterdir()``;
+
+
 Version 0.6.1 - 2023/07/16
 --------------------------
 

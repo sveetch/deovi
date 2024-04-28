@@ -95,7 +95,8 @@ def test_job_success(monkeypatch, caplog, media_sample):
     with destination.open() as fp:
         content = json.load(fp)
 
-    assert content == {
+    assert "device" in content
+    assert content["registry"] == {
         ".": {
             "path": str(source),
             "name": "bar",

@@ -1,5 +1,6 @@
 import datetime
 import json
+from shutil import disk_usage
 
 import yaml
 
@@ -375,6 +376,31 @@ class Collector(PrinterInterface):
 
         return data
 
+    def scan_basepath_device(self, path):
+        """
+        Collect basepath device information.
+
+        .. Note:
+            This only compute information for the device which basepath belong to, this
+            does not compute the basepath information itself.
+
+        Arguments:
+            path (pathlib.Path): Path to use to get the device to scan.
+
+        Returns:
+            dict: A dictionnary of device informations (total size, used size,
+            free space size and occupancy percentage).
+        """
+        path = path.resolve()
+        stats = disk_usage(path)
+
+        return {
+            "total": stats.total,
+            "used": stats.used,
+            "free": stats.free,
+            "percentage": (stats.used / stats.total) * 100,
+        }
+
     def run(self, destination=None, checksum=False):
         """
         Recursively scan everything from basepath to produce a registry of collected
@@ -393,11 +419,20 @@ class Collector(PrinterInterface):
         # Set storage basepath from destination location
         self.storage.set_basepath(destination, checksum=checksum)
 
+        device_stats = self.scan_basepath_device(self.basepath)
         self.scan_directory(self.basepath, checksum=checksum)
 
         if self.registry and destination:
             with destination.open("w") as fp:
-                json.dump(self.registry, fp, indent=4, cls=ExtendedJsonEncoder)
+                json.dump(
+                    {
+                        "device": device_stats,
+                        "registry": self.registry,
+                    },
+                    fp,
+                    indent=4,
+                    cls=ExtendedJsonEncoder
+                )
                 self.log_info("Registry saved to: {}".format(str(destination)))
 
             # Proceed to copy queued files into storage dir
