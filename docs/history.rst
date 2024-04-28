@@ -4,7 +4,7 @@
 History
 =======
 
-Version 0.7.0 - Unreleased
+Version 0.7.0 - 2024/04/28
 --------------------------
 
 * [collect] Breaking changes: The collection dump structure has change to include
