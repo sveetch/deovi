@@ -17,8 +17,7 @@ SAMPLE_TV_PAYLOAD = {
     "number_of_seasons": 2,
     "number_of_episodes": 49,
     "genres": [
-        "Drama",
-        "Sci-Fi & Fantasy"
+        "Sci-Fi & Fantasy",
     ]
 }
 

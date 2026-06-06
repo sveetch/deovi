@@ -4,8 +4,15 @@
 History
 =======
 
+Development
+***********
+
+* Fixed tests failing because of minor change on information of sample tv serie
+  *The Outer Limits* from TMDb;
+
+
 Version 0.7.0 - 2024/04/28
---------------------------
+**************************
 
 * [collect] Breaking changes: The collection dump structure has change to include
   device statistics in item ``device`` and all collected directory items (previously at
@@ -15,7 +22,7 @@ Version 0.7.0 - 2024/04/28
 
 
 Version 0.6.1 - 2023/07/16
---------------------------
+**************************
 
 * [collect] ``AssetStorage.store_assets()`` now returns also the asset storage
   directory along stored asset filepath list in a tuple;
@@ -24,7 +31,7 @@ Version 0.6.1 - 2023/07/16
 
 
 Version 0.6.0 - 2023/07/12
---------------------------
+**************************
 
 [scrap] Added a new command ``scrap`` which uses TMDb API to retrieve TV serie details
 and write them to a manifest. The manifest is compatible with collector from
@@ -32,7 +39,7 @@ and write them to a manifest. The manifest is compatible with collector from
 
 
 Version 0.5.2 - 2023/05/09
---------------------------
+**************************
 
 * [collect] Fixed dumped cover item filepath to be relative to the dump file;
 * [collect] Fixed directory checksum to be done with cover source path, so no UUID is
@@ -42,14 +49,14 @@ Version 0.5.2 - 2023/05/09
 
 
 Version 0.5.1 - 2023/03/07
---------------------------
+**************************
 
 [collect] Added checksum feature to collector. Directory checksum is computed from the
 directory payload as built from collector.
 
 
 Version 0.5.0 - 2023/03/03
---------------------------
+**************************
 
 * [collect] Improved collector so it can retrieve extra informations from a YAML
   manifest and cover image for each directory;
@@ -58,7 +65,7 @@ Version 0.5.0 - 2023/03/03
 
 
 Version 0.4.1 - 2022/01/22
---------------------------
+**************************
 
 [collect] Fixed tests on collector which failed because of file datetimes which can
 change from an installation to another. So we mocked up the method to get the formatted
@@ -66,20 +73,20 @@ datetime.
 
 
 Version 0.4.0 - 2022/01/16
---------------------------
+**************************
 
 Added new command ``collect`` to recursively collect media file informations for a
 given directory.
 
 
 Version 0.3.1 - 2021/12/19
---------------------------
+**************************
 
 This is a release fix for release version. No code change have been done.
 
 
 Version 0.3.0 - Unreleased
---------------------------
+**************************
 
 First working version.
 
@@ -92,7 +99,7 @@ First working version.
 
 
 Version 0.2.0 - Unreleased
---------------------------
+**************************
 
 Unworking version.
 
@@ -101,7 +108,7 @@ Unworking version.
 
 
 Version 0.1.0 - Unreleased
---------------------------
+**************************
 
 First commit.
 
