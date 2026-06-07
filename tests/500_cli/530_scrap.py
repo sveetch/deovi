@@ -32,12 +32,12 @@ def test_scrap_required_args(caplog):
 
     assert result.exit_code == 2
     assert caplog.record_tuples == []
-    assert "Error: Missing argument 'TVID'" in result.stdout
+    assert "Error: Missing argument 'TVID'" in result.output
 
     result = runner.invoke(cli_frontend, ["scrap", "noid"])
     assert result.exit_code == 2
     assert caplog.record_tuples == []
-    assert "Error: Missing argument 'DESTINATION'" in result.stdout
+    assert "Error: Missing argument 'DESTINATION'" in result.output
 
     result = runner.invoke(cli_frontend, ["scrap", "noid", "/foo/"])
     assert result.exit_code == 1

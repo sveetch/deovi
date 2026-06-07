@@ -20,14 +20,14 @@ Links
 * Download its `PyPi package <https://pypi.python.org/pypi/deovi>`_;
 * Clone it on its `Github repository <https://github.com/sveetch/deovi>`_;
 
-Dependancies
+Dependencies
 ************
 
-* `Python`_ >=3.8;
+* `Python`_ >=3.10;
 * `Click`_ >=8.0;
 * `Python Slugify`_ >=5.0.0;
-* `Unidecode`_;
-* `PyYAML`_;
+* `Unidecode`_ (as a sub dependency from "Python Slugify");
+* `PyYAML`_ >=6.0;
 
 And optional dependancies when ``scrapping`` feature is enabled:
 

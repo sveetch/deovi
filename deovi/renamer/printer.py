@@ -52,8 +52,6 @@ class PrinterInterface:
             template.format(i=length)
         )
 
-        indice_func = None
-
         # The formatter function carry the template to format indice directly from
         # given integer
         def indice_func(index):

@@ -15,31 +15,46 @@ APPLICATION_NAME=deovi
 
 # Formatting variables, FORMATRESET is always to be used last to close formatting
 FORMATBLUE:=$(shell tput setab 4)
+FORMATGREEN:=$(shell tput setab 2)
+FORMATRED:=$(shell tput setab 1)
 FORMATBOLD:=$(shell tput bold)
 FORMATRESET:=$(shell tput sgr0)
 
 help:
 	@echo "Please use 'make <target>' where <target> is one of"
 	@echo
-	@echo "  install             -- to install this project with virtualenv and Pip"
-	@echo "  install-backend     -- to install backend requirements with Virtualenv and Pip (usable to update requirements)"
-	@echo "  freeze-dependencies -- to write a frozen.txt file with installed dependencies versions"
+	@echo "  Cleaning"
+	@echo "  ========"
 	@echo
-	@echo "  clean               -- to clean EVERYTHING (Warning)"
-	@echo "  clean-doc           -- to remove documentation builds"
-	@echo "  clean-install       -- to clean Python side installation"
-	@echo "  clean-pycache       -- to remove all __pycache__, this is recursive from current directory"
+	@echo "  clean                      -- to clean EVERYTHING (Warning)"
+	@echo "  clean-doc                  -- to remove documentation builds"
+	@echo "  clean-install              -- to clean Python side installation"
+	@echo "  clean-pycache              -- to recursively remove all Python cache files"
+	@echo "  Installation"
+	@echo "  ============"
 	@echo
-	@echo "  docs                -- to build documentation"
-	@echo "  livedocs            -- to run livereload server to rebuild documentation on source changes"
+	@echo "  install                    -- to install this project with virtualenv and Pip"
+	@echo "  freeze-dependencies        -- to write installed dependencies versions in 'frozen.txt'"
 	@echo
-	@echo "  flake               -- to launch Flake8 checking"
-	@echo "  test                -- to launch base test suite using Pytest"
-	@echo "  tox                 -- to launch tests for every Tox environments"
-	@echo "  quality             -- to launch Flake8 checking, tests suites, documentation building, freeze dependancies and check release"
+	@echo "  Documentation"
+	@echo "  ============="
 	@echo
-	@echo "  check-release       -- to check package release before uploading it to PyPi"
-	@echo "  release             -- to release package for latest version on PyPi (once release has been pushed to repository)"
+	@echo "  docs                       -- to build documentation"
+	@echo "  livedocs                   -- to run a 'live reloaded' server for documentation"
+	@echo
+	@echo "  Quality"
+	@echo "  ======="
+	@echo
+	@echo "  check-release              -- to check package release before uploading it to PyPi"
+	@echo "  flake                      -- to launch Flake8 checking"
+	@echo "  quality                    -- to launch run quality tasks and checks"
+	@echo "  test                       -- to launch base test suite using Pytest"
+	@echo "  tox                        -- to launch tests for every Tox environments"
+	@echo
+	@echo "  Release"
+	@echo "  ======="
+	@echo
+	@echo "  release                    -- to release latest package version on PyPi"
 	@echo
 
 clean-pycache:
@@ -84,7 +99,7 @@ install-backend:
 	@echo ""
 	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Installing everything for development <---$(FORMATRESET)\n"
 	@echo ""
-	$(PIP) install -e .[scrapping,dev,quality,doc,release]
+	$(PIP) install -e .[scrapping,dev,quality,doc,doc-live,release]
 .PHONY: install-backend
 
 install: venv install-backend
@@ -122,7 +137,7 @@ freeze-dependencies:
 	@echo ""
 	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Freezing dependencies versions <---$(FORMATRESET)\n"
 	@echo ""
-	$(VENV_PATH)/bin/python freezer.py
+	$(PYTHON_BIN) freezer.py ${PACKAGE_NAME} --destination=frozen.txt
 .PHONY: freeze-dependencies
 
 build-package:
@@ -156,6 +171,6 @@ tox:
 
 quality: test flake docs check-release freeze-dependencies
 	@echo ""
-	@echo "♥ ♥ Everything should be fine ♥ ♥"
+	@printf "$(FORMATGREEN)$(FORMATBOLD) ♥ ♥ Everything should be fine ♥ ♥ $(FORMATRESET)\n"
 	@echo ""
 .PHONY: quality
