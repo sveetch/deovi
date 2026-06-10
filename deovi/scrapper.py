@@ -1,3 +1,4 @@
+import json
 import requests
 import shutil
 from pathlib import Path
@@ -13,6 +14,14 @@ class TmdbScrapper:
     """
     Class to scrap informations from TMDb API.
 
+    Attributes:
+        DEFAULT_LANGUAGE (string): Default value for ``language`` argument.
+        DEFAULT_POSTER_SIZE (string): Default value for ``poster_size`` argument.
+        DEFAULT_POSTER_FILENAME (string): Default value for ``poster_filename``
+            argument.
+        DEFAULT_MANIFEST_FORMAT (string): Default value for ``manifest_format``
+            argument.
+
     Arguments:
         api_key (string): Private key needed to use API.
 
@@ -23,14 +32,20 @@ class TmdbScrapper:
             without any extension.
         dry (boolean): If enabled nothing will be written or removed.
     """
-    def __init__(self, api_key, language="fr", poster_size="w780",
-                 poster_filename="cover", dry=False):
+    DEFAULT_LANGUAGE = "fr"
+    DEFAULT_POSTER_SIZE = "w780"
+    DEFAULT_POSTER_FILENAME = "cover"
+    DEFAULT_MANIFEST_FORMAT = "yaml"
+
+    def __init__(self, api_key, language=None, poster_size=None,
+                 poster_filename=None, manifest_format=None, dry=False):
         self.dry = dry
-        self.poster_size = poster_size
-        self.poster_filename = poster_filename
+        self.poster_size = poster_size or self.DEFAULT_POSTER_SIZE
+        self.poster_filename = poster_filename or self.DEFAULT_POSTER_FILENAME
+        self.manifest_format = manifest_format or self.DEFAULT_MANIFEST_FORMAT
 
         # Set TMDb client options
-        self.client = self.get_client(api_key, language)
+        self.client = self.get_client(api_key, (language or self.DEFAULT_LANGUAGE))
 
         # Get some config attributes from API
         self.get_api_configurations()
@@ -53,8 +68,7 @@ class TmdbScrapper:
 
         This can only be done once the client has been initialized.
         """
-        _api_configuration = Configuration()
-        _api_infos = _api_configuration.info()
+        _api_infos = Configuration().api_configuration()
 
         # Entry point from TMDb API to download medias
         self.secure_base_url = _api_infos.images["secure_base_url"]
@@ -149,9 +163,12 @@ class TmdbScrapper:
 
         # Write/overwrite manifest
         if not self.dry:
-            sourcepath.write_text(
-                yaml.dump(data, Dumper=yaml.Dumper)
-            )
+            if self.manifest_format == "json":
+                sourcepath.write_text(json.dumps(data, indent=4))
+            else:
+                sourcepath.write_text(
+                    yaml.dump(data, Dumper=yaml.Dumper)
+                )
 
         return diff_lines
 
@@ -172,8 +189,11 @@ class TmdbScrapper:
             poster_path = data.pop("poster_path")
             fetched_poster = self.fetch_poster(poster_path, directory)
 
-        # Build YAML manifest file to destination directory
-        manifest = directory / "manifest.yaml"
+        # Build manifest file to destination directory
+        if self.manifest_format == "json":
+            manifest = directory / "manifest.json"
+        else:
+            manifest = directory / "manifest.yaml"
         diff = self.write_manifest(manifest, data, write_diff=write_diff)
 
         return (

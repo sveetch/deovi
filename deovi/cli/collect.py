@@ -3,7 +3,8 @@ from pathlib import Path
 
 import click
 
-from ..collector import MEDIAS_EXTENSIONS, Collector
+from ..collector import Collector
+from ..conf import settings
 
 
 @click.command()
@@ -24,7 +25,9 @@ from ..collector import MEDIAS_EXTENSIONS, Collector
     help=(
         "Give a specific file extension (without leading dot) to search for. You can "
         "use this argument multiple times for all extension you want to allow. On "
-        "default the collector will use: {}".format(", ".join(MEDIAS_EXTENSIONS))
+        "default the collector will use: {}".format(
+            ", ".join(settings.medias_extensions)
+        )
     ),
 )
 @click.option(
@@ -48,7 +51,7 @@ def collect_command(context, source, destination, extension, checksum):
     logger = logging.getLogger("deovi")
 
     if not extension:
-        extension = MEDIAS_EXTENSIONS
+        extension = settings.medias_extensions
 
     logger.info("Source: {}".format(source))
     logger.info("Destination: {}".format(destination))

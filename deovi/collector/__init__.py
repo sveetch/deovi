@@ -1,19 +1,8 @@
-from .collect import (
-    MEDIAS_CONTAINERS, MEDIAS_DEFAULT_CONTAINER_NAME, MEDIAS_EXTENSIONS,
-    MANIFEST_FILENAME, MANIFEST_FORBIDDEN_VARS, COVER_NAME,
-    COVER_EXTENSIONS, Collector,
-)
+from .collect import Collector
 from .storage import AssetStorage
 
 
 __all__ = [
-    "MEDIAS_CONTAINERS",
-    "MEDIAS_DEFAULT_CONTAINER_NAME",
-    "MEDIAS_EXTENSIONS",
-    "MANIFEST_FILENAME",
-    "MANIFEST_FORBIDDEN_VARS",
-    "COVER_NAME",
-    "COVER_EXTENSIONS",
     "Collector",
     "AssetStorage",
 ]

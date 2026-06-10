@@ -4,76 +4,12 @@ from shutil import disk_usage
 
 import yaml
 
+from ..conf import settings
+from ..exceptions import CollectorError
 from ..renamer.printer import PrinterInterface
 from ..utils.jsons import ExtendedJsonEncoder
 from ..utils.checksum import ChecksumOperator
-from ..exceptions import CollectorError
 from .storage import AssetStorage
-
-# Non exhaustive list of Video containers with their file extension and name
-# NOTE: May also describe some music only containers
-MEDIAS_CONTAINERS = {
-    "3gp": "3GPP",
-    "asf": "Advanced Systems Format",
-    "avi": "AVI",
-    "flv": "Flash Video",
-    "f4v": "Flash Video",
-    "mov": "QuickTime",
-    "mp4": "MPEG-4",
-    "mkv": "Matroska",
-    "mpg": "MPEG",
-    "mpeg": "MPEG",
-    "mpv": "MPEG",
-    "mts": "MPEG Transport Stream",
-    "qt": "QuickTime",
-    "rm": "RealMedia",
-    "ts": "MPEG Transport Stream",
-    "vob": "Vob",
-    "webm": "WebM",
-    "wmv": "Windows Media Video",
-}
-
-
-# Default container label when extension does not match default container list
-MEDIAS_DEFAULT_CONTAINER_NAME = "Unknow"
-
-
-# List of unique file extensions for medias
-MEDIAS_EXTENSIONS = set(MEDIAS_CONTAINERS.keys())
-
-
-# Manifest filename to search in a directory
-MANIFEST_FILENAME = "manifest.yaml"
-
-
-# Forbidden/reserved keyword from manifest corresponding to computed values from
-# collection (obviously excepted the ones from manifest)
-MANIFEST_FORBIDDEN_VARS = {
-    "path",
-    "name",
-    "absolute_dir",
-    "relative_dir",
-    "size",
-    "mtime",
-    "checksum",
-    "children_files",
-    "cover",
-}
-
-
-# File name to use with allowed extensions to search for a cover
-COVER_NAME = "cover"
-
-
-# Allowed file extensions to search for a cover. The order define the priority when
-# there is multiple cover files in the same directory. The first extension will always
-# have highest priority against other extensions.
-COVER_EXTENSIONS = [
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".gif",
-]
 
 
 class Collector(PrinterInterface):
@@ -108,18 +44,18 @@ class Collector(PrinterInterface):
         allow_media_cover (boolean): If False, cover files will be ignored from dump.
             By default this is True and so covers are managed and dumped.
     """
-    def __init__(self, basepath, extensions=MEDIAS_EXTENSIONS, allow_empty_dir=False,
-                 manifest=MANIFEST_FILENAME, cover_name=COVER_NAME,
-                 cover_extensions=COVER_EXTENSIONS, allow_media_cover=True):
+    def __init__(self, basepath, extensions=None, allow_empty_dir=False,
+                 manifest=None, cover_name=None,
+                 cover_extensions=None, allow_media_cover=True):
         super().__init__()
 
         self.checksum_op = ChecksumOperator()
         self.basepath = basepath
-        self.extensions = extensions
+        self.extensions = extensions or settings.medias_extensions
         self.allow_empty_dir = allow_empty_dir
-        self.manifest_filename = manifest
-        self.cover_name = cover_name
-        self.cover_extensions = cover_extensions
+        self.manifest_filename = manifest or settings.manifest_filename
+        self.cover_name = cover_name or settings.cover_name
+        self.cover_extensions = cover_extensions or settings.cover_extensions
         self.allow_media_cover = allow_media_cover
         self.file_storage_queue = []
 
@@ -236,9 +172,9 @@ class Collector(PrinterInterface):
         # Remove leading dot
         extension = path.suffix[1:].lower()
         # Get the media container label from file extension
-        container = MEDIAS_DEFAULT_CONTAINER_NAME
-        if extension in MEDIAS_CONTAINERS:
-            container = MEDIAS_CONTAINERS[extension]
+        container = settings.default_container_name
+        if extension in settings.medias_containers:
+            container = settings.medias_containers[extension]
 
         data = {
             "path": path,
@@ -285,7 +221,7 @@ class Collector(PrinterInterface):
                 # computed data from directory scan
                 reserved = [
                     name
-                    for name in MANIFEST_FORBIDDEN_VARS
+                    for name in settings.manifest_forbidden_vars
                     if name in manifest
                 ]
                 if len(reserved) > 0:

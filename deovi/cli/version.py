@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import click
 
 from .. import __version__

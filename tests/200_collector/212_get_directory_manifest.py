@@ -1,4 +1,5 @@
-from deovi.collector import MANIFEST_FILENAME, MANIFEST_FORBIDDEN_VARS, Collector
+from deovi.conf import settings
+from deovi.collector import Collector
 
 
 def test_collector_get_directory_manifest_nofile(manifests_sample):
@@ -19,7 +20,7 @@ def test_collector_get_directory_manifest_invalid(caplog, warning_logger,
     """
     collector = Collector(None)
     sample_dir = manifests_sample / "invalid"
-    manifest_path = sample_dir / MANIFEST_FILENAME
+    manifest_path = sample_dir / settings.manifest_filename
     manifest = collector.get_directory_manifest(sample_dir)
 
     assert manifest == {}
@@ -41,7 +42,7 @@ def test_collector_get_directory_manifest_forbidden(caplog, warning_logger,
     """
     collector = Collector(None)
     sample_dir = manifests_sample / "forbidden"
-    manifest_path = sample_dir / MANIFEST_FILENAME
+    manifest_path = sample_dir / settings.manifest_filename
     manifest = collector.get_directory_manifest(sample_dir)
 
     assert manifest == {}
@@ -49,7 +50,7 @@ def test_collector_get_directory_manifest_forbidden(caplog, warning_logger,
     # Forbidden keywords
     names = ", ".join([
         item
-        for item in MANIFEST_FORBIDDEN_VARS
+        for item in settings.manifest_forbidden_vars
         if item not in ["checksum"]
     ])
 
