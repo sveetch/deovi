@@ -13,7 +13,7 @@ except ImportError:
     """
     @click.command()
     @click.pass_context
-    def scrap_command(context):
+    def new_scrap_command(context):
         """
         The scrapping feature has not been installed and so this command is not
         available. See 'Install' documentation for details.
@@ -34,7 +34,11 @@ else:
 
     @click.command()
     @click.argument(
-        "tvid",
+        "tmdb_type",
+        required=True,
+    )
+    @click.argument(
+        "tmdb_id",
         required=True,
     )
     @click.argument(
@@ -79,6 +83,14 @@ else:
         ),
     )
     @click.option(
+        "--formatter",
+        metavar="STRING",
+        help=(
+            "Manifest output format, either 'yaml' or 'json'."
+        ),
+        default="yaml",
+    )
+    @click.option(
         "--dry",
         is_flag=True,
         help=(
@@ -86,15 +98,20 @@ else:
         ),
     )
     @click.pass_context
-    def scrap_command(context, tvid, destination, key, filekey, language, write_diff,
-                      dry):
+    def scrap_command(context, tmdb_type, tmdb_id, destination, key, filekey,
+                      language, write_diff, formatter, dry):
         """
         Scrap TV show informations and poster image from TMDb API.
 
-        Required arguments:
+        Required arguments (in order):
 
-        TVID\n
-            The TV Show ID from TMDb, it may looks like an integer ('14009').
+        TMDB_TYPE\n
+            The kind of media from TMDb, it can be either 'tv' or 'movie'. Trying to
+            scrap a 'tmdb_id' with the wrong type (with 'tv' while it is a movie) will
+            lead to an error.
+
+        TMDB_ID\n
+            The media ID from TMDb, it may looks like an integer, exemple: 14009.
 
         DESTINATION\n
             Destination directory path where to write manifest and cover files.
@@ -113,18 +130,27 @@ else:
         elif filekey:
             key = filekey.read_text().strip()
 
-        logger.info("TV ID: {}".format(tvid))
+        logger.info("TMDB Type: {}".format(tmdb_type))
+        logger.info("TMDB ID: {}".format(tmdb_id))
+        logger.debug("Manifest format: {}".format(formatter))
         logger.debug("Destination: {}".format(destination))
         logger.debug("Language: {}".format(language))
         logger.debug("API Key {}".format(
             "from file" if filekey else "from string",
         ))
 
-        connector = TmdbScrapper(key, language=language, dry=dry)
+        connector = TmdbScrapper(
+            key,
+            manifest_format=formatter,
+            language=language,
+            dry=dry,
+            debug=False,
+        )
 
-        data, manifest, poster, diffs = connector.fetch_tv(
+        data, manifest, poster, diffs = connector.fetch_media(
             destination,
-            tvid,
+            tmdb_id,
+            tmdb_type=tmdb_type,
             write_diff=write_diff,
         )
         logger.info("Title: {}".format(data["title"]))

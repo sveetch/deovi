@@ -4,14 +4,12 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
+from deovi import __pkgname__
 from deovi.cli.entrypoint import cli_frontend
 
 from tests.utils import (
     API_FILEKEY_FILENAME, SAMPLE_TV_ID, SAMPLE_TV_PAYLOAD, get_tmdbapi_key,
 )
-
-
-APPLABEL = "deovi"
 
 
 # Skip marker decorator for tests depending on a TMDb API key usage
@@ -29,21 +27,25 @@ def test_scrap_required_args(caplog):
     runner = CliRunner()
 
     result = runner.invoke(cli_frontend, ["scrap"])
-
     assert result.exit_code == 2
     assert caplog.record_tuples == []
-    assert "Error: Missing argument 'TVID'" in result.output
+    assert "Error: Missing argument 'TMDB_TYPE'" in result.output
 
-    result = runner.invoke(cli_frontend, ["scrap", "noid"])
+    result = runner.invoke(cli_frontend, ["scrap", "tv"])
+    assert result.exit_code == 2
+    assert caplog.record_tuples == []
+    assert "Error: Missing argument 'TMDB_ID'" in result.output
+
+    result = runner.invoke(cli_frontend, ["scrap", "tv", "noid"])
     assert result.exit_code == 2
     assert caplog.record_tuples == []
     assert "Error: Missing argument 'DESTINATION'" in result.output
 
-    result = runner.invoke(cli_frontend, ["scrap", "noid", "/foo/"])
+    result = runner.invoke(cli_frontend, ["scrap", "tv", "noid", "/foo/"])
     assert result.exit_code == 1
     assert caplog.record_tuples == [
         (
-            APPLABEL,
+            __pkgname__,
             logging.CRITICAL,
             "A TMDb API key is required either from 'key' or 'filekey' option.",
         ),
@@ -65,6 +67,7 @@ def test_scrap_basic_success(caplog, tmp_path, settings):
 
     result = runner.invoke(cli_frontend, [
         "scrap",
+        "tv",
         SAMPLE_TV_ID,
         str(tmp_path),
         "--key", settings.tmdbapi_key(),
@@ -78,20 +81,25 @@ def test_scrap_basic_success(caplog, tmp_path, settings):
     assert result.exit_code == 0
     assert caplog.record_tuples == [
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
-            "TV ID: {}".format(SAMPLE_TV_ID)
+            "TMDB Type: tv",
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
-            "Title: {}".format(SAMPLE_TV_PAYLOAD["title"])
+            "TMDB ID: {}".format(SAMPLE_TV_ID),
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
-            "Poster: {}".format(str(poster_path))
-        )
+            "Title: {}".format(SAMPLE_TV_PAYLOAD["title"]),
+        ),
+        (
+            __pkgname__,
+            logging.INFO,
+            "Poster: {}".format(str(poster_path)),
+        ),
     ]
 
 
@@ -114,6 +122,7 @@ def test_scrap_diff_success(caplog, tmp_path, settings):
 
     result = runner.invoke(cli_frontend, [
         "scrap",
+        "tv",
         SAMPLE_TV_ID,
         str(tmp_path),
         "--key", settings.tmdbapi_key(),
@@ -138,6 +147,7 @@ def test_scrap_basic_dry(caplog, tmp_path, settings):
 
     result = runner.invoke(cli_frontend, [
         "scrap",
+        "tv",
         SAMPLE_TV_ID,
         str(tmp_path),
         "--key", settings.tmdbapi_key(),
@@ -151,17 +161,22 @@ def test_scrap_basic_dry(caplog, tmp_path, settings):
 
     assert caplog.record_tuples == [
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
-            "TV ID: {}".format(SAMPLE_TV_ID)
+            "TMDB Type: tv",
         ),
         (
-            APPLABEL,
+            __pkgname__,
+            logging.INFO,
+            "TMDB ID: {}".format(SAMPLE_TV_ID),
+        ),
+        (
+            __pkgname__,
             logging.INFO,
             "Title: {}".format(SAMPLE_TV_PAYLOAD["title"])
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
             "Poster: {}".format(str(poster_path))
         )

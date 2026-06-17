@@ -15,6 +15,12 @@ Development
   *The Outer Limits* from TMDb;
 * Added logo;
 * Moved documentation theme to "Furo";
+* [scrap] Improved Scrapper class and 'scrap' command to support movie along tv media;
+* [scrap] Improved Scrapper to output manifest in JSON format in addition to YAML;
+* [scrap] Breaking change: The command now required the TMDB type to be given as the
+  first argument;
+* [scrap] Added original language, casting and crew to retrieved information from
+  payload;
 
 
 Version 0.7.0 - 2024/04/28

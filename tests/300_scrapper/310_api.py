@@ -54,7 +54,7 @@ def test_scrapper_serialize_tv_payload(settings):
     """
     scrapper = TmdbScrapper(settings.tmdbapi_key(), language="en")
 
-    payload = scrapper.serialize_tv_payload(scrapper.get_provider(), SAMPLE_TV_ID)
+    payload = scrapper.serialize_tv_payload(SAMPLE_TV_ID)
 
     # Check poster apart since its filename may change
     poster_path = payload.pop("poster_path")

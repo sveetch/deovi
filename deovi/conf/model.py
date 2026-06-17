@@ -23,6 +23,10 @@ class SettingsObject:
     # Manifest filename to search in a directory
     manifest_filename: str = "manifest.yaml"
 
+    # Manifest file name without format extension
+    # TODO: Promote its method to get the proper manifest
+    manifest_name: str = "manifest"
+
     # Forbidden/reserved keyword from manifest corresponding to computed values from
     # collection (obviously excepted the ones from manifest)
     manifest_forbidden_vars: dict = dataclasses_field(default_factory=dict)

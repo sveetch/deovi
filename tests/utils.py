@@ -1,3 +1,7 @@
+"""
+Although we choosed very old media, the sample payload may change because TMDB still
+edit their data sometime for some unknow reason.
+"""
 from pathlib import Path
 
 import deovi
@@ -18,8 +22,29 @@ SAMPLE_TV_PAYLOAD = {
     "number_of_episodes": 49,
     "genres": [
         "Sci-Fi & Fantasy",
-    ]
+    ],
+    "original_language": "en",
+    "overview": "The Outer Limits is an anthology tv series of self-contained "
+    "sci-fi-horror stories, sometimes with a plot twist at the end.",
+    "casting": [],
+    "crew": [
+        [
+            "Leslie Stevens",
+            "Executive Producer",
+        ],
+        [
+            "Sam White",
+            "Producer",
+        ],
+        [
+            "Lou Morheim",
+            "Producer",
+        ],
+    ],
 }
+# TODO
+SAMPLE_MOVIE_ID = "000"
+SAMPLE_MOVIE_PAYLOAD = {}
 
 
 def get_tmdbapi_key():
