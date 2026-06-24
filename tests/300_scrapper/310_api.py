@@ -16,7 +16,12 @@ import pytest
 import yaml
 
 from tests.utils import (
-    API_FILEKEY_FILENAME, SAMPLE_TV_ID, SAMPLE_TV_PAYLOAD, get_tmdbapi_key,
+    API_FILEKEY_FILENAME,
+    SAMPLE_TV_ID,
+    SAMPLE_TV_PAYLOAD,
+    SAMPLE_MOVIE_ID,
+    SAMPLE_MOVIE_PAYLOAD,
+    get_tmdbapi_key,
 )
 
 from deovi.scrapper import TmdbScrapper
@@ -66,6 +71,26 @@ def test_scrapper_serialize_tv_payload(settings):
 
 
 @api_allowed
+def test_scrapper_serialize_movie_payload(settings):
+    """
+    TV details from API should return expected payload.
+
+    NOTE: This involves 2 requests to API
+    """
+    scrapper = TmdbScrapper(settings.tmdbapi_key(), language="en")
+
+    payload = scrapper.serialize_movie_payload(SAMPLE_MOVIE_ID)
+
+    # Check poster apart since its filename may change
+    poster_path = payload.pop("poster_path")
+    assert poster_path.startswith("/")
+    assert poster_path.endswith(".jpg")
+
+    # Assert almost full payload
+    assert payload == SAMPLE_MOVIE_PAYLOAD
+
+
+@api_allowed
 def test_scrapper_fetch_tv(tmp_path, settings):
     """
     From given TV ID the scrapper should retrieve its detail and poster file from API
@@ -74,7 +99,7 @@ def test_scrapper_fetch_tv(tmp_path, settings):
     NOTE: This involves 2 requests to API
     """
     scrapper = TmdbScrapper(settings.tmdbapi_key(), language="en")
-    scrapper.fetch_tv(tmp_path, SAMPLE_TV_ID)
+    scrapper.fetch_media(tmp_path, SAMPLE_TV_ID, tmdb_type="tv")
 
     manifest_path = tmp_path / "manifest.yaml"
     assert (tmp_path / "cover.jpg").exists()
@@ -83,3 +108,23 @@ def test_scrapper_fetch_tv(tmp_path, settings):
     manifest = yaml.load(manifest_path.read_text(), Loader=yaml.FullLoader)
 
     assert manifest == SAMPLE_TV_PAYLOAD
+
+
+@api_allowed
+def test_scrapper_fetch_movie(tmp_path, settings):
+    """
+    From given TV ID the scrapper should retrieve its detail and poster file from API
+    payload.
+
+    NOTE: This involves 2 requests to API
+    """
+    scrapper = TmdbScrapper(settings.tmdbapi_key(), language="en")
+    scrapper.fetch_media(tmp_path, SAMPLE_MOVIE_ID, tmdb_type="movie")
+
+    manifest_path = tmp_path / "manifest.yaml"
+    assert (tmp_path / "cover.jpg").exists()
+    assert manifest_path.exists()
+
+    manifest = yaml.load(manifest_path.read_text(), Loader=yaml.FullLoader)
+
+    assert manifest == SAMPLE_MOVIE_PAYLOAD

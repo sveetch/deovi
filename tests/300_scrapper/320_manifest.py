@@ -107,8 +107,8 @@ def test_scrapper_fetch_tv_diffs(monkeypatch, tmp_path, settings, manifest_from,
 
     # Run the scrapper with dummy key and id
     scrapper = TmdbScrapper("nokey", language="en")
-    data, manifest, fetched_poster, diff = scrapper.fetch_tv(
-        tmp_path, "noid", write_diff=write_diff
+    data, manifest, fetched_poster, diff = scrapper.fetch_media(
+        tmp_path, "noid", tmdb_type="tv", write_diff=write_diff
     )
 
     assert data == manifest_to

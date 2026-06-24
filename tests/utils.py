@@ -33,18 +33,79 @@ SAMPLE_TV_PAYLOAD = {
             "Executive Producer",
         ],
         [
-            "Sam White",
+            "Lou Morheim",
             "Producer",
         ],
         [
-            "Lou Morheim",
+            "Sam White",
             "Producer",
         ],
     ],
 }
-# TODO
-SAMPLE_MOVIE_ID = "000"
-SAMPLE_MOVIE_PAYLOAD = {}
+
+
+# Sample TV serie 'The Pit and the Pendulum' in english
+SAMPLE_MOVIE_ID = "273204"
+SAMPLE_MOVIE_PAYLOAD = {
+    "tmdb_id": "273204",
+    "tmdb_type": "movie",
+    "title": "The Pit and the Pendulum",
+    "status": "Released",
+    "release_date": "1964-01-09",
+    "original_language": "fr",
+    "overview": (
+        "A haunting short version of Edgar Allan Poe's famous story about a cruel and"
+        " unusual punishment inflicted on a victim of the Spanish Inquisition..."
+    ),
+    "genres": [
+        "Drama",
+        "Horror"
+    ],
+    "casting": [
+        [
+            "Maurice Ronet",
+            "Le condamné à mort"
+        ]
+    ],
+    "crew": [
+        [
+            "Alexandre Astruc",
+            "Writer"
+        ],
+        [
+            "Alexandre Astruc",
+            "Director"
+        ],
+        [
+            "Edgar Allan Poe",
+            "Short Story"
+        ],
+        [
+            "Antoine Duhamel",
+            "Original Music Composer"
+        ],
+        [
+            "Nicolas Hayer",
+            "Director of Photography"
+        ],
+        [
+            "Yves Kovacs",
+            "Assistant Director"
+        ],
+        [
+            "Pierre-André Boutang",
+            "Assistant Director"
+        ],
+        [
+            "Paul Bonnefond",
+            "Sound"
+        ],
+        [
+            "Marie Thérèse Respens",
+            "Costume Design"
+        ]
+    ]
+}
 
 
 def get_tmdbapi_key():
