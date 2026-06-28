@@ -53,7 +53,7 @@ def test_collector_scan_directory_single(monkeypatch, media_sample):
         "foo/bar": {
             "path": media_sample / "foo/bar",
             "name": "bar",
-            "title": "Foo bar",
+            "title": "Foo bar YAML",
             "absolute_dir": media_sample / "foo",
             "relative_dir": Path("foo/bar"),
             "size": 4096,

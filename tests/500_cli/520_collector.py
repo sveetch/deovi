@@ -3,12 +3,10 @@ import logging
 
 from click.testing import CliRunner
 
+from deovi import __pkgname__
 from deovi.collector import Collector
 from deovi.cli.entrypoint import cli_frontend
 from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat
-
-
-APPLABEL = "deovi"
 
 
 def test_job_required_arguments(caplog, media_sample):
@@ -56,37 +54,37 @@ def test_job_success(monkeypatch, caplog, media_sample):
     assert result.exit_code == 0
     assert caplog.record_tuples == [
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
             "Source: {}".format(str(source)),
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
             "Destination: {}".format(str(destination)),
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
             "Extensions: mkv",
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
             "Registry saved to: {}".format(str(destination)),
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
             "Registered directories: 1",
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
             "Registered files: 1",
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
             "Total directories and files size: 1059817",
         ),
@@ -100,7 +98,7 @@ def test_job_success(monkeypatch, caplog, media_sample):
         ".": {
             "path": str(source),
             "name": "bar",
-            "title": "Foo bar",
+            "title": "Foo bar YAML",
             "absolute_dir": str(media_sample / "foo"),
             "relative_dir": ".",
             "size": 4096,

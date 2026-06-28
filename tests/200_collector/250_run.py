@@ -41,7 +41,7 @@ def test_collector_run_basic(monkeypatch, media_sample):
         "foo/bar": {
             "path": media_sample / "foo/bar",
             "name": "bar",
-            "title": "Foo bar",
+            "title": "Foo bar YAML",
             "absolute_dir": media_sample / "foo",
             "relative_dir": Path("foo/bar"),
             "size": 4096,
@@ -53,7 +53,8 @@ def test_collector_run_basic(monkeypatch, media_sample):
         },
         ".": {
             "path": media_sample,
-            "title": "Media sample root",
+            "title": "Media sample root YAML",
+            "tmdb_type": "collection",
             "name": "media_sample",
             "absolute_dir": media_sample.parent,
             "relative_dir": Path("."),
@@ -119,8 +120,8 @@ def test_collector_run_manifest(monkeypatch, media_sample):
     dumped_registry = payload["registry"]
 
     # Expected item titles
-    assert dumped_registry["."]["title"] == "Media sample root"
-    assert dumped_registry["foo/bar"]["title"] == "Foo bar"
+    assert dumped_registry["."]["title"] == "Media sample root YAML"
+    assert dumped_registry["foo/bar"]["title"] == "Foo bar YAML"
 
     # Expected item cover files
     assert sorted(list(absolute_assets_storage.iterdir())) == [

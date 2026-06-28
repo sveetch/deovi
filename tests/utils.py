@@ -1,6 +1,6 @@
 """
-Although we choosed very old media, the sample payload may change because TMDB still
-edit their data sometime for some unknow reason.
+Although we choosed very old media, the sample payloads may change because TMDB still
+edit their data sometime for some reasons.
 """
 from pathlib import Path
 
@@ -47,20 +47,6 @@ SAMPLE_TV_PAYLOAD = {
 # Sample TV serie 'The Pit and the Pendulum' in english
 SAMPLE_MOVIE_ID = "273204"
 SAMPLE_MOVIE_PAYLOAD = {
-    "tmdb_id": "273204",
-    "tmdb_type": "movie",
-    "title": "The Pit and the Pendulum",
-    "status": "Released",
-    "release_date": "1964-01-09",
-    "original_language": "fr",
-    "overview": (
-        "A haunting short version of Edgar Allan Poe's famous story about a cruel and"
-        " unusual punishment inflicted on a victim of the Spanish Inquisition..."
-    ),
-    "genres": [
-        "Drama",
-        "Horror"
-    ],
     "casting": [
         [
             "Maurice Ronet",
@@ -70,41 +56,55 @@ SAMPLE_MOVIE_PAYLOAD = {
     "crew": [
         [
             "Alexandre Astruc",
-            "Writer"
-        ],
-        [
-            "Alexandre Astruc",
             "Director"
         ],
         [
-            "Edgar Allan Poe",
-            "Short Story"
+            "Alexandre Astruc",
+            "Writer"
         ],
         [
             "Antoine Duhamel",
             "Original Music Composer"
         ],
         [
+            "Edgar Allan Poe",
+            "Short Story"
+        ],
+        [
+            "Marie Thérèse Respens",
+            "Costume Design"
+        ],
+        [
             "Nicolas Hayer",
             "Director of Photography"
-        ],
-        [
-            "Yves Kovacs",
-            "Assistant Director"
-        ],
-        [
-            "Pierre-André Boutang",
-            "Assistant Director"
         ],
         [
             "Paul Bonnefond",
             "Sound"
         ],
         [
-            "Marie Thérèse Respens",
-            "Costume Design"
+            "Pierre-André Boutang",
+            "Assistant Director"
+        ],
+        [
+            "Yves Kovacs",
+            "Assistant Director"
         ]
-    ]
+    ],
+    "genres": [
+        "Drama",
+        "Horror"
+    ],
+    "original_language": "fr",
+    "overview": (
+        "A haunting short version of Edgar Allan Poe's famous story about a cruel "
+        "and unusual punishment inflicted on a victim of the Spanish Inquisition..."
+    ),
+    "release_date": "1964-01-09",
+    "status": "Released",
+    "title": "The Pit and the Pendulum",
+    "tmdb_id": "273204",
+    "tmdb_type": "movie"
 }
 
 

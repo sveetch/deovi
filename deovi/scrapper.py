@@ -106,6 +106,8 @@ class TmdbScrapper:
     def serialize_tv_payload(self, tmdb_id):
         """
         Get informations payload for given TV ID.
+
+        List values are sorted to help enforcing some stability.
         """
         # Fetch payload from API
         payload = TV().details(tmdb_id)
@@ -124,18 +126,25 @@ class TmdbScrapper:
             "number_of_episodes": payload.number_of_episodes,
             "original_language": payload.original_language,
             "overview": payload.overview,
-            "genres": [item["name"] for item in payload.genres],
-            "casting": [
-                [item["name"], item["character"]] for item in payload.credits.cast
-            ],
-            "crew": [
-                [item["name"], item["job"]] for item in payload.credits.crew
-            ],
+            "genres": sorted([
+                item["name"]
+                for item in payload.genres
+            ]),
+            "casting": sorted([
+                [item["name"], item["character"]]
+                for item in payload.credits.cast
+            ]),
+            "crew": sorted([
+                [item["name"], item["job"]]
+                for item in payload.credits.crew
+            ]),
         }
 
     def serialize_movie_payload(self, tmdb_id):
         """
         Get informations payload for given MOVIE ID.
+
+        List values are sorted to help enforcing some stability.
         """
         # Fetch payload from API
         payload = Movie().details(tmdb_id)
@@ -152,13 +161,18 @@ class TmdbScrapper:
             "release_date": payload.release_date,
             "original_language": payload.original_language,
             "overview": payload.overview,
-            "genres": [item["name"] for item in payload.genres],
-            "casting": [
-                [item["name"], item["character"]] for item in payload.casts.cast
-            ],
-            "crew": [
-                [item["name"], item["job"]] for item in payload.casts.crew
-            ],
+            "genres": sorted([
+                item["name"]
+                for item in payload.genres
+            ]),
+            "casting": sorted([
+                [item["name"], item["character"]]
+                for item in payload.casts.cast
+            ]),
+            "crew": sorted([
+                [item["name"], item["job"]]
+                for item in payload.casts.crew
+            ]),
         }
 
     def fetch_poster(self, path, basepath):
@@ -212,38 +226,6 @@ class TmdbScrapper:
                 )
 
         return diff_lines
-
-    def fetch_tv(self, directory, tmdb_id, write_diff=False):
-        """
-        Get informations payload and medias for given TV ID.
-
-        This downloads media files and build a YAML manifest to the given directory.
-
-        DEPRECATED: In profit of 'fetch_media()' for the new scrapper.
-        """
-        # Fetch and serialize media informations
-        data = self.serialize_tv_payload(tmdb_id)
-
-        # Download possible poster image file in destination directory
-        fetched_poster = None
-        if data.get("poster_path", None):
-            poster_path = data.pop("poster_path")
-            fetched_poster = self.fetch_poster(poster_path, directory)
-
-        # Build manifest file to destination directory
-        if self.manifest_format == "json":
-            manifest = directory / "manifest.json"
-        else:
-            manifest = directory / "manifest.yaml"
-
-        diff = self.write_manifest(manifest, data, write_diff=write_diff)
-
-        return (
-            data,
-            manifest,
-            fetched_poster,
-            diff,
-        )
 
     def fetch_media(self, directory, tmdb_id, tmdb_type="tv", write_diff=False):
         """

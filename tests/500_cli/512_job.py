@@ -3,10 +3,8 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
+from deovi import __pkgname__
 from deovi.cli.entrypoint import cli_frontend
-
-
-APPLABEL = "deovi"
 
 
 def test_job_required_basepath(caplog):
@@ -42,17 +40,17 @@ def test_job_error(caplog, basic_sample):
 
     assert caplog.record_tuples == [
         (
-            APPLABEL,
+            __pkgname__,
             logging.DEBUG,
             "Basepath: {}".format(basepath),
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.DEBUG,
             "Destination: {}".format(destination),
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.CRITICAL,
             (
                 "🚨 Destination path must point into an existing "
@@ -89,17 +87,17 @@ def test_job_success(monkeypatch, caplog, basic_sample):
 
     assert caplog.record_tuples == [
         (
-            APPLABEL,
+            __pkgname__,
             logging.DEBUG,
             "Basepath: {}".format(basepath),
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.DEBUG,
             "No destination given, automatic name from basepath will be used.",
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
             "Created Job file: {}".format(destination),
         ),
@@ -135,17 +133,17 @@ def test_job_success_with_destination(monkeypatch, caplog, basic_sample):
 
     assert caplog.record_tuples == [
         (
-            APPLABEL,
+            __pkgname__,
             logging.DEBUG,
             "Basepath: {}".format(basepath),
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.DEBUG,
             "Destination: {}".format(destination),
         ),
         (
-            APPLABEL,
+            __pkgname__,
             logging.INFO,
             "Created Job file: {}".format(destination),
         ),

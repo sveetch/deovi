@@ -32,7 +32,7 @@ class Collector(PrinterInterface):
         extensions (list): A list of file extensions to consider as media files. A
             file extension that is not in this list are ignored. Default list contains
             all common video file extensions.
-        allow_empty_dir (list): If True, even directory without direct media files are
+        allow_empty_dir (bool): If True, even directory without direct media files are
             still collected in registry. Default is False, so only directories with
             direct media children are collected, the other directories are ignored from
             registry (but still scanned for children directories).
@@ -41,7 +41,7 @@ class Collector(PrinterInterface):
             cover files.
         cover_extensions (list): Cover file extensions (with leading dot) used to
             search for cover files.
-        allow_media_cover (boolean): If False, cover files will be ignored from dump.
+        allow_media_cover (bool): If False, cover files will be ignored from dump.
             By default this is True and so covers are managed and dumped.
     """
     def __init__(self, basepath, extensions=None, allow_empty_dir=False,

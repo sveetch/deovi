@@ -3,10 +3,8 @@ import logging
 
 from click.testing import CliRunner
 
+from deovi import __pkgname__
 from deovi.cli.entrypoint import cli_frontend
-
-
-APPLABEL = "deovi"
 
 
 def test_rename_required_job_option(caplog):
@@ -23,7 +21,7 @@ def test_rename_required_job_option(caplog):
 
     assert caplog.record_tuples == [
         (
-            APPLABEL,
+            __pkgname__,
             logging.CRITICAL,
             "There is no job file to process.",
         )

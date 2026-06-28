@@ -1,8 +1,7 @@
 """
 These tests involve requests to TMDb API (and so request an API key).
 
-All tests use a TV id for the old serie 'The Outer Limits', hoping it won't never
-change its informations which would break tests.
+All tests use sample payload downloaded from TMDB.
 
 .. NOTE::
     TMDb API has a soft limit around 50 requests per second, so since test are pretty
@@ -126,5 +125,6 @@ def test_scrapper_fetch_movie(tmp_path, settings):
     assert manifest_path.exists()
 
     manifest = yaml.load(manifest_path.read_text(), Loader=yaml.FullLoader)
-
+    import json
+    print(json.dumps(manifest, indent=4))
     assert manifest == SAMPLE_MOVIE_PAYLOAD

@@ -38,6 +38,13 @@ class CollectorError(DeoviClientBaseException):
     pass
 
 
+class InformationModelError(DeoviClientBaseException):
+    """
+    For any error inside a model BaseInformation or inheriters.
+    """
+    pass
+
+
 class JobValidationError(DeoviClientBaseException):
     """
     When a job is not valid.

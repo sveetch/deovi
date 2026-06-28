@@ -21,10 +21,10 @@ class SettingsObject:
     medias_extensions: list[str] = dataclasses_field(default_factory=list)
 
     # Manifest filename to search in a directory
+    # DEPRECATED: With new collector the manifest support JSON/YAML and can have
+    # different name
     manifest_filename: str = "manifest.yaml"
-
     # Manifest file name without format extension
-    # TODO: Promote its method to get the proper manifest
     manifest_name: str = "manifest"
 
     # Forbidden/reserved keyword from manifest corresponding to computed values from
@@ -39,7 +39,19 @@ class SettingsObject:
     # always have highest priority against other extensions.
     cover_extensions: list[str] = dataclasses_field(default_factory=list)
 
+    # Only these types (from item 'tmdb_type') of manifest are supported
+    allowed_manifest_types: tuple[str] = dataclasses_field(default_factory=tuple)
+
+    # List of manifest type that be scrapped
+    scrapped_manifest_types: tuple[str] = dataclasses_field(default_factory=tuple)
+
+    # All manifest fields that is known to be filled from tmdb
+    supported_tmdb_fields: tuple[str] = dataclasses_field(default_factory=tuple)
+
     def __post_init__(self):
+        """
+        Fill attributes with default values.
+        """
         if not self.medias_containers:
             self.medias_containers = {
                 "3gp": "3GPP",
@@ -85,3 +97,26 @@ class SettingsObject:
 
         if not self.medias_extensions:
             self.medias_extensions = set(self.medias_containers.keys())
+
+        if not self.allowed_manifest_types:
+            self.allowed_manifest_types = ("tv", "movie", "collection")
+
+        if not self.scrapped_manifest_types:
+            self.scrapped_manifest_types = ("tv", "movie")
+
+        if not self.supported_tmdb_fields:
+            self.supported_tmdb_fields = (
+                "tmdb_id",
+                "tmdb_type",
+                "title",
+                "overview",
+                "status",
+                "original_language",
+                "casting",
+                "crew",
+                "genres",
+                "first_air_date",
+                "number_of_seasons",
+                "number_of_episodes",
+                "release_date",
+            )

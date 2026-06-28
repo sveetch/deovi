@@ -1,6 +1,7 @@
 import datetime
 import json
 from pathlib import Path
+import types
 
 try:
     import tmdbv3api  # NOQA: F401
@@ -29,11 +30,22 @@ class ExtendedJsonEncoder(json.JSONEncoder):
         # Support for date and time
         if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
             return obj.isoformat()
+        # Convert callable to its name as a string
+        if callable(obj):
+            return obj.__name__
+        # Convert generator to its name as a string
+        if isinstance(obj, types.GeneratorType):
+            return obj.__name__
 
         # Support for tmdb AsObj
         if TMDB_AVAILABLE is True:
             if isinstance(obj, tmdbv3api.as_obj.AsObj):
                 return dict(obj.items())
+
+        # Support for models without to import them (from their specific class name)
+        # NOTE: This is to be as a last resort
+        if hasattr(obj, "as_dict"):
+            return obj.as_dict()
 
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)
