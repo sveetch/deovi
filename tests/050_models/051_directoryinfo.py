@@ -73,7 +73,7 @@ def test_creation():
 @freeze_time("2012-10-15 10:00:00.001007")
 def test_set_medias():
     """
-    TODO
+    Adding medias to a directory
     """
     picsou = MediaInformation(
         path=Path("/home/cities/duckcity/picsou.mp4"),

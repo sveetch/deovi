@@ -1,9 +1,17 @@
+import datetime
 from pathlib import Path
 
 import pytest
 
 from deovi.collector.new_collect import NewCollector
 from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat
+from deovi.models import (
+    DirectoryInformation,
+    MediaInformation,
+    CollectionManifest,
+    MovieManifest,
+    SerieManifest,
+)
 
 
 @pytest.mark.parametrize("path, expected", [
@@ -14,11 +22,12 @@ from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat
             "name": "SampleVideo_1280x720_1mb.mkv",
             "absolute_dir": "",
             "relative_dir": ".",
-            "directory": "",
+            "name_alt": "",
             "extension": "mkv",
             "container": "Matroska",
             "size": 1052413,
             "mtime": DUMMY_ISO_DATETIME,
+            "manifest":  None,
         },
     ),
     (
@@ -28,11 +37,12 @@ from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat
             "name": "SampleVideo_720x480_1mb.mp4",
             "absolute_dir": "moo",
             "relative_dir": "moo",
-            "directory": "moo",
+            "name_alt": "moo",
             "extension": "mp4",
             "container": "MPEG-4",
             "size": 1057149,
             "mtime": DUMMY_ISO_DATETIME,
+            "manifest":  None,
         },
     ),
     (
@@ -42,17 +52,20 @@ from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat
             "name": "SampleVideo_176x144_1mb.3gp",
             "absolute_dir": "ping/pong/pang",
             "relative_dir": "ping/pong/pang",
-            "directory": "pang",
+            "name_alt": "pang",
             "extension": "3gp",
             "container": "3GPP",
             "size": 1038741,
             "mtime": DUMMY_ISO_DATETIME,
+            "manifest":  None,
         },
     ),
 ])
 def test_collector_scan_file(monkeypatch, media_sample, path, expected):
     """
     Scanning a file should return the right media file datas.
+
+    No manifest is involved here.
     """
     monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
 
@@ -66,4 +79,50 @@ def test_collector_scan_file(monkeypatch, media_sample, path, expected):
 
     data = collector.scan_file(path)
 
-    assert expected == data
+    assert expected == data.as_dict()
+
+
+def test_collector_scan_file_manifest(monkeypatch, media_sample):
+    """
+    Scanning a file with manifest autoload enabled should return the right media file
+    datas with its manifest data also.
+    """
+    monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
+
+    path = media_sample / "ping/pong/SampleVideo_720x480_1mb.mkv"
+
+    collector = NewCollector(media_sample, autoload_manifests=True)
+
+    data = collector.scan_file(path)
+
+    assert isinstance(data, MediaInformation)
+    assert isinstance(data.manifest, MovieManifest)
+
+    # import json
+    # print(data.as_json())
+    assert data.as_dict(preserve=True) == {
+        "path": path,
+        "size": 1050238,
+        "mtime": "1977-06-02T07:35:15",
+        "name": "SampleVideo_720x480_1mb.mkv",
+        "absolute_dir": media_sample / "ping/pong",
+        "relative_dir": Path("ping/pong"),
+        "manifest": {
+            "path": media_sample / "ping/pong/SampleVideo_720x480_1mb.json",
+            "tmdb_id": None,
+            "tmdb_type": "movie",
+            "locked": False,
+            "title": "Sample 720x480 1mb JSON",
+            "overview": None,
+            "status": None,
+            "original_language": None,
+            "cover": None,
+            "casting": [],
+            "crew": [],
+            "genres": [],
+            "release_date": ""
+        },
+        "name_alt": "pong",
+        "extension": "mkv",
+        "container": "Matroska"
+    }

@@ -107,37 +107,6 @@ def test_storage_set_basepath_blake2b():
     assert len(hashid) == 20
 
 
-@freeze_time("2012-10-15 10:00:00")
-def test_storage_get_directory_asset(monkeypatch, media_sample):
-    """
-    Asset should be found from given path when it matches allowed asset filenames.
-    """
-    monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
-    monkeypatch.setattr(hashlib, "blake2b", dummy_blake2b)
-
-    basepath = media_sample / "dump.json"
-
-    # Predicted name since we use freeze_time and no checksum
-    storage_assets = Path("dump_20121015T100000")
-
-    # No allowed filename can be found from given path
-    storage = AssetStorage(basepath)
-    assert storage.get_directory_asset(
-        media_sample,
-        ["cover.jpg"],
-    ) is None
-
-    # An allowed filename have been found from given path
-    storage = AssetStorage(basepath)
-    assert storage.get_directory_asset(
-        media_sample,
-        ["cover.jpg", "cover.png"],
-    ) == (
-        media_sample / "cover.png",
-        storage_assets / "dummy_uuid4.png",
-    )
-
-
 def test_storage_store_assets(monkeypatch, media_sample):
     """
     Storage should correctly store asset files

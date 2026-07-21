@@ -1,9 +1,11 @@
 import datetime
+import json
 from shutil import disk_usage
 
 from ..conf import settings
 from ..exceptions import CollectorError
 from ..models import (
+    Asset,
     DirectoryInformation,
     MediaInformation,
     CollectionManifest,
@@ -13,7 +15,8 @@ from ..models import (
 from ..renamer.printer import PrinterInterface
 from ..utils.jsons import ExtendedJsonEncoder
 from ..utils.checksum import ChecksumOperator
-from .storage import AssetStorage
+from .new_storage import NewAssetStorage
+
 
 class NewCollector(PrinterInterface):
     """
@@ -44,43 +47,49 @@ class NewCollector(PrinterInterface):
             cover files.
         cover_extensions (list): Cover file extensions (with leading dot) used to
             search for cover files.
+        autoload_manifests (bool): If enabled, the manifest are discovered and used
+            to collect additional data from directories or files.
         allow_media_cover (bool): If False, cover files will be ignored from dump.
             By default this is True and so covers are managed and dumped.
+            Deprecated, since cover is now enabled from non empty 'cover_extensions'
+            which is passed to manifest discovering.
     """
     def __init__(self, basepath, extensions=None, allow_empty_dir=False,
                  manifest=None, cover_name=None,
-                 cover_extensions=None, allow_media_cover=True):
+                 cover_extensions=None, allow_media_cover=True,
+                 autoload_manifests=False):
         super().__init__()
 
         self.checksum_op = ChecksumOperator()
         self.basepath = basepath
         self.extensions = extensions or settings.medias_extensions
         self.allow_empty_dir = allow_empty_dir
+        self.cover_extensions = cover_extensions or settings.cover_extensions
+        self.autoload_manifests = autoload_manifests
+        # Everything below is DEPRECATED
+        self.file_storage_queue = []
+        self.allow_media_cover = allow_media_cover
         self.manifest_filename = manifest or settings.manifest_filename
         self.cover_name = cover_name or settings.cover_name
-        self.cover_extensions = cover_extensions or settings.cover_extensions
-        self.allow_media_cover = allow_media_cover
-        self.file_storage_queue = []
-
         # Build elligible file names for cover from cover base file name and enabled
         # cover extensions
         self.cover_files = [
             self.cover_name + item
             for item in self.cover_extensions
         ]
+        #/ End of deprecation block
 
         self.reset()
 
     def reset(self):
         """
-        Reset registry and global states.
+        Reset registry, global states and initialize blank storage.
 
         This is the method to use if you plan to make multiple usage of ``run`` or
         ``scan_directory`` for different basepath since registry and global states are
         cumulative.
         """
-        self.storage = AssetStorage(allowed_cover_filenames=self.cover_files)
-        self.file_storage_queue = []
+        self.storage = NewAssetStorage(allowed_cover_filenames=self.cover_files)
 
         self.registry = {}
         self.stats = {
@@ -106,48 +115,30 @@ class NewCollector(PrinterInterface):
             tz=datetime.timezone.utc
         ).isoformat(timespec="seconds")
 
-    def _process_file_fields(self, fields, data):
+    def scan_basepath_device(self, path):
         """
-        Process field fields
+        Collect basepath device information.
 
-        File field are collected as a tuple with file source path and destination path
-        but only the destination path will be stored. The source path will just be
-        used to copy the file source to its destination.
-
-        Copying source file to destination is done through a queue to be performed
-        after the end of collection.
-
-        At this stage, we don't validate if a file item exist or not, since it has
-        already be done during collection.
-
-        Returns:
-            dict: Given data possibly patched on file fields. Patch fields are
-                transformed to just keep the final file path (not the original one).
-        """
-        for field in fields:
-            if data.get(field):
-                source, destination = data.get(field)
-                self.file_storage_queue.append((source, destination))
-                data[field] = destination
-
-        return data
-
-    def store(self, data):
-        """
-        Store given directory data.
+        .. Note:
+            This only compute information for the device which basepath belong to, this
+            does not compute the basepath information itself.
 
         Arguments:
-            data (dict): The data payload to store. It must have at least a ``path``
-                item which will be used as the item key in the store.
+            path (pathlib.Path): Path to use to get the device to scan.
 
         Returns:
-            string: Item key name used to store the data.
+            dict: A dictionnary of device informations (total size, used size,
+            free space size and occupancy percentage).
         """
-        key = str(data["path"].relative_to(self.basepath))
+        path = path.resolve()
+        stats = disk_usage(path)
 
-        self.registry[key] = self._process_file_fields(["cover"], data)
-
-        return key
+        return {
+            "total": stats.total,
+            "used": stats.used,
+            "free": stats.free,
+            "percentage": (stats.used / stats.total) * 100,
+        }
 
     def scan_file(self, path):
         """
@@ -164,34 +155,150 @@ class NewCollector(PrinterInterface):
         # Get file stats informations
         stats = path.stat()
 
-        relative_dir = path.parent.relative_to(self.basepath)
-
-        dirname = path.parent.name
-        # Prefer empty dirname instead of basepath dirname when file is at basepath
-        # root
-        if dirname == self.basepath.name:
-            dirname = ""
-
-        # Remove leading dot
-        extension = path.suffix[1:].lower()
-        # Get the media container label from file extension
-        container = settings.default_container_name
-        if extension in settings.medias_containers:
-            container = settings.medias_containers[extension]
-
-        data = {
-            "path": path,
-            "name": path.name,
-            "absolute_dir": path.parents[0],
-            "relative_dir": relative_dir,
-            "directory": dirname,
-            "extension": extension,
-            "container": container,
-            "size": stats.st_size,
-            "mtime": self.timestamp_to_isoformat(stats.st_mtime),
-        }
+        data = MediaInformation(
+            path=path,
+            basepath=self.basepath,
+            size=stats.st_size,
+            mtime=self.timestamp_to_isoformat(stats.st_mtime),
+            autoload=self.autoload_manifests,
+            cover_extensions=self.cover_extensions,
+        )
 
         self.stats["files"] += 1
-        self.stats["size"] += data["size"]
+        self.stats["size"] += data.size
 
         return data
+
+    def scan_directory(self, path, parent=None, checksum=False):
+        """
+        Scan a directory to get its media files.
+
+        NOTE: Now a directory can have a parent so it should be passed as 'parent'
+        argument
+
+        Arguments:
+            path (pathlib.Path): Directory to scan for informations, for direct children
+                files and to recursively search for children directories.
+
+        Keyword Arguments:
+            parent (DirectoryInformation): The parent directory model object.
+            checksum (boolean): Whether to enable directory checksums or not. Default
+                to False, no checksum are done.
+
+        Raises:
+            CollectorError: If given path is not a directory inside
+                basepath directory.
+
+        Returns:
+            dict: Directory information payload.
+        """
+        self.log_debug("Scanning {}".format(str(path)))
+
+        try:
+            relative_dir = path.relative_to(self.basepath)
+        except ValueError:
+            msg = "You cannot scan a directory which is out of given basepath: {}"
+            raise CollectorError(msg.format(str(self.basepath)))
+
+        # Get directory stats informations
+        stats = path.stat()
+
+        data = DirectoryInformation(
+            path=path,
+            basepath=self.basepath,
+            size=stats.st_size,
+            mtime=self.timestamp_to_isoformat(stats.st_mtime),
+            autoload=self.autoload_manifests,
+            cover_extensions=self.cover_extensions,
+        )
+
+        # Attach directory to its possible parent
+        # NOTE: This is actually useless, directories attribute is not used from collect
+        #if parent:
+            #parent.set_directories([data])
+
+        # Process all possible children
+        for child_path in path.iterdir():
+            if child_path.is_dir():
+                self.scan_directory(child_path, parent=data, checksum=checksum)
+            else:
+                # Attach file to its parent directory
+                if (
+                    child_path.suffix
+                    and child_path.suffix.lower()[1:] in self.extensions
+                ):
+                    data.set_medias([self.scan_file(child_path)])
+
+        # Only append directory datas if there is at least one file or empty dir is
+        # allowed
+        if self.allow_empty_dir or len(data.medias) > 0:
+            self.stats["directories"] += 1
+            self.stats["size"] += data.size
+
+            # Perform content checksum if enabled
+            if checksum:
+                # Add file checksums
+                self.checksum_op.payload_files(
+                    data,
+                    files_fields=["cover"],
+                    storage=self.storage.storage_path,
+                )
+                # Then build directory info checksum
+                data.checksum = self.checksum_op.directory_payload(
+                    data,
+                    files_fields=["cover"],
+                    storage=self.storage.storage_path,
+                )
+
+            # Store collected data
+            key = str(data.path.relative_to(self.basepath))
+            self.registry[key] = data
+
+            if getattr(data, "manifest"):
+                for field in ["cover"]:
+                    value = getattr(getattr(data, "manifest"), field)
+                    if value:
+                        self.storage.queue.append(value)
+
+        return data
+
+    def run(self, destination=None, checksum=False):
+        """
+        Recursively scan everything from basepath to produce a registry of collected
+        informations.
+
+        Keyword Arguments:
+            destination (pathlib.Path): Destination path to write a JSON file with
+                every collected informations. Default is ``None`` so no JSON dump
+                file will be written to the filesystem.
+            checksum (boolean): Whether to enable directory checksums or not. Default
+                to False, no checksum are done.
+
+        Returns:
+            dict: Dictionnary of global states for collected directories and files.
+        """
+        # Set storage basepath from destination location
+        self.storage.set_basepath(destination, checksum=checksum)
+
+        device_stats = self.scan_basepath_device(self.basepath)
+        self.scan_directory(self.basepath, checksum=checksum)
+
+        if self.registry and destination:
+            with destination.open("w") as fp:
+                json.dump(
+                    {
+                        "device": device_stats,
+                        "registry": self.registry,
+                    },
+                    fp,
+                    indent=4,
+                    cls=ExtendedJsonEncoder
+                )
+                self.log_info("Registry saved to: {}".format(str(destination)))
+
+            # Proceed to copy queued files into storage dir
+            container, stored = self.storage.store()
+            if container:
+                self.stats["asset_storage"] = container
+
+        return self.stats

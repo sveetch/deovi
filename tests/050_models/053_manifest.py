@@ -1,8 +1,98 @@
+"""
+Movies
+======
+
+Assume the same filename without extension, implies you can not have
+same filename for different media: foo.mp4 + foo.mkv => foo.[json|jpg] (collision)
+
+    .
+    └── movies/
+        ├── the-pit.mp4
+        ├── the-pit.json
+        └── the-pit.jpg
+
+Optionnaly allows to push cover/manifest in a sub directory.
+
+    .
+    └── movies/
+        ├── covers/
+        │   ├── ...
+        │   └── the-pit.jpg
+        ├── manifests/
+        │   ├── ...
+        │   └── the-pit.json
+        ├── ...
+        └── the-pit.mp4
+
+'covers' and 'manifests' dir name would be an option, basically from settings and CLI
+arg overrider ?
+
+Collection
+==========
+
+Created structure in test: ::
+
+    .
+    └── saga_starworse/
+        ├── the-first-nope.mp4
+        └── cover.jpg
+
+Sample has no JSON manifest file created, the proper process could not succeed.
+
+Proposals
+*********
+
+Collection itself manifest and cover must keep normalized filename.
+
+Or: ::
+
+    .
+    └── saga_starworse/
+        ├── covers/
+        │   ├── cover.jpg
+        │   └── the-first-nope.jpg
+        ├── manifests/
+        │   ├── manifest.json
+        │   └── the-first-nope.json
+        └── the-first-nope.mp4
+
+Serie
+=====
+
+Created structure in test: ::
+
+    .
+    └── the_outer_limits/
+        └── cover.jpg
+
+Sample has no JSON manifest file created, the proper process could not succeed.
+
+Serie has no mediafile but it is not required at this level (only from
+BaseInformation).
+
+Proposals
+*********
+
+Serie itself manifest and cover must keep normalized filename.
+
+
+Or: ::
+
+    .
+    └── the_outer_limits/
+        ├── covers/
+        │   └── cover.jpg
+        ├── manifests/
+        │   └── manifest.json
+        └── ...
+
+"""
+
 from pathlib import Path
 
 from freezegun import freeze_time
 
-from deovi.models import CollectionManifest, MovieManifest, SerieManifest
+from deovi.models import Asset, CollectionManifest, MovieManifest, SerieManifest
 
 from tests.utils import (
     SAMPLE_MOVIE_PAYLOAD,
@@ -11,51 +101,136 @@ from tests.utils import (
 
 
 @freeze_time("2012-10-15 10:00:00.001007")
-def test_serie_creation():
-    """
-    Basic creation of a Tv show manifest using the sample payload.
-    """
-    the_outer_limits = SerieManifest(
-        Path("/series/the_outer_limits"),
-        **SAMPLE_TV_PAYLOAD,
-    )
-
-    assert the_outer_limits.tmdb_id == "21567"
-    assert the_outer_limits.tmdb_type == "tv"
-    assert the_outer_limits.title == "The Outer Limits"
-
-
-@freeze_time("2012-10-15 10:00:00.001007")
-def test_movie_creation():
+def test_movie_creation(tmp_path):
     """
     Basic creation of a Movie manifest using the sample payload.
-    """
-    the_pit = MovieManifest(
-        Path("/movies/the-pit-and-the-pendulum.mp4"),
-        **SAMPLE_MOVIE_PAYLOAD,
-    )
 
+    Possible cover is expected to be a file aside of the movie file with the same
+    filename (without extension).
+
+    .
+    └── movies/
+        ├── the-pit.mp4
+        ├── the-pit.json
+        └── the-pit.jpg
+    """
+    directory_path = tmp_path / "movies"
+    directory_path.mkdir()
+
+    # Create a dummy manifest file
+    manifest_path = directory_path / "the-pit.json"
+    manifest_path.write_text("dummy manifest the-pit.json")
+
+    # Create a dummy movie file
+    movie_path = directory_path / "the-pit.mp4"
+    movie_path.write_text("dummy the-pit.mp4")
+
+    # Create a dummy cover
+    cover = directory_path / "the-pit.jpg"
+    cover.write_text("dummy the-pit.jpg")
+
+    # Basic definition with payload and without cover
+    the_pit = MovieManifest(manifest_path, **SAMPLE_MOVIE_PAYLOAD)
     assert the_pit.tmdb_id == "273204"
     assert the_pit.tmdb_type == "movie"
     assert the_pit.title == "The Pit and the Pendulum"
 
+    # Cover enabled but not matching the existing one
+    the_pit = MovieManifest(manifest_path, cover_extensions=(".png",))
+    assert the_pit.cover is None
+
+    # With existing cover matching allowed extensions
+    the_pit = MovieManifest(manifest_path, cover_extensions=(".jpg",))
+    assert isinstance(the_pit.cover, Asset) is True
+    assert the_pit.cover.source == cover
+    assert the_pit.cover.destination.suffix == ".jpg"
+
 
 @freeze_time("2012-10-15 10:00:00.001007")
-def test_collection_creation():
+def test_collection_creation(tmp_path):
     """
     Basic creation of a Collection manifest.
+
+    Possible cover is expected to be a file in the collection directory.
+
+    .
+    └── saga_starworse/
+        ├── cover.jpg
+        ├── manifest.json
+        ├── the-first-nope.mp4
+        ├── the-first-nope.json
+        └── the-first-nope.jpg
     """
-    first_hope = MovieManifest(
-        Path("/movies/the-first-hope.mp4"),
-        **SAMPLE_MOVIE_PAYLOAD,
-    )
+    collection_path = tmp_path / "saga_starworse"
+    collection_path.mkdir()
 
-    starwors = CollectionManifest(
-        Path("/movies/starwors"),
-        movies=[first_hope],
-    )
+    # here the manifest file itself do not need to exists on FS
+    manifest_path = collection_path / "manifest.json"
 
-    assert starwors.tmdb_id is None
-    assert starwors.tmdb_type == "collection"
-    assert starwors.title == "starwors"
-    assert first_hope.parent == starwors
+    # Create a dummy collection cover
+    cover = collection_path / "cover.jpg"
+    cover.write_text("dummy collection cover.jpg")
+
+    # Create a dummy movie in collection dir
+    movie_path = collection_path / "the-first-nope.mp4"
+    movie_path.write_text("dummy the-first-nope.mp4")
+    first_nope = MovieManifest(movie_path)
+
+    # Basic definition with payload and without cover
+    starworse = CollectionManifest(manifest_path, movies=[first_nope])
+    assert starworse.tmdb_id is None
+    assert starworse.tmdb_type == "collection"
+    assert starworse.title == "manifest.json"
+    assert starworse.cover is None
+    assert first_nope.parent == starworse
+
+    # Cover enabled but not matching the existing one
+    starworse = SerieManifest(manifest_path, cover_extensions=(".png",))
+    assert starworse.cover is None
+
+    # With existing cover matching allowed extensions
+    starworse = SerieManifest(manifest_path, cover_extensions=(".jpg",))
+    assert isinstance(starworse.cover, Asset) is True
+    assert starworse.cover.source == cover
+    assert starworse.cover.destination.suffix == ".jpg"
+
+
+@freeze_time("2012-10-15 10:00:00.001007")
+def test_serie_creation(tmp_path):
+    """
+    Basic creation of a Tv show manifest using the sample payload.
+
+    Possible cover is expected to be a file in the serie directory.
+
+    .
+    └── the_outer_limits/
+        ├── ...
+        ├── manifest.json
+        └── cover.jpg
+    """
+    serie_path = tmp_path / "the_outer_limits"
+    serie_path.mkdir()
+
+    # here the manifest file itself do not need to exists on FS
+    manifest_path = serie_path / "manifest.json"
+
+    # Create a dummy serie cover
+    cover = serie_path / "cover.jpg"
+    cover.write_text("dummy serie cover.jpg")
+
+    # Basic definition with payload and without cover
+    the_outer_limits = SerieManifest(manifest_path, **SAMPLE_TV_PAYLOAD)
+    assert the_outer_limits.tmdb_id == "21567"
+    assert the_outer_limits.tmdb_type == "tv"
+    assert the_outer_limits.title == "The Outer Limits"
+    assert the_outer_limits.cover is None
+
+    # Cover enabled but not matching the existing one
+    the_outer_limits = SerieManifest(manifest_path, cover_extensions=(".png",))
+    assert the_outer_limits.cover is None
+
+    # With existing cover matching allowed extensions
+    the_outer_limits = SerieManifest(manifest_path, cover_extensions=(".jpg",))
+    assert isinstance(the_outer_limits.cover, Asset) is True
+    assert the_outer_limits.cover.source == cover
+    assert the_outer_limits.cover.destination.suffix == ".jpg"

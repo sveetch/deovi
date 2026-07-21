@@ -42,8 +42,6 @@ def test_scrapper_init(settings):
     """
     scrapper = TmdbScrapper(settings.tmdbapi_key())
 
-    print(scrapper.secure_base_url)
-
     # Quickly check base url is a proper URL
     assert scrapper.secure_base_url.startswith("https://")
     assert scrapper.secure_base_url.endswith("/")
@@ -125,6 +123,4 @@ def test_scrapper_fetch_movie(tmp_path, settings):
     assert manifest_path.exists()
 
     manifest = yaml.load(manifest_path.read_text(), Loader=yaml.FullLoader)
-    import json
-    print(json.dumps(manifest, indent=4))
     assert manifest == SAMPLE_MOVIE_PAYLOAD
