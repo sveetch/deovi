@@ -130,7 +130,7 @@ test:
 	@echo ""
 	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Running Tests <---$(FORMATRESET)\n"
 	@echo ""
-	$(PYTEST) -vv tests/
+	$(PYTEST) tests/
 .PHONY: test
 
 freeze-dependencies:

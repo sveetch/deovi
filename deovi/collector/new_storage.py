@@ -79,12 +79,12 @@ class NewAssetStorage(PrinterInterface):
 
         Keyword Arguments:
             checksum (boolean): Whether to enable checksum or not. Default
-                to False, asset storage paths won't any checksum included in its
+                to False, assets storage path won't include any checksum in its
                 name.
 
         Returns:
             pathlib.Path: A filename composed from the filepath filename (without dirs
-            or extension) and a computed unique hash.
+            or extension) and possibly a computed unique hash.
         """
         if not filepath or str(filepath) == ".":
             filepath = Path(self.DEFAULT_BASE_PATH)
@@ -124,7 +124,7 @@ class NewAssetStorage(PrinterInterface):
                 container.mkdir(parents=True, exist_ok=True)
 
             for asset in self.queue:
-                # TODO:
+                # NOTE:
                 # We may patch the destination value with the full relative path
                 # but conditionnally so we dont add relative path to relative path
                 # (alike when the Asset has already be processed before)

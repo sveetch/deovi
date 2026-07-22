@@ -106,10 +106,12 @@ def test_collector_run_manifest(monkeypatch, media_sample):
 
     # Expected item directories with a cover from manifest
     assert root["manifest"]["cover"] == {
+        "checksum": None,
         "source": str(media_sample / "cover.png"),
         "destination": "dummy_uuid4.png",
     }
     assert pong["manifest"]["cover"] == {
+        "checksum": None,
         "source": str(media_sample / "ping/pong/cover.gif"),
         "destination": "dummy_uuid4.gif",
     }
@@ -121,9 +123,14 @@ def test_collector_run_checksum(monkeypatch, media_sample):
     a field file checksum. Also, the directories checksum should be identical for two
     run on the same unchanged content.
 
-    TODO:
+    TODO: We moved the checksum computation to models, lets stabilize them in their own
+    test before continuing here.
     """
     monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    ## Use the right precise mockups for the right content behaviors
+    ## Useless ?
+    #monkeypatch.setattr(ChecksumOperator, "file", dummy_checksumoperator_filepath)
+    #monkeypatch.setattr(ChecksumOperator, "filepath", dummy_checksumoperator_filepath)
 
     dump_destination = media_sample / "dump.json"
 

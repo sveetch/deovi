@@ -237,7 +237,7 @@ class NewCollector(PrinterInterface):
 
             # Perform content checksum if enabled
             if checksum:
-                # Add file checksums
+                # Add all file checksums
                 self.checksum_op.payload_files(
                     data,
                     files_fields=["cover"],

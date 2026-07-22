@@ -5,7 +5,6 @@ from pathlib import Path
 from dataclasses import (
     dataclass,
     field as dataclasses_field,
-    fields as dataclasses_fields,
     InitVar,
 )
 from typing import Any, ClassVar, Union
@@ -18,12 +17,14 @@ from ..exceptions import InformationModelError
 from ..utils.jsons import ExtendedJsonEncoder
 from .. import __pkgname__
 
+from .abstracts import ChecksumAbstract, ExportAbstract
+
 
 LOGGER = logging.getLogger(__pkgname__)
 
 
 @dataclass
-class BaseInformation:
+class BaseInformation(ChecksumAbstract, ExportAbstract):
     """
     Base model for information models.
 
@@ -72,12 +73,14 @@ class BaseInformation:
             Eg: For ``/foo/bar/home/`` the basepath would be ``/foo/bar/`` and ``home/``
             the relative directory.
         manifest (Object): todo (to carry tmdb infos)
+        checksum (str): Checksum (this is expected to be a long blake2b string).
         autoload (bool): If enabled the model will try to discover and load a manifest
             file related to this object. This is disabled on default. Each model kind
             has its own way to discover a manifest.
         basepath (pathlib.Path): The basepath of this directory
     """
     EXPORT_PRIVATES: ClassVar[list[str]] = ["parent"]
+    CHECKSUM_FIELD: ClassVar[str] = "path"
     basepath: InitVar[Path]
     path: Path
     size: int
@@ -87,10 +90,12 @@ class BaseInformation:
     absolute_dir: Path = None
     relative_dir: Path = None
     manifest: Any = None
+    checksum: str = None
     autoload: InitVar[bool] = False
+    autochecksum: InitVar[bool] = False
     cover_extensions: InitVar[list] = None
 
-    def __post_init__(self, basepath, autoload, cover_extensions):
+    def __post_init__(self, basepath, autoload, autochecksum, cover_extensions):
         if not self.name:
             self.name = self.path.name
 
@@ -102,6 +107,9 @@ class BaseInformation:
 
         if autoload and not self.manifest:
             self.manifest = self.discover_manifest(cover_extensions)
+
+        if autochecksum:
+            self.set_checksum()
 
     def compute_relative_dir(self, path, basepath):
         """
@@ -124,49 +132,6 @@ class BaseInformation:
             raise InformationModelError(msg.format(basepath))
 
         return relative_dir
-
-    def as_dict(self, preserve=False):
-        """
-        A safe way to convert to a dict without recursion issues.
-
-        Preservation only works with model objects which implement ``as_dict``. For
-        example a list of MediaInformation objects won't be preserved since the list
-        does not have ``as_dict`` and so the option can not be passed to the objects.
-
-        If it is required to get only Python builtin types, you may prefer to use
-        JSON load: ::
-
-            import json
-            json.loads(OBJECT.as_json())
-
-        Keyword Arguments:
-            preserve (bool): If enabled all values which have the method ``as_dict()``
-                will use it instead of returning their object. This is almost only
-                implemented internally in Deovi models so you can get an output of
-                ``as_dict()`` only with Python builtin types.
-
-        Returns:
-            dict: This model object attribute serialized in a dictionnary, items named
-                after one of names from EXPORT_PRIVATES won't be in the output.
-        """
-        return {
-            f.name: (
-                getattr(self, f.name).as_dict(preserve=preserve)
-                if preserve is True and hasattr(getattr(self, f.name), "as_dict")
-                else getattr(self, f.name)
-            )
-            for f in dataclasses_fields(self)
-            if f.name not in self.EXPORT_PRIVATES
-        }
-
-    def as_json(self):
-        """
-        Returns the output of ``as_dict()`` in a JSON string.
-
-        We don't implement the ``preserve`` option since an extended JSON encoder is
-        used that already serialize custom object (at least for the ones it knows).
-        """
-        return json.dumps(self.as_dict(), indent=4, cls=ExtendedJsonEncoder)
 
     def discover_manifest(self, cover_extensions=None):
         """
@@ -314,22 +279,35 @@ class DirectoryInformation(BaseInformation):
         expose the data that will be computed by Deovi.
 
     Keyword Arguments:
-        checksum (str): Required checksum (long blake2b string).
         directories (list): List of DirectoryInformation objects that belong to this
             directory object.
         medias (list): List of MediaInformation objects that belong to this
             directory object.
     """
-    checksum: str = None
     directories: list[Any] = dataclasses_field(default_factory=list)
     medias: list[Any] = dataclasses_field(default_factory=list)
 
-    def __post_init__(self, basepath, autoload, cover_extensions):
-        super().__post_init__(basepath, autoload, cover_extensions)
+    def __post_init__(self, basepath, autoload, autochecksum, cover_extensions):
+        super().__post_init__(basepath, autoload, autochecksum, cover_extensions)
 
         # Automatically link sub objects relations
         self.set_medias(self.medias, from_init=True)
         self.set_directories(self.directories, from_init=True)
+
+    def set_checksum(self):
+        """
+        Directory checksum is a computation of its field values.
+        Build the checksum of the file content and set it onto object attribute.
+
+        TODO:
+            The JSON payload need to convert Asset to source string, clean manifest ?
+            clean media files ? ignore parent ? etc..
+
+            We need to ensure this is working well in model test.
+        """
+        self.checksum = self.get_content_checksum(self.as_json())
+
+        return self.checksum
 
     def can_be_scrapped(self):
         """
@@ -439,8 +417,8 @@ class MediaInformation(BaseInformation):
     extension: str = None
     container: str = None
 
-    def __post_init__(self, basepath, autoload, cover_extensions):
-        super().__post_init__(basepath, autoload, cover_extensions)
+    def __post_init__(self, basepath, autoload, autochecksum, cover_extensions):
+        super().__post_init__(basepath, autoload, autochecksum, cover_extensions)
 
         if not self.name_alt:
             self.name_alt = (
@@ -493,4 +471,8 @@ class MediaInformation(BaseInformation):
             discovered_path = self.path.with_suffix(".yaml")
             data = self.get_yaml_manifest(discovered_path)
 
-        return self.load_manifest(discovered_path, data, cover_extensions=cover_extensions)
+        return self.load_manifest(
+            discovered_path,
+            data,
+            cover_extensions=cover_extensions
+        )

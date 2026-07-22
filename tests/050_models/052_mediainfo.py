@@ -16,6 +16,7 @@ def test_creation():
         path=Path("/home/cities/duckcity/picsou.mp4"),
         basepath=Path("/home/cities/duckcity"),
         size=42,
+        checksum="plop",
         mtime=datetime.datetime.now(),
     )
 
@@ -27,6 +28,7 @@ def test_creation():
         "absolute_dir": "/home/cities/duckcity",
         "relative_dir": ".",
         "manifest": None,
+        "checksum": "plop",
         "container": "MPEG-4",
         "name_alt": "",
         "extension": "mp4",

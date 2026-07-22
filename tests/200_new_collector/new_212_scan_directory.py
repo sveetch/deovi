@@ -116,6 +116,7 @@ def test_no_autoload(monkeypatch, tmp_path):
                 "absolute_dir": str(serie_path),
                 "relative_dir": "the_outer_limits",
                 "manifest": None,
+                "checksum": None,
                 "name_alt": "the_outer_limits",
                 "extension": "mkv",
                 "container": "Matroska"
@@ -155,6 +156,7 @@ def test_with_cover_and_mediafile(monkeypatch, media_sample):
             "status": None,
             "original_language": None,
             "cover": {
+                "checksum": None,
                 "source": str(media_sample / "ping/pong/cover.gif"),
                 "destination": "dummy_uuid4.gif"
             },
@@ -192,6 +194,7 @@ def test_with_cover_and_mediafile(monkeypatch, media_sample):
                     "genres": [],
                     "release_date": ""
                 },
+                "checksum": None,
                 "name_alt": "pong",
                 "extension": "mkv",
                 "container": "Matroska"
@@ -204,6 +207,7 @@ def test_with_cover_and_mediafile(monkeypatch, media_sample):
                 "absolute_dir": str(media_sample / "ping/pong"),
                 "relative_dir": "ping/pong",
                 "manifest": None,
+                "checksum": None,
                 "name_alt": "pong",
                 "extension": "mkv",
                 "container": "Matroska"

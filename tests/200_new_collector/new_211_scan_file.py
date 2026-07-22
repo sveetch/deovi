@@ -28,6 +28,7 @@ from deovi.models import (
             "size": 1052413,
             "mtime": DUMMY_ISO_DATETIME,
             "manifest":  None,
+            "checksum":  None,
         },
     ),
     (
@@ -43,6 +44,7 @@ from deovi.models import (
             "size": 1057149,
             "mtime": DUMMY_ISO_DATETIME,
             "manifest":  None,
+            "checksum":  None,
         },
     ),
     (
@@ -58,6 +60,7 @@ from deovi.models import (
             "size": 1038741,
             "mtime": DUMMY_ISO_DATETIME,
             "manifest":  None,
+            "checksum":  None,
         },
     ),
 ])
@@ -122,6 +125,7 @@ def test_collector_scan_file_manifest(monkeypatch, media_sample):
             "genres": [],
             "release_date": ""
         },
+        "checksum":  None,
         "name_alt": "pong",
         "extension": "mkv",
         "container": "Matroska"

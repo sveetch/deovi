@@ -121,6 +121,7 @@ def test_set_medias():
                 "absolute_dir": "/home/cities/duckcity",
                 "relative_dir": ".",
                 "manifest": None,
+                "checksum": None,
                 "name_alt": "",
                 "extension": "mp4",
                 "container": "MPEG-4"
@@ -149,6 +150,7 @@ def test_set_medias():
                 "absolute_dir": "/home/cities/duckcity",
                 "relative_dir": ".",
                 "manifest": None,
+                "checksum": None,
                 "name_alt": "",
                 "extension": "mp4",
                 "container": "MPEG-4"
@@ -161,6 +163,7 @@ def test_set_medias():
                 "absolute_dir": "/home/cities/duckcity",
                 "relative_dir": ".",
                 "manifest": None,
+                "checksum": None,
                 "name_alt": "",
                 "extension": "mp4",
                 "container": "MPEG-4"
