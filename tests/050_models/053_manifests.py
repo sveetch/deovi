@@ -2,7 +2,6 @@ import uuid
 from pathlib import Path
 
 from freezegun import freeze_time
-from freezegun.api import FakeDatetime
 
 from deovi.models import Asset, CollectionManifest, MovieManifest, SerieManifest
 from deovi.utils.tests import dummy_uuid4
@@ -152,6 +151,7 @@ def test_collection_creation(monkeypatch, tmp_path):
         "tmdb_id": None,
         "tmdb_type": "collection",
     }
+
 
 @freeze_time("2012-10-15 10:00:00.001007")
 def test_serie_creation(monkeypatch, tmp_path):

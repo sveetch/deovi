@@ -6,11 +6,8 @@ import pytest
 
 from deovi.collector.new_collect import NewCollector
 from deovi.exceptions import CollectorError
-from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_uuid4
-from deovi.models import (
-    DirectoryInformation,
-    MediaInformation,
-)
+from deovi.utils.tests import timestamp_to_isoformat, dummy_uuid4
+from deovi.models import DirectoryInformation
 
 
 def test_outofbasepath(media_sample):
@@ -189,7 +186,9 @@ def test_with_cover_and_mediafile(monkeypatch, media_sample):
                     "original_language": None,
                     "cover": {
                         "checksum": None,
-                        "source": str(media_sample / "ping/pong/SampleVideo_720x480_1mb.jpg"),
+                        "source": str(
+                            media_sample / "ping/pong/SampleVideo_720x480_1mb.jpg"
+                        ),
                         "destination": "dummy_uuid4.jpg"
                     },
                     "casting": [],

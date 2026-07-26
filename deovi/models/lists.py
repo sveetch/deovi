@@ -1,4 +1,8 @@
+import json
+
 from collections import UserList
+
+from ..utils.jsons import ExtendedJsonEncoder
 
 
 class SerializableList(UserList):

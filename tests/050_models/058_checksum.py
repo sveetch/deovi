@@ -1,20 +1,11 @@
 import datetime
-import json
-import logging
 import uuid
 from pathlib import Path
 
 from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 
-from deovi import __pkgname__
-from deovi.models import (
-    DirectoryInformation,
-    MediaInformation,
-    CollectionManifest,
-    MovieManifest,
-    SerieManifest,
-)
+from deovi.models import DirectoryInformation, MediaInformation
 from deovi.utils.tests import dummy_uuid4
 
 
@@ -26,7 +17,6 @@ def test_checksum(settings, monkeypatch):
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
 
     media_sample = settings.datas_path / "media_sample"
-    ping = media_sample / "ping"
     pong = media_sample / "ping/pong"
 
     movie_path = pong / "SampleVideo_720x480_1mb.mkv"
@@ -101,7 +91,9 @@ def test_checksum(settings, monkeypatch):
                             "6cdf1e2f36534195"
                         ),
                         "destination": Path("dummy_uuid4.jpg"),
-                        "source": media_sample / "ping/pong/SampleVideo_720x480_1mb.jpg",
+                        "source": (
+                            media_sample / "ping/pong/SampleVideo_720x480_1mb.jpg"
+                        ),
                     },
                     "crew": [],
                     "genres": [],

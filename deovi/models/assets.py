@@ -5,9 +5,8 @@ from dataclasses import (
     dataclass,
     InitVar,
 )
-from typing import Any, ClassVar
+from typing import ClassVar
 
-from ..conf import settings
 from .. import __pkgname__
 
 from .abstracts import ChecksumAbstract, ExportAbstract

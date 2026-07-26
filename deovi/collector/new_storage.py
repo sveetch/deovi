@@ -1,9 +1,9 @@
 import datetime
 import shutil
-import uuid
 from pathlib import Path
 
 from ..renamer.printer import PrinterInterface
+# DEPRECATED in favor of functions
 from ..utils.checksum import ChecksumOperator
 
 
@@ -26,7 +26,7 @@ class NewAssetStorage(PrinterInterface):
     # Name used when given basepath is an empty Path
     DEFAULT_BASE_PATH = "attachment"
 
-    def __init__(self, basepath=None, checksum=False, allowed_cover_filenames=None):
+    def __init__(self, basepath=None, checksum=False):
         super().__init__()
 
         self.queue = []

@@ -1,11 +1,7 @@
 import datetime
-import json
 import logging
-import uuid
-from pathlib import Path
 
 from freezegun import freeze_time
-from freezegun.api import FakeDatetime
 
 from deovi import __pkgname__
 from deovi.models import (
@@ -15,7 +11,6 @@ from deovi.models import (
     MovieManifest,
     SerieManifest,
 )
-from deovi.utils.tests import dummy_uuid4
 
 
 @freeze_time("2012-10-15 10:00:00.001007")

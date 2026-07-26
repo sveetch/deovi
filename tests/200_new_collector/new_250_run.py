@@ -6,13 +6,9 @@ from freezegun import freeze_time
 
 from deovi.collector.new_collect import NewCollector
 from deovi.utils.tests import (
-    DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_uuid4,
-    dummy_checksumoperator_filepath,
+    timestamp_to_isoformat, dummy_uuid4,
 )
-from deovi.models import (
-    DirectoryInformation,
-    MediaInformation,
-)
+from deovi.models import DirectoryInformation
 
 
 def test_collector_run_basic(monkeypatch, media_sample):
@@ -26,10 +22,10 @@ def test_collector_run_basic(monkeypatch, media_sample):
     collector = NewCollector(media_sample, extensions=["mkv"], autoload_manifests=True)
     stats = collector.run()
 
-    payload = {
-        key: json.loads(dictinfos.as_json())
-        for key, dictinfos in collector.registry.items()
-    }
+    # payload = {
+    #     key: json.loads(dictinfos.as_json())
+    #     for key, dictinfos in collector.registry.items()
+    # }
     # print(json.dumps(payload, indent=4))
 
     assert list(collector.registry.keys()) == [
@@ -82,7 +78,6 @@ def test_collector_run_manifest(monkeypatch, media_sample):
 
     # Load data from created dump
     payload = json.loads(dump_destination.read_text())
-    dumped_registry = payload["registry"]
 
     # Those dirs have no manifest (and so no cover, etc..)
     assert payload["registry"]["moo"]["manifest"] is None
@@ -123,10 +118,6 @@ def test_collector_run_checksum(monkeypatch, media_sample):
     consecutive runs on the same content.
     """
     monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
-    ## Use the right precise mockups for the right content behaviors
-    ## Useless ?
-    #monkeypatch.setattr(ChecksumOperator, "file", dummy_checksumoperator_filepath)
-    #monkeypatch.setattr(ChecksumOperator, "filepath", dummy_checksumoperator_filepath)
 
     dump_destination = media_sample / "dump.json"
 

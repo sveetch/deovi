@@ -7,7 +7,6 @@ from ..exceptions import CollectorError
 from ..models import DirectoryInformation, MediaInformation
 from ..renamer.printer import PrinterInterface
 from ..utils.jsons import ExtendedJsonEncoder
-from ..utils.checksum import ChecksumOperator
 from .new_storage import NewAssetStorage
 
 
@@ -61,19 +60,6 @@ class NewCollector(PrinterInterface):
         self.cover_extensions = cover_extensions or settings.cover_extensions
         self.autoload_manifests = autoload_manifests
         self.autochecksum = autochecksum
-        # Everything below is DEPRECATED
-        self.checksum_op = ChecksumOperator()
-        self.file_storage_queue = []
-        self.allow_media_cover = allow_media_cover
-        self.manifest_filename = manifest or settings.manifest_filename
-        self.cover_name = cover_name or settings.cover_name
-        # Build elligible file names for cover from cover base file name and enabled
-        # cover extensions
-        self.cover_files = [
-            self.cover_name + item
-            for item in self.cover_extensions
-        ]
-        #/ End of deprecation block
 
         self.reset()
 
@@ -85,7 +71,7 @@ class NewCollector(PrinterInterface):
         ``scan_directory`` for different basepath since registry and global states are
         cumulative.
         """
-        self.storage = NewAssetStorage(allowed_cover_filenames=self.cover_files)
+        self.storage = NewAssetStorage()
 
         self.registry = {}
         self.stats = {
@@ -190,7 +176,7 @@ class NewCollector(PrinterInterface):
         self.log_debug("Scanning {}".format(str(path)))
 
         try:
-            relative_dir = path.relative_to(self.basepath)
+            path.relative_to(self.basepath)
         except ValueError:
             msg = "You cannot scan a directory which is out of given basepath: {}"
             raise CollectorError(msg.format(str(self.basepath)))

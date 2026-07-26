@@ -1,17 +1,10 @@
-import datetime
 import uuid
 from pathlib import Path
 
 import pytest
 
 from deovi.collector.new_collect import NewCollector
-from deovi.models import (
-    DirectoryInformation,
-    MediaInformation,
-    CollectionManifest,
-    MovieManifest,
-    SerieManifest,
-)
+from deovi.models import MediaInformation, MovieManifest
 from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_uuid4
 
 
