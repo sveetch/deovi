@@ -5,7 +5,6 @@ from pathlib import Path
 from freezegun import freeze_time
 
 from deovi.collector.new_collect import NewCollector
-from deovi.utils.checksum import ChecksumOperator
 from deovi.utils.tests import (
     DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_uuid4,
     dummy_checksumoperator_filepath,
@@ -79,7 +78,7 @@ def test_collector_run_manifest(monkeypatch, media_sample):
     storage_absolutedir = media_sample / storage_dirname
 
     # Collecting
-    collector.run(dump_destination, checksum=False)
+    collector.run(dump_destination)
 
     # Load data from created dump
     payload = json.loads(dump_destination.read_text())
@@ -121,10 +120,7 @@ def test_collector_run_checksum(monkeypatch, media_sample):
     """
     When checksum is enabled, the collector should generate a directory checksum and
     a field file checksum. Also, the directories checksum should be identical for two
-    run on the same unchanged content.
-
-    TODO: We moved the checksum computation to models, lets stabilize them in their own
-    test before continuing here.
+    consecutive runs on the same content.
     """
     monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
     ## Use the right precise mockups for the right content behaviors
@@ -135,8 +131,8 @@ def test_collector_run_checksum(monkeypatch, media_sample):
     dump_destination = media_sample / "dump.json"
 
     # First run
-    collector = NewCollector(media_sample)
-    collector.run(dump_destination, checksum=True)
+    collector = NewCollector(media_sample, autochecksum=True)
+    collector.run(dump_destination)
     payload = json.loads(dump_destination.read_text())
     dumped_registry = payload["registry"]
 
@@ -154,8 +150,8 @@ def test_collector_run_checksum(monkeypatch, media_sample):
     first_foo_bar_checksum = dumped_registry["foo/bar"]["checksum"]
 
     # Run collect a second time
-    collector = NewCollector(media_sample)
-    collector.run(dump_destination, checksum=True)
+    collector = NewCollector(media_sample, autochecksum=True)
+    collector.run(dump_destination)
     payload = json.loads(dump_destination.read_text())
     dumped_registry = payload["registry"]
 

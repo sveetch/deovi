@@ -1,10 +1,10 @@
 import datetime
+import uuid
 from pathlib import Path
 
 import pytest
 
 from deovi.collector.new_collect import NewCollector
-from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat
 from deovi.models import (
     DirectoryInformation,
     MediaInformation,
@@ -12,6 +12,7 @@ from deovi.models import (
     MovieManifest,
     SerieManifest,
 )
+from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_uuid4
 
 
 @pytest.mark.parametrize("path, expected", [
@@ -91,6 +92,7 @@ def test_collector_scan_file_manifest(monkeypatch, media_sample):
     datas with its manifest data also.
     """
     monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
 
     path = media_sample / "ping/pong/SampleVideo_720x480_1mb.mkv"
 
@@ -119,7 +121,11 @@ def test_collector_scan_file_manifest(monkeypatch, media_sample):
             "overview": None,
             "status": None,
             "original_language": None,
-            "cover": None,
+            "cover": {
+                "checksum": None,
+                "destination": Path("dummy_uuid4.jpg"),
+                "source": media_sample / "ping/pong/SampleVideo_720x480_1mb.jpg",
+            },
             "casting": [],
             "crew": [],
             "genres": [],

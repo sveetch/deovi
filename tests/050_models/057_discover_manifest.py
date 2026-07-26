@@ -1,7 +1,11 @@
 import datetime
+import json
 import logging
+import uuid
+from pathlib import Path
 
 from freezegun import freeze_time
+from freezegun.api import FakeDatetime
 
 from deovi import __pkgname__
 from deovi.models import (
@@ -11,10 +15,11 @@ from deovi.models import (
     MovieManifest,
     SerieManifest,
 )
+from deovi.utils.tests import dummy_uuid4
 
 
 @freeze_time("2012-10-15 10:00:00.001007")
-def test_no_valid(settings):
+def test_manifest_no_valid(settings):
     """
     When the directory does not have any valid manifest file
 
@@ -46,7 +51,7 @@ def test_no_valid(settings):
 
 
 @freeze_time("2012-10-15 10:00:00.001007")
-def test_fallback_on_yaml(settings, caplog):
+def test_manifest_fallback_on_yaml(settings, caplog):
     """
     Yaml manifest is discovered since the JSON one is not valid
     """
@@ -75,7 +80,7 @@ def test_fallback_on_yaml(settings, caplog):
 
 
 @freeze_time("2012-10-15 10:00:00.001007")
-def test_dir_loaded_json(settings, caplog):
+def test_manifest_dir_loaded_json(settings, caplog):
     """
     JSON is loaded if found and valid
     """
@@ -98,7 +103,7 @@ def test_dir_loaded_json(settings, caplog):
 
 
 @freeze_time("2012-10-15 10:00:00.001007")
-def test_media_loaded_json(settings, caplog):
+def test_manifest_media_loaded_json(settings, caplog):
     """
     MediaInformation manifest is named after its own name
     """

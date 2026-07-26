@@ -34,6 +34,19 @@ def checksum_file_content(path):
     return h.hexdigest()
 
 
+def checksum_content(content):
+    """
+    Basic function to make a checksum of a given content string.
+
+    Arguments:
+        content (string): Content string to checksum.
+
+    Returns:
+        string: The file checksum as 40 characters.
+    """
+    return hashlib.blake2b(content.encode("utf-8")).hexdigest()
+
+
 def compute_checksum_file_path(path):
     """
     Compute a string made up of file name and a blake2b checksum.
@@ -60,22 +73,12 @@ def compute_checksum_file_path(path):
     ).hexdigest()
 
 
-def checksum_content(content):
-    """
-    Basic function to make a checksum of a given content string.
-
-    Arguments:
-        content (string): Content string to checksum.
-
-    Returns:
-        string: The file checksum as 40 characters.
-    """
-    return hashlib.blake2b(content.encode("utf-8")).hexdigest()
-
-
 class ChecksumOperator:
     """
     Gather all methods which perform checksums.
+
+    DEPRECATED: Checksum operations have been moved into models using functions from
+    here, this class will be useless and models will only use the basic functions.
     """
     def file(self, filepath):
         """
@@ -169,7 +172,6 @@ class ChecksumOperator:
         File item are checksumed apart so they would change the directory information
         payload checksum if they change. So we keep the file item untouched so if the
         file name change, this also triggers a payload checksum difference.
-        TODO: ???
 
         Arguments:
             payload_source (dict): The directory information payload to checksum.
@@ -200,9 +202,5 @@ class ChecksumOperator:
             sort_keys=True,
             cls=ExtendedJsonEncoder
         )
-        # TODO: print JSON serialization and look for it in original collector test
-        print("----> directory_payload")
-        print(serialized)
-        print("directory_payload <----")
 
         return hashlib.blake2b(serialized.encode("utf-8")).hexdigest()

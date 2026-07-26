@@ -46,20 +46,21 @@ class BaseManifest(ExportAbstract):
             there won't be any update possible from TMDB.
         tmdb_type (str): Mandatory if tmdb_id is filled, it should be "tv" or "movie",
             any other value is not compatible with TMDB scrapping.
+        locked (bool): If enabled, even with a proper TMDB id and type there won't be
+            any scrapping. This is to be used on media you already got enough metadata
+            in this manifest and you don't want to be update from TMDB.
         title (str): The media display title.
         overview (str):
         status (str): Airing/Release status.
         original_language (str): The original language of this media.
         cover (Asset, Path): Path to the cover image file. This accept a Path object
             but that will be transformed to an Asset object.
-        cover_extensions (list): List of allowed file extension such as ``.png`` to
-            discover a cover file. No cover will be discovered if this is empty.
         casting (list):
         crew (list):
         genres (list): List of genre names.
-        locked (bool): If enabled, even with a proper TMDB id and type there won't be
-            any scrapping. This is to be used on media you already got enough metadata
-            in this manifest and you don't want to be update from TMDB.
+        cover_extensions (list): List of allowed file extensions such as ``.png`` to
+            discover a cover file. No cover will be discovered if this is empty.
+        autochecksum (bool): Transmitted option to Asset model when discovering cover.
     """
     EXPORT_PRIVATES: ClassVar[list[str]] = ["parent"]
     path: Path
@@ -72,17 +73,18 @@ class BaseManifest(ExportAbstract):
     status: str = None
     original_language: str = None
     cover: Union[Asset, Path] = None
-    cover_extensions: InitVar[list] = None
     casting: list[list] = dataclasses_field(default_factory=list)
     crew: list[list] = dataclasses_field(default_factory=list)
     genres: list[str] = dataclasses_field(default_factory=list)
+    cover_extensions: InitVar[list] = None
+    autochecksum: InitVar[bool] = False
 
-    def __post_init__(self, cover_extensions):
+    def __post_init__(self, cover_extensions, autochecksum):
         if not self.title:
             self.title = self.path.name
 
         if not self.cover and cover_extensions:
-            self.cover = self.discover_cover(cover_extensions)
+            self.cover = self.discover_cover(cover_extensions, autochecksum)
 
     def can_be_scrapped(self):
         """
@@ -101,7 +103,7 @@ class BaseManifest(ExportAbstract):
         """
         return self.path.parent
 
-    def discover_asset(self, filename_patterns):
+    def discover_asset(self, filename_patterns, autochecksum=False):
         """
         Search for an asset file from allowed filenames.
 
@@ -125,11 +127,11 @@ class BaseManifest(ExportAbstract):
 
             # If file matches
             if filepath.exists():
-                return Asset(source=filepath.resolve())
+                return Asset(source=filepath.resolve(), autochecksum=autochecksum)
 
         return None
 
-    def discover_cover(self, cover_extensions):
+    def discover_cover(self, cover_extensions, autochecksum=False):
         """
         Discover a possible cover file for allowed extensions.
 
@@ -143,7 +145,7 @@ class BaseManifest(ExportAbstract):
             self.path.stem + v
             for v in cover_extensions
         ]
-        return self.discover_asset(filename_patterns)
+        return self.discover_asset(filename_patterns, autochecksum)
 
 
 @dataclass
@@ -157,8 +159,8 @@ class MovieManifest(BaseManifest):
     """
     release_date: str = ""
 
-    def __post_init__(self, cover_extensions):
-        super().__post_init__(cover_extensions)
+    def __post_init__(self, cover_extensions, autochecksum):
+        super().__post_init__(cover_extensions, autochecksum)
 
         self.tmdb_type = "movie"
 
@@ -176,12 +178,12 @@ class SerieManifest(BaseManifest):
     number_of_seasons: int = None
     number_of_episodes: int = None
 
-    def __post_init__(self, cover_extensions):
-        super().__post_init__(cover_extensions)
+    def __post_init__(self, cover_extensions, autochecksum):
+        super().__post_init__(cover_extensions, autochecksum)
 
         self.tmdb_type = "tv"
 
-    def discover_cover(self, cover_extensions):
+    def discover_cover(self, cover_extensions, autochecksum=False):
         """
         Discover a possible cover file for allowed extensions.
 
@@ -196,8 +198,7 @@ class SerieManifest(BaseManifest):
             "cover" + v
             for v in cover_extensions
         ]
-        foo = self.discover_asset(filename_patterns)
-        return foo
+        return self.discover_asset(filename_patterns, autochecksum)
 
 
 @dataclass
@@ -220,8 +221,8 @@ class CollectionManifest(BaseManifest):
     """
     movies: list[MovieManifest] = dataclasses_field(default_factory=list)
 
-    def __post_init__(self, cover_extensions):
-        super().__post_init__(cover_extensions)
+    def __post_init__(self, cover_extensions, autochecksum):
+        super().__post_init__(cover_extensions, autochecksum)
 
         self.tmdb_type = "collection"
 
@@ -249,7 +250,7 @@ class CollectionManifest(BaseManifest):
         if not from_init:
             self.movies.extend(movies)
 
-    def discover_cover(self, cover_extensions):
+    def discover_cover(self, cover_extensions, autochecksum=False):
         """
         Discover a possible cover file for allowed extensions.
 
@@ -264,4 +265,4 @@ class CollectionManifest(BaseManifest):
             "cover" + v
             for v in cover_extensions
         ]
-        return self.discover_asset(filename_patterns)
+        return self.discover_asset(filename_patterns, autochecksum)

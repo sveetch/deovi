@@ -73,6 +73,7 @@ def test_no_autoload(monkeypatch, tmp_path):
     Without manifest autoload no manifest should be discovered.
     """
     monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
 
     serie_path = tmp_path / "the_outer_limits"
     serie_path.mkdir()
@@ -106,7 +107,6 @@ def test_no_autoload(monkeypatch, tmp_path):
         "relative_dir": "the_outer_limits",
         "manifest": None,
         "checksum": None,
-        "directories": [],
         "medias": [
             {
                 "path": str(serie_path / "dummy.mkv"),
@@ -168,7 +168,6 @@ def test_with_cover_and_mediafile(monkeypatch, media_sample):
             "number_of_episodes": None
         },
         "checksum": None,
-        "directories": [],
         "medias": [
             {
                 "path": str(media_sample / "ping/pong/SampleVideo_720x480_1mb.mkv"),
@@ -188,7 +187,11 @@ def test_with_cover_and_mediafile(monkeypatch, media_sample):
                     "overview": None,
                     "status": None,
                     "original_language": None,
-                    "cover": None,
+                    "cover": {
+                        "checksum": None,
+                        "source": str(media_sample / "ping/pong/SampleVideo_720x480_1mb.jpg"),
+                        "destination": "dummy_uuid4.jpg"
+                    },
                     "casting": [],
                     "crew": [],
                     "genres": [],

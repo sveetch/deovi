@@ -1,98 +1,11 @@
-"""
-Movies
-======
-
-Assume the same filename without extension, implies you can not have
-same filename for different media: foo.mp4 + foo.mkv => foo.[json|jpg] (collision)
-
-    .
-    └── movies/
-        ├── the-pit.mp4
-        ├── the-pit.json
-        └── the-pit.jpg
-
-Optionnaly allows to push cover/manifest in a sub directory.
-
-    .
-    └── movies/
-        ├── covers/
-        │   ├── ...
-        │   └── the-pit.jpg
-        ├── manifests/
-        │   ├── ...
-        │   └── the-pit.json
-        ├── ...
-        └── the-pit.mp4
-
-'covers' and 'manifests' dir name would be an option, basically from settings and CLI
-arg overrider ?
-
-Collection
-==========
-
-Created structure in test: ::
-
-    .
-    └── saga_starworse/
-        ├── the-first-nope.mp4
-        └── cover.jpg
-
-Sample has no JSON manifest file created, the proper process could not succeed.
-
-Proposals
-*********
-
-Collection itself manifest and cover must keep normalized filename.
-
-Or: ::
-
-    .
-    └── saga_starworse/
-        ├── covers/
-        │   ├── cover.jpg
-        │   └── the-first-nope.jpg
-        ├── manifests/
-        │   ├── manifest.json
-        │   └── the-first-nope.json
-        └── the-first-nope.mp4
-
-Serie
-=====
-
-Created structure in test: ::
-
-    .
-    └── the_outer_limits/
-        └── cover.jpg
-
-Sample has no JSON manifest file created, the proper process could not succeed.
-
-Serie has no mediafile but it is not required at this level (only from
-BaseInformation).
-
-Proposals
-*********
-
-Serie itself manifest and cover must keep normalized filename.
-
-
-Or: ::
-
-    .
-    └── the_outer_limits/
-        ├── covers/
-        │   └── cover.jpg
-        ├── manifests/
-        │   └── manifest.json
-        └── ...
-
-"""
-
+import uuid
 from pathlib import Path
 
 from freezegun import freeze_time
+from freezegun.api import FakeDatetime
 
 from deovi.models import Asset, CollectionManifest, MovieManifest, SerieManifest
+from deovi.utils.tests import dummy_uuid4
 
 from tests.utils import (
     SAMPLE_MOVIE_PAYLOAD,
@@ -101,7 +14,7 @@ from tests.utils import (
 
 
 @freeze_time("2012-10-15 10:00:00.001007")
-def test_movie_creation(tmp_path):
+def test_movie_creation(monkeypatch, tmp_path):
     """
     Basic creation of a Movie manifest using the sample payload.
 
@@ -114,6 +27,8 @@ def test_movie_creation(tmp_path):
         ├── the-pit.json
         └── the-pit.jpg
     """
+    monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
+
     directory_path = tmp_path / "movies"
     directory_path.mkdir()
 
@@ -145,9 +60,30 @@ def test_movie_creation(tmp_path):
     assert the_pit.cover.source == cover
     assert the_pit.cover.destination.suffix == ".jpg"
 
+    # Serialized
+    assert the_pit.as_dict(preserve=True) == {
+        "casting": [],
+        "cover": {
+            "checksum": None,
+            "destination": Path("dummy_uuid4.jpg"),
+            "source": tmp_path / "movies/the-pit.jpg",
+        },
+        "crew": [],
+        "genres": [],
+        "locked": False,
+        "original_language": None,
+        "overview": None,
+        "path": tmp_path / "movies/the-pit.json",
+        "release_date": "",
+        "status": None,
+        "title": "the-pit.json",
+        "tmdb_id": None,
+        "tmdb_type": "movie",
+    }
+
 
 @freeze_time("2012-10-15 10:00:00.001007")
-def test_collection_creation(tmp_path):
+def test_collection_creation(monkeypatch, tmp_path):
     """
     Basic creation of a Collection manifest.
 
@@ -161,6 +97,8 @@ def test_collection_creation(tmp_path):
         ├── the-first-nope.json
         └── the-first-nope.jpg
     """
+    monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
+
     collection_path = tmp_path / "saga_starworse"
     collection_path.mkdir()
 
@@ -185,18 +123,38 @@ def test_collection_creation(tmp_path):
     assert first_nope.parent == starworse
 
     # Cover enabled but not matching the existing one
-    starworse = SerieManifest(manifest_path, cover_extensions=(".png",))
+    starworse = CollectionManifest(manifest_path, cover_extensions=(".png",))
     assert starworse.cover is None
 
     # With existing cover matching allowed extensions
-    starworse = SerieManifest(manifest_path, cover_extensions=(".jpg",))
+    starworse = CollectionManifest(manifest_path, cover_extensions=(".jpg",))
     assert isinstance(starworse.cover, Asset) is True
     assert starworse.cover.source == cover
     assert starworse.cover.destination.suffix == ".jpg"
 
+    # Serialized
+    assert starworse.as_dict(preserve=True) == {
+        "casting": [],
+        "cover": {
+            "checksum": None,
+            "destination": Path("dummy_uuid4.jpg"),
+            "source": tmp_path / "saga_starworse/cover.jpg",
+        },
+        "crew": [],
+        "genres": [],
+        "locked": False,
+        "movies": [],
+        "original_language": None,
+        "overview": None,
+        "path": tmp_path / "saga_starworse/manifest.json",
+        "status": None,
+        "title": "manifest.json",
+        "tmdb_id": None,
+        "tmdb_type": "collection",
+    }
 
 @freeze_time("2012-10-15 10:00:00.001007")
-def test_serie_creation(tmp_path):
+def test_serie_creation(monkeypatch, tmp_path):
     """
     Basic creation of a Tv show manifest using the sample payload.
 
@@ -208,6 +166,8 @@ def test_serie_creation(tmp_path):
         ├── manifest.json
         └── cover.jpg
     """
+    monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
+
     serie_path = tmp_path / "the_outer_limits"
     serie_path.mkdir()
 
@@ -234,3 +194,26 @@ def test_serie_creation(tmp_path):
     assert isinstance(the_outer_limits.cover, Asset) is True
     assert the_outer_limits.cover.source == cover
     assert the_outer_limits.cover.destination.suffix == ".jpg"
+
+    # Serialized
+    assert the_outer_limits.as_dict(preserve=True) == {
+        "casting": [],
+        "cover": {
+            "checksum": None,
+            "destination": Path("dummy_uuid4.jpg"),
+            "source": tmp_path / "the_outer_limits/cover.jpg",
+        },
+        "crew": [],
+        "first_air_date": "",
+        "genres": [],
+        "locked": False,
+        "number_of_episodes": None,
+        "number_of_seasons": None,
+        "original_language": None,
+        "overview": None,
+        "path": tmp_path / "the_outer_limits/manifest.json",
+        "status": None,
+        "title": "manifest.json",
+        "tmdb_id": None,
+        "tmdb_type": "tv",
+    }

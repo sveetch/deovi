@@ -8,11 +8,17 @@ from deovi.utils.tests import dummy_uuid4
 
 def test_creation(monkeypatch):
     """
-    Basic model creation
+    Basic model creation.
     """
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
 
     picsou = Asset(source=Path("/home/cities/duckcity/picsou.jpg"))
+
+    assert picsou.as_dict(preserve=True) == {
+        "source": Path("/home/cities/duckcity/picsou.jpg"),
+        "destination": Path("dummy_uuid4.jpg"),
+        "checksum": None,
+    }
 
     assert json.loads(picsou.as_json()) == {
         "source": "/home/cities/duckcity/picsou.jpg",
@@ -23,17 +29,14 @@ def test_creation(monkeypatch):
 
 def test_checksum(monkeypatch, tmp_path):
     """
-    Basic model creation
+    Creation with a checksum.
     """
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
 
     image = tmp_path / "picsou.jpg"
     image.write_text("Image source picsou.jpg")
 
-    picsou = Asset(
-        source=image,
-        autochecksum=True,
-    )
+    picsou = Asset(source=image, autochecksum=True)
 
     assert json.loads(picsou.as_json()) == {
         "source": str(image),

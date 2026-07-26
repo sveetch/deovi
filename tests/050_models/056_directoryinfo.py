@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 from freezegun import freeze_time
+from freezegun.api import FakeDatetime
 
 from deovi.models import DirectoryInformation, MediaInformation
 
@@ -20,29 +21,18 @@ def test_creation():
         checksum="coin42coin001",
     )
 
-    assert json.loads(duckcity.as_json()) == {
-        "path": "/home/cities/duckcity",
-        "size": 42,
-        "mtime": "2012-10-15T10:00:00.001007",
-        "name": "duckcity",
-        "absolute_dir": "/home/cities",
-        "relative_dir": "duckcity",
-        "manifest": None,
+    assert duckcity.as_dict(preserve=True) == {
+        "absolute_dir": Path("/home/cities"),
         "checksum": "coin42coin001",
-        "directories": [],
+        "manifest": None,
         "medias": [],
+        "mtime": FakeDatetime(2012, 10, 15, 10, 0, 0, 1007),
+        "name": "duckcity",
+        "path": Path("/home/cities/duckcity"),
+        "relative_dir": Path("duckcity"),
+        "size": 42,
     }
 
-    killmotor_hill = DirectoryInformation(
-        path=Path("/home/cities/duckcity/killmotor_hill"),
-        basepath=Path("/home/cities"),
-        size=42,
-        mtime=datetime.datetime.now(),
-        checksum="coin42coin001",
-    )
-    duckcity.set_directories([killmotor_hill])
-    assert killmotor_hill.parent == duckcity
-
     assert json.loads(duckcity.as_json()) == {
         "path": "/home/cities/duckcity",
         "size": 42,
@@ -52,20 +42,6 @@ def test_creation():
         "relative_dir": "duckcity",
         "manifest": None,
         "checksum": "coin42coin001",
-        "directories": [
-            {
-                "path": "/home/cities/duckcity/killmotor_hill",
-                "size": 42,
-                "mtime": "2012-10-15T10:00:00.001007",
-                "name": "killmotor_hill",
-                "absolute_dir": "/home/cities/duckcity",
-                "relative_dir": "duckcity/killmotor_hill",
-                "manifest": None,
-                "checksum": "coin42coin001",
-                "directories": [],
-                "medias": []
-            }
-        ],
         "medias": [],
     }
 
@@ -102,6 +78,32 @@ def test_set_medias():
     # Child has been linked to parent
     assert picsou.parent == duckcity
 
+    assert duckcity.as_dict(preserve=True) == {
+        "absolute_dir": Path("/home/cities"),
+        "checksum": "coin42coin001",
+        "manifest": None,
+        "medias": [
+            {
+                "absolute_dir": Path("/home/cities/duckcity"),
+                "checksum": None,
+                "container": "MPEG-4",
+                "extension": "mp4",
+                "manifest": None,
+                "mtime": FakeDatetime(2012, 10, 15, 10, 0, 0, 1007),
+                "name": "picsou.mp4",
+                "name_alt": "",
+                "path": Path("/home/cities/duckcity/picsou.mp4"),
+                "relative_dir": Path("."),
+                "size": 42,
+            },
+        ],
+        "mtime": FakeDatetime(2012, 10, 15, 10, 0, 0, 1007),
+        "name": "duckcity",
+        "path": Path("/home/cities/duckcity"),
+        "relative_dir": Path("duckcity"),
+        "size": 42,
+    }
+
     assert json.loads(duckcity.as_json()) == {
         "path": "/home/cities/duckcity",
         "size": 42,
@@ -111,7 +113,6 @@ def test_set_medias():
         "relative_dir": "duckcity",
         "manifest": None,
         "checksum": "coin42coin001",
-        "directories": [],
         "medias": [
             {
                 "path": "/home/cities/duckcity/picsou.mp4",
@@ -140,7 +141,6 @@ def test_set_medias():
         "relative_dir": "duckcity",
         "manifest": None,
         "checksum": "coin42coin001",
-        "directories": [],
         "medias": [
             {
                 "path": "/home/cities/duckcity/picsou.mp4",

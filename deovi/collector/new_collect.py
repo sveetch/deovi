@@ -4,14 +4,7 @@ from shutil import disk_usage
 
 from ..conf import settings
 from ..exceptions import CollectorError
-from ..models import (
-    Asset,
-    DirectoryInformation,
-    MediaInformation,
-    CollectionManifest,
-    MovieManifest,
-    SerieManifest,
-)
+from ..models import DirectoryInformation, MediaInformation
 from ..renamer.printer import PrinterInterface
 from ..utils.jsons import ExtendedJsonEncoder
 from ..utils.checksum import ChecksumOperator
@@ -49,6 +42,8 @@ class NewCollector(PrinterInterface):
             search for cover files.
         autoload_manifests (bool): If enabled, the manifest are discovered and used
             to collect additional data from directories or files.
+        autochecksum (bool): Whether to enable content checksums or not. Default
+            to False, no checksum are done.
         allow_media_cover (bool): If False, cover files will be ignored from dump.
             By default this is True and so covers are managed and dumped.
             Deprecated, since cover is now enabled from non empty 'cover_extensions'
@@ -57,16 +52,17 @@ class NewCollector(PrinterInterface):
     def __init__(self, basepath, extensions=None, allow_empty_dir=False,
                  manifest=None, cover_name=None,
                  cover_extensions=None, allow_media_cover=True,
-                 autoload_manifests=False):
+                 autoload_manifests=False, autochecksum=False):
         super().__init__()
 
-        self.checksum_op = ChecksumOperator()
         self.basepath = basepath
         self.extensions = extensions or settings.medias_extensions
         self.allow_empty_dir = allow_empty_dir
         self.cover_extensions = cover_extensions or settings.cover_extensions
         self.autoload_manifests = autoload_manifests
+        self.autochecksum = autochecksum
         # Everything below is DEPRECATED
+        self.checksum_op = ChecksumOperator()
         self.file_storage_queue = []
         self.allow_media_cover = allow_media_cover
         self.manifest_filename = manifest or settings.manifest_filename
@@ -161,6 +157,7 @@ class NewCollector(PrinterInterface):
             size=stats.st_size,
             mtime=self.timestamp_to_isoformat(stats.st_mtime),
             autoload=self.autoload_manifests,
+            autochecksum=self.autochecksum,
             cover_extensions=self.cover_extensions,
         )
 
@@ -169,7 +166,7 @@ class NewCollector(PrinterInterface):
 
         return data
 
-    def scan_directory(self, path, parent=None, checksum=False):
+    def scan_directory(self, path, parent=None):
         """
         Scan a directory to get its media files.
 
@@ -182,8 +179,6 @@ class NewCollector(PrinterInterface):
 
         Keyword Arguments:
             parent (DirectoryInformation): The parent directory model object.
-            checksum (boolean): Whether to enable directory checksums or not. Default
-                to False, no checksum are done.
 
         Raises:
             CollectorError: If given path is not a directory inside
@@ -209,18 +204,14 @@ class NewCollector(PrinterInterface):
             size=stats.st_size,
             mtime=self.timestamp_to_isoformat(stats.st_mtime),
             autoload=self.autoload_manifests,
+            autochecksum=self.autochecksum,
             cover_extensions=self.cover_extensions,
         )
-
-        # Attach directory to its possible parent
-        # NOTE: This is actually useless, directories attribute is not used from collect
-        #if parent:
-            #parent.set_directories([data])
 
         # Process all possible children
         for child_path in path.iterdir():
             if child_path.is_dir():
-                self.scan_directory(child_path, parent=data, checksum=checksum)
+                self.scan_directory(child_path, parent=data)
             else:
                 # Attach file to its parent directory
                 if (
@@ -235,25 +226,11 @@ class NewCollector(PrinterInterface):
             self.stats["directories"] += 1
             self.stats["size"] += data.size
 
-            # Perform content checksum if enabled
-            if checksum:
-                # Add all file checksums
-                self.checksum_op.payload_files(
-                    data,
-                    files_fields=["cover"],
-                    storage=self.storage.storage_path,
-                )
-                # Then build directory info checksum
-                data.checksum = self.checksum_op.directory_payload(
-                    data,
-                    files_fields=["cover"],
-                    storage=self.storage.storage_path,
-                )
-
             # Store collected data
             key = str(data.path.relative_to(self.basepath))
             self.registry[key] = data
 
+            # TODO: This need to be applied on 'scan_file()' also for cover
             if getattr(data, "manifest"):
                 for field in ["cover"]:
                     value = getattr(getattr(data, "manifest"), field)
@@ -262,7 +239,7 @@ class NewCollector(PrinterInterface):
 
         return data
 
-    def run(self, destination=None, checksum=False):
+    def run(self, destination=None):
         """
         Recursively scan everything from basepath to produce a registry of collected
         informations.
@@ -271,17 +248,15 @@ class NewCollector(PrinterInterface):
             destination (pathlib.Path): Destination path to write a JSON file with
                 every collected informations. Default is ``None`` so no JSON dump
                 file will be written to the filesystem.
-            checksum (boolean): Whether to enable directory checksums or not. Default
-                to False, no checksum are done.
 
         Returns:
             dict: Dictionnary of global states for collected directories and files.
         """
         # Set storage basepath from destination location
-        self.storage.set_basepath(destination, checksum=checksum)
+        self.storage.set_basepath(destination, checksum=self.autochecksum)
 
         device_stats = self.scan_basepath_device(self.basepath)
-        self.scan_directory(self.basepath, checksum=checksum)
+        self.scan_directory(self.basepath)
 
         if self.registry and destination:
             with destination.open("w") as fp:

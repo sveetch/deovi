@@ -1,13 +1,14 @@
 from .assets import Asset
-from .manifests import CollectionManifest, MovieManifest, SerieManifest
 from .infos import DirectoryInformation, MediaInformation
-
+from .lists import SerializableList
+from .manifests import CollectionManifest, MovieManifest, SerieManifest
 
 __all__ = [
     "Asset",
     "CollectionManifest",
-    "MovieManifest",
-    "SerieManifest",
     "DirectoryInformation",
     "MediaInformation",
+    "MovieManifest",
+    "SerieManifest",
+    "SerializableList",
 ]
