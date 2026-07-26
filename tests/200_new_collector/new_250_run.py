@@ -60,8 +60,8 @@ def test_collector_run_basic(monkeypatch, media_sample):
 @freeze_time("2012-10-15 10:00:00")
 def test_collector_run_manifest(monkeypatch, media_sample):
     """
-    Collector should correctly find directory manifest files, directory covers and
-    add them to directory payload.
+    Collector should correctly find directory manifest files, directory covers,
+    add them to directory payload and collect their assets in storage dir.
     """
     monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
@@ -84,7 +84,7 @@ def test_collector_run_manifest(monkeypatch, media_sample):
     assert payload["registry"]["foo/bar"]["manifest"] is None
     assert payload["registry"]["ping/pong/pang"]["manifest"] is None
 
-    # Dirs with manifest
+    # Directories with manifest
     root = payload["registry"]["."]
     pong = payload["registry"]["ping/pong"]
     assert root["manifest"] is not None
@@ -92,13 +92,13 @@ def test_collector_run_manifest(monkeypatch, media_sample):
     assert pong["manifest"] is not None
     assert pong["manifest"]["title"] == "Pong JSON"
 
-    # Expected cover files in storage directory on filesystem
-    assert sorted(list(storage_absolutedir.iterdir())) == [
-        storage_absolutedir / "dummy_uuid4.gif",
-        storage_absolutedir / "dummy_uuid4.png",
-    ]
+    # Ensure pong has expected medias with manifests and covers
+    assert len(pong["medias"]) == 2
+    assert pong["medias"][1]["manifest"] is None
+    assert pong["medias"][0]["manifest"] is not None
+    assert pong["medias"][0]["manifest"]["cover"] is not None
 
-    # Expected item directories with a cover from manifest
+    # Expected directory and media cover assets
     assert root["manifest"]["cover"] == {
         "checksum": None,
         "source": str(media_sample / "cover.png"),
@@ -109,6 +109,18 @@ def test_collector_run_manifest(monkeypatch, media_sample):
         "source": str(media_sample / "ping/pong/cover.gif"),
         "destination": "dummy_uuid4.gif",
     }
+    assert pong["medias"][0]["manifest"]["cover"] == {
+        "checksum": None,
+        "source": str(media_sample / "ping/pong/SampleVideo_720x480_1mb.jpg"),
+        "destination": "dummy_uuid4.jpg",
+    }
+
+    # Expected cover files in storage directory on filesystem
+    assert sorted(list(storage_absolutedir.iterdir())) == [
+        storage_absolutedir / "dummy_uuid4.gif",
+        storage_absolutedir / "dummy_uuid4.jpg",
+        storage_absolutedir / "dummy_uuid4.png",
+    ]
 
 
 def test_collector_run_checksum(monkeypatch, media_sample):

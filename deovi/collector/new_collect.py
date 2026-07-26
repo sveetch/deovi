@@ -150,6 +150,13 @@ class NewCollector(PrinterInterface):
         self.stats["files"] += 1
         self.stats["size"] += data.size
 
+        # TODO: This need to be applied on 'scan_file()' also for cover
+        if getattr(data, "manifest"):
+            for field in ["cover"]:
+                value = getattr(getattr(data, "manifest"), field)
+                if value:
+                    self.storage.queue.append(value)
+
         return data
 
     def scan_directory(self, path, parent=None):
