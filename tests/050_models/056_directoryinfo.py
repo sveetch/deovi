@@ -5,7 +5,7 @@ from pathlib import Path
 from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 
-from deovi.models import DirectoryInformation, MediaInformation
+from deovi.models import DirectoryInformation, MediaInformation, SerializableList
 
 
 @freeze_time("2012-10-15 10:00:00.001007")
@@ -58,13 +58,6 @@ def test_set_medias():
         mtime=datetime.datetime.now(),
     )
 
-    donald = MediaInformation(
-        path=Path("/home/cities/duckcity/donald.mp4"),
-        basepath=Path("/home/cities/duckcity"),
-        size=42,
-        mtime=datetime.datetime.now(),
-    )
-
     # Add a child during init
     duckcity = DirectoryInformation(
         path=Path("/home/cities/duckcity"),
@@ -78,7 +71,13 @@ def test_set_medias():
     # Child has been linked to parent
     assert picsou.parent == duckcity
 
-    assert duckcity.as_dict(preserve=True) == {
+    # Ensure we strictly have the right expected types
+    payload = duckcity.as_dict(preserve=True)
+    assert isinstance(payload["medias"], list) is True
+    assert isinstance(payload["medias"], SerializableList) is False
+    assert isinstance(payload["medias"][0], dict) is True
+    assert isinstance(payload["medias"][0], MediaInformation) is False
+    assert payload == {
         "absolute_dir": Path("/home/cities"),
         "checksum": "coin42coin001",
         "manifest": None,
@@ -131,6 +130,12 @@ def test_set_medias():
     }
 
     # Adding a child after init with set_medias
+    donald = MediaInformation(
+        path=Path("/home/cities/duckcity/donald.mp4"),
+        basepath=Path("/home/cities/duckcity"),
+        size=42,
+        mtime=datetime.datetime.now(),
+    )
     duckcity.set_medias([donald])
     assert json.loads(duckcity.as_json()) == {
         "path": "/home/cities/duckcity",

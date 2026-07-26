@@ -306,10 +306,6 @@ class DirectoryInformation(BaseInformation):
         This is not to be mistaken with the Manifest file stored in directory which only
         expose the data that will be computed by Deovi.
 
-    TODO:
-        'directories' seems useless because it is not really used from collector because
-        it involves recursive operations with some options. So we should remove it.
-
     Keyword Arguments:
         medias (list): List of MediaInformation objects that belong to this
             directory object.
@@ -319,10 +315,10 @@ class DirectoryInformation(BaseInformation):
     )
 
     def __post_init__(self, basepath, autoload, autochecksum, cover_extensions):
-        super().__post_init__(basepath, autoload, autochecksum, cover_extensions)
-
         if self.medias and isinstance(self.medias, list):
             self.medias = SerializableList(self.medias)
+
+        super().__post_init__(basepath, autoload, autochecksum, cover_extensions)
 
         # Automatically link sub objects relations
         self.set_medias(self.medias, from_init=True)
@@ -330,8 +326,6 @@ class DirectoryInformation(BaseInformation):
     def set_checksum(self):
         """
         Directory checksum is a computation of its field values.
-
-        TODO: Directory medias Asset object are not patched
         """
         # Copy the payload to patch
         payload = {
@@ -339,10 +333,19 @@ class DirectoryInformation(BaseInformation):
             for k, v in self.as_dict(preserve=True).items()
         }
 
-        if payload.get("manifest") and payload.get("manifest", {})["cover"]:
+        # Patch directory manifest cover
+        if payload["manifest"] and payload.get("manifest", {})["cover"]:
             cover_asset = payload["manifest"]["cover"]
             payload["manifest"]["cover"] = cover_asset["source"]
             payload["manifest"]["cover_checksum"] = cover_asset["checksum"]
+
+        # Patch manifest cover from directory medias
+        if payload["medias"]:
+            for item in payload["medias"]:
+                if item["manifest"] and item["manifest"]["cover"]:
+                    cover_asset = item["manifest"]["cover"]
+                    item["manifest"]["cover"] = cover_asset["source"]
+                    item["manifest"]["cover_checksum"] = cover_asset["checksum"]
 
         self.checksum = self.get_content_checksum(
             json.dumps(payload, cls=ExtendedJsonEncoder)

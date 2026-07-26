@@ -46,8 +46,8 @@ def test_checksum(settings, monkeypatch):
     assert duckcity.as_dict(preserve=True) == {
         "absolute_dir": media_sample / "ping",
         "checksum": (
-            "c07303ca2fb6211b019c3e0451609b3edc584920ff5f8266df070239a3aec26d7f217b26a"
-            "203e467240653d2387aba0e45744c7aa1bb39b14914683e518ca20f"
+            "182ab143510afa3dc28a49027da48c46522e2146e037e937f606cba48c7796468e62a2d"
+            "2483dc77954709205c1b287172cf53c426b223ec694aa972b53909c57"
         ),
         "manifest": {
             "casting": [],
