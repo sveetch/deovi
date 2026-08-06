@@ -63,13 +63,16 @@ def test_manifest_fallback_on_yaml(settings, caplog):
         path=base_samplepath / "manifest.yaml",
         title="Media sample root YAML",
     )
+
+    expected_msg = (
+        "Ignored JSON manifest because it misses the required 'tmdb_type' "
+        "field: {}"
+    )
     assert caplog.record_tuples == [
         (
             __pkgname__,
             logging.WARNING,
-            "JSON Manifest is missing the required 'tmdb_type' field: {}".format(
-                base_samplepath / "manifest.json"
-            ),
+            expected_msg.format(base_samplepath / "manifest.json"),
         ),
     ]
 
@@ -94,6 +97,7 @@ def test_manifest_dir_loaded_json(settings, caplog):
     assert pong.manifest == SerieManifest(
         path=base_samplepath / "ping/pong/manifest.json",
         title="Pong JSON",
+        tmdb_id=21567,
     )
 
 
@@ -117,4 +121,5 @@ def test_manifest_media_loaded_json(settings, caplog):
     assert sample720.manifest == MovieManifest(
         path=base_samplepath / "ping/pong/SampleVideo_720x480_1mb.json",
         title="Sample 720x480 1mb JSON",
+        tmdb_id=273204,
     )

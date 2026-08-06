@@ -5,7 +5,7 @@ All tests use sample payload downloaded from TMDB.
 
 .. NOTE::
     TMDb API has a soft limit around 50 requests per second, so since test are pretty
-    fast, we assume all these runned tests will perform less than 50 requests to API.
+    fast, we expect all runned tests will perform less than 50 requests to API.
 
     Remember than TmdbScrapper initialization itself involves a request to API, since
     client validate API key and retrieve base API configuration.

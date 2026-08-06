@@ -66,7 +66,7 @@ class ExportAbstract:
         A safe way to convert to a dict without recursion issues.
 
         Keyword Arguments:
-            preserve (bool): If enabled all values which have the method ``as_dict()``
+            preserve (bool): If enabled all values with a method ``as_dict()``
                 will use it instead of returning model object. This is almost only
                 implemented internally in Deovi models so you can get an output of
                 ``as_dict()`` only with Python builtin types.

@@ -18,6 +18,7 @@ from ..utils.jsons import ExtendedJsonEncoder
 from .. import __pkgname__
 
 from .abstracts import ChecksumAbstract, ExportAbstract
+from .mixins import ManifestLoaderMixin
 from .lists import SerializableList
 
 
@@ -25,7 +26,7 @@ LOGGER = logging.getLogger(__pkgname__)
 
 
 @dataclass
-class BaseInformation(ChecksumAbstract, ExportAbstract):
+class BaseInformation(ChecksumAbstract, ExportAbstract, ManifestLoaderMixin):
     """
     Base model for information models.
 
@@ -56,16 +57,15 @@ class BaseInformation(ChecksumAbstract, ExportAbstract):
             you should care of this field.
 
     Arguments:
-        basepath (pathlib.Path): The basepath of this directory
-        path (pathlib.Path): Absolute path of this directory object.
-        size (int): Directory size in octets (as an integer).
-        mtime (datetime.datetime): Datetime of the last directory modification.
         basepath (pathlib.Path): The base directory for all directories to scan.
             Directories does not have to start directly from the basepath but must
-            start from it. It is used to automatically computed many optional fields but
-            it is not stored as this object attribute.
+            start from it. It is used to automatically to compute some optional fields
+            but it is not stored as this object attribute.
+        path (pathlib.Path): Absolute path of this directory object.
 
     Keyword Arguments:
+        size (int): Directory size in octets (as an integer).
+        mtime (datetime.datetime): Datetime of the last directory modification.
         parent (DirectoryInformation): Directory object which this object belong to.
             This should only be used in file information models as directories are not
             collected recursively.
@@ -92,8 +92,8 @@ class BaseInformation(ChecksumAbstract, ExportAbstract):
     CHECKSUM_FIELD: ClassVar[str] = "path"
     basepath: InitVar[Path]
     path: Path
-    size: int
-    mtime: datetime.datetime
+    size: int = 0
+    mtime: datetime.datetime = None
     parent: Any = None
     name: str = None
     absolute_dir: Path = None
@@ -162,134 +162,6 @@ class BaseInformation(ChecksumAbstract, ExportAbstract):
             cover_extensions=cover_extensions,
             autochecksum=autochecksum
         )
-
-    def load_manifest(self, path, data, cover_extensions=None, autochecksum=None):
-        """
-        Load manifest payload as a manifest model object.
-
-        The kind of manifest model to be used is guessed from 'tmdb_type'.
-        """
-        if data:
-            if data["tmdb_type"] == "collection":
-                return CollectionManifest(
-                    path,
-                    cover_extensions=cover_extensions,
-                    autochecksum=autochecksum,
-                    **data
-                )
-            elif data["tmdb_type"] == "tv":
-                return SerieManifest(
-                    path,
-                    cover_extensions=cover_extensions,
-                    autochecksum=autochecksum,
-                    **data
-                )
-            elif data["tmdb_type"] == "movie":
-                return MovieManifest(
-                    path,
-                    cover_extensions=cover_extensions,
-                    autochecksum=autochecksum,
-                    **data
-                )
-            else:
-                msg = "Manifest type is not supported: {}"
-                raise NotImplementedError(msg.format(data.get("tmdb_type")))
-
-            return None
-
-        return None
-
-    def get_yaml_manifest(self, path):
-        """
-        Open and load a YAML manifest.
-
-        It should be safe to run with invalid manifests.
-
-        NOTE: Previously this method was returning a {} if no valid was found/parsed,
-        now it returns a null value.
-
-        Arguments:
-            path (pathlib.Path): The manifest filepath.
-
-        Returns:
-            dict: Loaded manifest file data.
-        """
-        manifest = None
-
-        try:
-            manifest = yaml.load(path.read_text(), Loader=yaml.FullLoader)
-        except yaml.YAMLError:
-            msg = "No YAML object could be decoded from manifest: {}"
-            LOGGER.warning(msg.format(path))
-        else:
-            # Validate top level items against reserved keywords to avoid overriding
-            # computed data from directory scan
-            reserved = [
-                name
-                for name in settings.manifest_forbidden_vars
-                if name in manifest
-            ]
-            if len(reserved) > 0:
-                msg = (
-                    "Ignored YAML manifest because it has forbidden keywords '{}': {}"
-                )
-                LOGGER.warning(msg.format(", ".join(reserved), path))
-                return None
-
-        if manifest.get("tmdb_type", None) not in settings.allowed_manifest_types:
-            msg = (
-                "YAML Manifest is missing the required 'tmdb_type' field: {}"
-            )
-            LOGGER.warning(msg.format(path))
-            return None
-
-        return manifest
-
-    def get_json_manifest(self, path):
-        """
-        Open and load a JSON manifest.
-
-        It should be safe to run with invalid manifests.
-
-        NOTE: Collector method was returning a {} if no valid was found/parsed, now we
-        return a None
-
-        Arguments:
-            path (pathlib.Path): The manifest filepath.
-
-        Returns:
-            dict: Loaded manifest file data.
-        """
-        manifest = None
-
-        try:
-            manifest = json.loads(path.read_text())
-        except json.JSONDecodeError:
-            msg = "No JSON object could be decoded from manifest: {}"
-            LOGGER.warning(msg.format(path))
-        else:
-            # Validate top level items against reserved keywords to avoid overriding
-            # computed data from directory scan
-            reserved = [
-                name
-                for name in settings.manifest_forbidden_vars
-                if name in manifest
-            ]
-            if len(reserved) > 0:
-                msg = (
-                    "Ignored JSON manifest because it has forbidden keywords '{}': {}"
-                )
-                LOGGER.warning(msg.format(", ".join(reserved), path))
-                return None
-
-        if manifest.get("tmdb_type", None) not in settings.allowed_manifest_types:
-            msg = (
-                "JSON Manifest is missing the required 'tmdb_type' field: {}"
-            )
-            LOGGER.warning(msg.format(path))
-            return None
-
-        return manifest
 
 
 @dataclass

@@ -1,6 +1,8 @@
 from deovi.conf import settings
 from deovi.collector import Collector
 
+import pytest
+
 
 def test_collector_get_directory_manifest_nofile(manifests_sample):
     """
@@ -34,6 +36,7 @@ def test_collector_get_directory_manifest_invalid(caplog, warning_logger,
     ]
 
 
+@pytest.mark.skip("'manifest_forbidden_vars' does not invalid loading anymore")
 def test_collector_get_directory_manifest_forbidden(caplog, warning_logger,
                                                     manifests_sample):
     """

@@ -12,6 +12,7 @@ from ..cli.rename import rename_command
 from ..cli.job import job_command
 from ..cli.collect import collect_command
 from ..cli.scrap import scrap_command
+from ..cli.manifescrap import manifescrap_command
 
 
 # Help alias on "-h" argument
@@ -67,3 +68,4 @@ cli_frontend.add_command(rename_command, name="rename")
 cli_frontend.add_command(job_command, name="job")
 cli_frontend.add_command(collect_command, name="collect")
 cli_frontend.add_command(scrap_command, name="scrap")
+cli_frontend.add_command(manifescrap_command, name="manifescrap")

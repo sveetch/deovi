@@ -13,7 +13,7 @@ except ImportError:
     """
     @click.command()
     @click.pass_context
-    def scrap_command(context):
+    def manifescrap_command(context):
         """
         The scrapping feature has not been installed and so this command is not
         available. See 'Install' documentation for details.
@@ -34,16 +34,9 @@ else:
 
     @click.command()
     @click.argument(
-        "tmdb_type",
-        required=True,
-    )
-    @click.argument(
-        "tmdb_id",
-        required=True,
-    )
-    @click.argument(
-        "destination",
-        type=click.Path(exists=False, path_type=Path),
+        "basedir",
+        nargs=1,
+        type=click.Path(exists=True, path_type=Path)
     )
     @click.option(
         "--key",
@@ -77,7 +70,7 @@ else:
         is_flag=True,
         help=(
             "If enabled, a file 'manifest.diff.txt' will be written along manifest "
-            "file if there was a previous manifest file in destination directory and "
+            "file if there was a previous manifest file and "
             "it got differences with the new one. This is not incremental, previous "
             "manifest difference file may be overwritten from a scrap job to another."
         ),
@@ -98,24 +91,24 @@ else:
         ),
     )
     @click.pass_context
-    def scrap_command(context, tmdb_type, tmdb_id, destination, key, filekey,
-                      language, write_diff, formatter, dry):
+    def manifescrap_command(context, basedir, key, filekey,
+                            language, write_diff, formatter, dry):
         """
-        Scrap TV show informations and poster image from TMDb API.
+        Scrap informations and poster image from TMDb API for all manifest found.
+
+        .. TODO::
+            * Expect a directory;
+            * rglob manifest.[json|yaml] to find all manifest;
+            * Only proceed to unlocked tv and movie;
+            * Scrap elligible manifest;
+            * Replace manifest content with the scrapped one;
+            * Replacement must not remove attributes that are not TMDB (like the lock
+              option);
 
         Required arguments (in order):
 
-        TMDB_TYPE\n
-            The kind of media from TMDb, it can be either 'tv' or 'movie'. Trying to
-            scrap a 'tmdb_id' with the wrong type (with 'tv' while it is a movie) will
-            lead to an error.
-
-        TMDB_ID\n
-            The media ID from TMDb, it may looks like an integer, exemple: 14009.
-
-        DESTINATION\n
-            Destination directory path where to write manifest and cover files.
-            If path does not exist it will be created.
+        BASEDIR\n
+            A directory path which contains manifest files to consider for scrapping.
 
         And finally a valid API Key is mandatory, give it either from option '--key'
         or '--filekey'.
@@ -130,10 +123,8 @@ else:
         elif filekey:
             key = filekey.read_text().strip()
 
-        logger.info("TMDB Type: {}".format(tmdb_type))
-        logger.info("TMDB ID: {}".format(tmdb_id))
+        logger.info("basedir: {}".format(basedir))
         logger.debug("Manifest format: {}".format(formatter))
-        logger.debug("Destination: {}".format(destination))
         logger.debug("Language: {}".format(language))
         logger.debug("API Key {}".format(
             "from file" if filekey else "from string",
@@ -147,15 +138,7 @@ else:
             debug=False,
         )
 
-        data, manifest, poster, diffs = connector.fetch_media(
-            destination,
-            tmdb_id,
-            tmdb_type=tmdb_type,
+        stats = connector.fetch_all_from_manifests(
+            basedir,
             write_diff=write_diff,
         )
-        logger.info("Title: {}".format(data["title"]))
-        logger.info("Poster: {}".format(poster))
-        if diffs:
-            logger.info("There were differences with previous manifest file:")
-            for line in diffs:
-                logger.info("- {}".format(line))

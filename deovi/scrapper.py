@@ -1,6 +1,8 @@
 import json
+import logging
 import requests
 import shutil
+from collections import defaultdict
 from pathlib import Path
 
 from deepdiff import DeepDiff
@@ -9,6 +11,8 @@ from tmdbv3api import Configuration, TMDb, TV, Movie
 
 import yaml
 
+from .models import CollectionManifest, MovieManifest, SerieManifest
+from .models.mixins import ManifestLoaderMixin
 from .utils.jsons import ExtendedJsonEncoder
 
 
@@ -30,14 +34,20 @@ class TmdbScrapper:
     Keyword Arguments:
         language (string): Used language for payload content.
         poster_size (string): Size name as supported from TMDb API.
+        manifest_format (string): Manifest file format to use for creation. Note than
+            method ``fetch_all_from_manifests`` will prefer to re use the same format
+            for existing ones.
         poster_filename (string): Filename to use to write download poster image,
-            without any extension.
+            without any extension. DEPRECATED: in new convention, the cover name for
+            a Media is the same filename that the media file and for a Directory it is
+            always 'cover'.
         dry (boolean): If enabled nothing will be written or removed. The JSON payload
             from the ``debug`` is always written no matter of the dry option.
         debug (boolean): If enabled the fetched payload from TmdbScrapper (not to
             confuse with the real TMDB payload) is saved on disk in a JSON file named
             after the media tmdb_id, file is saved in the current working directory.
     """
+    # TODO: Most of these attrs should come from settings
     DEFAULT_LANGUAGE = "fr"
     DEFAULT_POSTER_SIZE = "w780"
     DEFAULT_POSTER_FILENAME = "cover"
@@ -50,6 +60,7 @@ class TmdbScrapper:
         self.poster_size = poster_size or self.DEFAULT_POSTER_SIZE
         self.poster_filename = poster_filename or self.DEFAULT_POSTER_FILENAME
         self.manifest_format = manifest_format or self.DEFAULT_MANIFEST_FORMAT
+        self.logger = logging.getLogger("deovi")
 
         # Set TMDb client options
         self.client = self.get_client(api_key, (language or self.DEFAULT_LANGUAGE))
@@ -175,9 +186,12 @@ class TmdbScrapper:
             ]),
         }
 
-    def fetch_poster(self, path, basepath):
+    def old_fetch_poster(self, path, basepath):
         """
         Download poster from given url path and write it to basepath destination.
+
+        TODO: Write to the right location with the right filename, see
+        'poster_filename' docstring
         """
         basefilepath = basepath / self.poster_filename
 
@@ -200,8 +214,9 @@ class TmdbScrapper:
 
         return destination
 
-    def write_manifest(self, sourcepath, data, write_diff=False):
+    def old_write_manifest_data(self, sourcepath, data, write_diff=False):
         """
+        DEPRECATED
         Write given data to manifest and possibly create a log file about differences
         with previous manifest file if any.
         """
@@ -227,25 +242,21 @@ class TmdbScrapper:
 
         return diff_lines
 
-    def fetch_media(self, directory, tmdb_id, tmdb_type="tv", write_diff=False):
+    def fetch_media(self, destination, tmdb_id, tmdb_type="tv", write_diff=False):
         """
         Get informations payload and images for given TMDB ID.
 
         This downloads images files and build a YAML manifest to the given directory.
-        """
-        # TODO: Here we should open the original manifest (if any) to find the option
-        # which would define if the manifest is locked or not. If locked we should not
-        # proceed to fetch payload and let the original manifest unchanged.
-        # As a sample, the manifest is already opened and parsed from method
-        # 'write_manifest()'
 
+        TODO: Craft a manifest on the fly and use 'fetch_manifest_data'
+        """
         # Fetch and serialize media informations
         if tmdb_type == "tv":
             data = self.serialize_tv_payload(tmdb_id)
         elif tmdb_type == "movie":
             data = self.serialize_movie_payload(tmdb_id)
         else:
-            raise NotImplementedError("Given tmdb_type is not implemented: {}".format(
+            raise NotImplementedError("Given 'tmdb_type' is not implemented: {}".format(
                 tmdb_type
             ))
 
@@ -253,15 +264,15 @@ class TmdbScrapper:
         fetched_poster = None
         if data.get("poster_path", None):
             poster_path = data.pop("poster_path")
-            fetched_poster = self.fetch_poster(poster_path, directory)
+            fetched_poster = self.old_fetch_poster(poster_path, destination)
 
         # Build manifest file to destination directory
         if self.manifest_format == "json":
-            manifest = directory / "manifest.json"
+            manifest = destination / "manifest.json"
         else:
-            manifest = directory / "manifest.yaml"
+            manifest = destination / "manifest.yaml"
 
-        diff = self.write_manifest(manifest, data, write_diff=write_diff)
+        diff = self.old_write_manifest_data(manifest, data, write_diff=write_diff)
 
         return (
             data,
@@ -269,3 +280,246 @@ class TmdbScrapper:
             fetched_poster,
             diff,
         )
+
+    def find_elligible_manifest_file(self, basedir):
+        """
+        Recursively find all manifest files from a directory.
+
+        We start to search for every JSON or YAML files, group them on their filepath
+        without extension, then for each group we try to validate firstly the JSON one
+        and validation fails we try the YAML one.
+
+        During validation the manifest content is deserialized into a manifest model.
+
+        Arguments:
+            basedir (Path): Where to search for manifests.
+
+        Returns:
+            dict: All found elligible manifest file grouped by their branch (meaning
+                the full filepath without the file extension).
+        """
+        branches = defaultdict(list)
+
+        # Group found files per branch
+        # Order of collect per extension will be the priority order for file processing
+        # so here the JSON is the priority format.
+        for v in list(basedir.rglob("*.json")) + list(basedir.rglob("*.yaml")):
+            branch = str(v.parent / v.stem)
+            branches[branch].append(v)
+
+        return branches
+
+    def load_original_manifests(self, branches):
+        """
+        Retrieve all valid manifests from branches.
+
+        * In a branch, the first valid manifest file win;
+        * 'locked' option only ignore the current file item, not the branch, other
+          elligible manifest in a branch may be considered as valid;
+
+        Arguments:
+            branches (dict):
+
+        Returns:
+            list: List of manifest model objects.
+        """
+        manifests = []
+
+        loader = ManifestLoaderMixin()
+
+        self.logger.info("Validating manifests")
+
+        for branch, files in branches.items():
+            # Try each file from branch
+            for fileitem in files:
+                discovered_path = None
+                data = None
+
+                # Load format from file extension
+                if fileitem.suffix == ".json":
+                    data = loader.get_json_manifest(fileitem)
+
+                elif fileitem.suffix == ".yaml":
+                    data = loader.get_yaml_manifest(fileitem)
+
+                else:
+                    raise NotImplementedError("Unsupported format extension: {}".format(
+                        fileitem.suffix
+                    ))
+
+                # Try to load current file as a manifest model
+                manifest = loader.load_manifest(
+                    fileitem,
+                    data,
+                    cover_extensions=[],
+                    autochecksum=False,
+                )
+
+                # TODO: We may output a debug log for locked manifest
+                if (
+                    manifest
+                    and manifest.locked is not True
+                ):
+                    msg = (
+                        "Ignored manifest because it is locked: {}"
+                    )
+                    self.logger.debug(msg.format(manifest.path))
+
+                # Only valid manifests, unlocked and not a collection are scrapped
+                if (
+                    manifest
+                    and manifest.locked is not True
+                    and manifest.tmdb_id is not None
+                    and manifest.tmdb_type != "collection"
+                ):
+                    manifests.append(manifest)
+                    # Store the first valid one and ignore the latter ones
+                    break
+
+        return manifests
+
+    def fetch_poster(self, manifest, url):
+        """
+        Download poster from given url path and write it to basepath destination.
+
+        TODO: Write to the right location with the right filename, see
+        'poster_filename' docstring
+        """
+        # NOTE: Manifest could include a dedicated method to return just the cover
+        # filename
+        if manifest.tmdb_type == "movie":
+            filename = manifest.path.stem
+        else:
+            filename = "cover"
+
+        url = self.get_poster_url(url)
+        extension = Path(
+            url.split("/")[-1]
+        ).suffix
+
+        destination = manifest.path.parent / (filename + extension)
+
+        # Download image file
+        with requests.get(url, stream=True) as r:
+            if not self.dry:
+                # Write file from stream
+                with open(destination, "wb") as f:
+                    shutil.copyfileobj(r.raw, f)
+
+        return destination
+
+    def write_manifest_data(self, manifest, write_diff=False):
+        """
+        Write given data to manifest and possibly create a log file about differences
+        with previous manifest file if any.
+
+        Arguments:
+            manifest (MovieManifest, SerieManifest): The manifest object to write.
+
+        Keyword Arguments:
+            write_diff (bool):
+
+        Returns:
+            list:
+        """
+        diff_lines = []
+
+        new_data = json.loads(manifest.as_json())
+
+        # Write differences if any
+        # TODO: Currently we dont have the 'original' data anymore since manifest
+        # has been updated previously, so we cant diff anything
+        #if manifest.path.exists():
+            #diffs = DeepDiff(original_data, new_data)
+            #diff_lines = diffs.pretty().splitlines()
+            #if not self.dry and write_diff and diff_lines:
+                #diffpath = manifest.path.with_suffix(".diff.txt")
+                #diffpath.write_text("\n".join(diff_lines))
+
+        # Rewrite manifest
+        if not self.dry:
+            if manifest.path.suffix == ".json":
+                manifest.path.write_text(json.dumps(new_data, indent=4))
+
+            elif manifest.path.suffix == ".yaml":
+                manifest.path.write_text(
+                    yaml.dump(new_data, Dumper=yaml.Dumper)
+                )
+
+        return diff_lines
+
+    def fetch_manifest_data(self, manifest, write_diff=False):
+        """
+        Get informations payload and images for given TMDB ID.
+
+        This downloads images files and build a manifest to the given directory.
+
+        NOTE:
+            New method to scrap an item on TMDB ID, once finished 'fetch_media' should
+            use it or be totally deprecated.
+
+            This one stands only on manifest model. 'fetch_media' would need to craft
+            a dummy manifest before using 'fetch_manifest_data'.
+
+        Arguments:
+            manifest (MovieManifest, SerieManifest): The manifest object where to get
+                the TMDB type and ID, also its path will be used to write manifest file.
+
+        Keyword Arguments:
+            write_diff (bool):
+
+        Returns:
+            tuple:
+        """
+        # Fetch and serialize media informations
+        if manifest.tmdb_type == "tv":
+            data = self.serialize_tv_payload(manifest.tmdb_id)
+        elif manifest.tmdb_type == "movie":
+            data = self.serialize_movie_payload(manifest.tmdb_id)
+        else:
+            raise NotImplementedError("Given 'tmdb_type' is not implemented: {}".format(
+                manifest.tmdb_type
+            ))
+
+        # Update manifest object with serialized data
+        for k, v in data.items():
+            setattr(manifest, k, v)
+
+        # Download possible cover image file in destination directory
+        if data.get("poster_path", None):
+            cover_filepath = self.fetch_poster(manifest, data.pop("poster_path"))
+            manifest.cover = cover_filepath.name
+
+        diff = self.write_manifest_data(manifest, write_diff=write_diff)
+
+        return (manifest, diff)
+
+    def fetch_all_from_manifests(self, basedir, write_diff=False):
+        """
+        Scrap informations from TMDB for all manifests.
+
+        Arguments:
+            basedir (Path): Where to search for manifests.
+
+        Keyword Arguments:
+            write_diff (bool):
+
+        Returns:
+            None:
+        """
+
+        branches = self.find_elligible_manifest_file(basedir)
+        print()
+        print("   - branches:")
+        print(json.dumps(branches, indent=4, cls=ExtendedJsonEncoder))
+
+        manifests = self.load_original_manifests(branches)
+        print()
+        print("   - loaded manifests:")
+        print(json.dumps(manifests, indent=4, cls=ExtendedJsonEncoder))
+
+        # TODO: Scrap each manifest with 'fetch_manifest_data'
+        for manifest in manifests:
+            self.fetch_manifest_data(manifest, write_diff=write_diff)
+
+        return

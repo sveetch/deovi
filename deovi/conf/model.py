@@ -22,7 +22,7 @@ class SettingsObject:
 
     # Manifest filename to search in a directory
     # DEPRECATED: With new collector the manifest support JSON/YAML and can have
-    # different name
+    # different names (for Movie)
     manifest_filename: str = "manifest.yaml"
     # Manifest file name without format extension
     manifest_name: str = "manifest"
@@ -75,16 +75,14 @@ class SettingsObject:
             }
 
         if not self.manifest_forbidden_vars:
+            # NOTE: Previous collector/manifest implementation was using it to reject
+            # manifest loading.
+            # This list has evolved to be used only to ignore some fields from loaded
+            # payload.
             self.manifest_forbidden_vars = {
                 "path",
                 "name",
-                "absolute_dir",
-                "relative_dir",
-                "size",
-                "mtime",
-                "checksum",
-                "children_files",
-                "cover",
+                "parent",
             }
 
         if not self.cover_extensions:

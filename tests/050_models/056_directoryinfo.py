@@ -11,6 +11,29 @@ from deovi.models import DirectoryInformation, MediaInformation, SerializableLis
 @freeze_time("2012-10-15 10:00:00.001007")
 def test_creation():
     """
+    Model creation with only required arguments.
+    """
+    duckcity = DirectoryInformation(
+        path=Path("/home/cities/duckcity"),
+        basepath=Path("/home/cities"),
+    )
+
+    assert duckcity.as_dict(preserve=True) == {
+        "absolute_dir": Path("/home/cities"),
+        "checksum": None,
+        "manifest": None,
+        "medias": [],
+        "mtime": None,
+        "name": "duckcity",
+        "path": Path("/home/cities/duckcity"),
+        "relative_dir": Path("duckcity"),
+        "size": 0,
+    }
+
+
+@freeze_time("2012-10-15 10:00:00.001007")
+def test_basic():
+    """
     Basic model creation
     """
     duckcity = DirectoryInformation(

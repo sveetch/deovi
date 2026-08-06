@@ -128,6 +128,11 @@ class NewCollector(PrinterInterface):
 
         This implementation does not support file without any file extension.
 
+        .. Note::
+            Opposed to ``scan_directory``, this method is not intended to be runned
+            directly and rather from inside of ``scan_directory``. So this method does
+            not store data directly to the registry.
+
         Arguments:
             path (pathlib.Path): File path to scan for informations.
 
@@ -150,7 +155,7 @@ class NewCollector(PrinterInterface):
         self.stats["files"] += 1
         self.stats["size"] += data.size
 
-        # TODO: This need to be applied on 'scan_file()' also for cover
+        # Push cover asset in storage queue
         if getattr(data, "manifest"):
             for field in ["cover"]:
                 value = getattr(getattr(data, "manifest"), field)
@@ -162,9 +167,6 @@ class NewCollector(PrinterInterface):
     def scan_directory(self, path, parent=None):
         """
         Scan a directory to get its media files.
-
-        NOTE: Now a directory can have a parent so it should be passed as 'parent'
-        argument
 
         Arguments:
             path (pathlib.Path): Directory to scan for informations, for direct children
@@ -223,7 +225,7 @@ class NewCollector(PrinterInterface):
             key = str(data.path.relative_to(self.basepath))
             self.registry[key] = data
 
-            # TODO: This need to be applied on 'scan_file()' also for cover
+            # Push cover asset in storage queue
             if getattr(data, "manifest"):
                 for field in ["cover"]:
                     value = getattr(getattr(data, "manifest"), field)

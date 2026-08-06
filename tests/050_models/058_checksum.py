@@ -46,8 +46,8 @@ def test_checksum(settings, monkeypatch):
     assert duckcity.as_dict(preserve=True) == {
         "absolute_dir": media_sample / "ping",
         "checksum": (
-            "182ab143510afa3dc28a49027da48c46522e2146e037e937f606cba48c7796468e62a2d"
-            "2483dc77954709205c1b287172cf53c426b223ec694aa972b53909c57"
+            "2c72ae797271e20404648f725eaa8ba3850e1a17037decd476f3a34f7236dd83274078e"
+            "b4c437b411d3969e339238df5129df7d76144940d24a67a9039a3b6ba"
         ),
         "manifest": {
             "casting": [],
@@ -70,7 +70,7 @@ def test_checksum(settings, monkeypatch):
             "path": media_sample / "ping/pong/manifest.json",
             "status": None,
             "title": "Pong JSON",
-            "tmdb_id": None,
+            "tmdb_id": 21567,
             "tmdb_type": "tv",
         },
         "medias": [
@@ -104,7 +104,7 @@ def test_checksum(settings, monkeypatch):
                     "release_date": "",
                     "status": None,
                     "title": "Sample 720x480 1mb JSON",
-                    "tmdb_id": None,
+                    "tmdb_id": 273204,
                     "tmdb_type": "movie",
                 },
                 "mtime": FakeDatetime(2012, 10, 15, 10, 0, 0, 1007),

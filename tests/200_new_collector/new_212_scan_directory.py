@@ -151,6 +151,7 @@ def test_with_cover_and_mediafile(monkeypatch, media_sample):
             "title": "Pong JSON",
             "overview": None,
             "status": None,
+            "tmdb_id": 21567,
             "original_language": None,
             "cover": {
                 "checksum": None,
@@ -183,6 +184,7 @@ def test_with_cover_and_mediafile(monkeypatch, media_sample):
                     "title": "Sample 720x480 1mb JSON",
                     "overview": None,
                     "status": None,
+                    "tmdb_id": 273204,
                     "original_language": None,
                     "cover": {
                         "checksum": None,

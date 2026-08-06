@@ -111,6 +111,7 @@ def test_collector_scan_file_manifest(monkeypatch, media_sample):
             "tmdb_type": "movie",
             "locked": False,
             "title": "Sample 720x480 1mb JSON",
+            "tmdb_id": 273204,
             "overview": None,
             "status": None,
             "original_language": None,

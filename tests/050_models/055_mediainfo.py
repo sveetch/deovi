@@ -10,6 +10,31 @@ from deovi.models import MediaInformation
 @freeze_time("2012-10-15 10:00:00.001007")
 def test_creation():
     """
+    Model creation with only required arguments.
+    """
+    picsou = MediaInformation(
+        path=Path("/home/cities/duckcity/picsou.mp4"),
+        basepath=Path("/home/cities/duckcity"),
+    )
+
+    assert json.loads(picsou.as_json()) == {
+        "path": "/home/cities/duckcity/picsou.mp4",
+        "size": 0,
+        "mtime": None,
+        "name": "picsou.mp4",
+        "absolute_dir": "/home/cities/duckcity",
+        "relative_dir": ".",
+        "manifest": None,
+        "checksum": None,
+        "container": "MPEG-4",
+        "name_alt": "",
+        "extension": "mp4",
+    }
+
+
+@freeze_time("2012-10-15 10:00:00.001007")
+def test_basic():
+    """
     Basic model creation
     """
     picsou = MediaInformation(
