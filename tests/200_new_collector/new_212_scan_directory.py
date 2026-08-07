@@ -145,13 +145,12 @@ def test_with_cover_and_mediafile(monkeypatch, media_sample):
         "relative_dir": "ping/pong",
         "manifest": {
             "path": str(media_sample / "ping/pong/manifest.json"),
-            "tmdb_id": None,
+            "tmdb_id": 21567,
             "tmdb_type": "tv",
             "locked": False,
             "title": "Pong JSON",
             "overview": None,
             "status": None,
-            "tmdb_id": 21567,
             "original_language": None,
             "cover": {
                 "checksum": None,
@@ -178,13 +177,12 @@ def test_with_cover_and_mediafile(monkeypatch, media_sample):
                     "path": str(
                         media_sample / "ping/pong/SampleVideo_720x480_1mb.json"
                     ),
-                    "tmdb_id": None,
+                    "tmdb_id": 273204,
                     "tmdb_type": "movie",
                     "locked": False,
                     "title": "Sample 720x480 1mb JSON",
                     "overview": None,
                     "status": None,
-                    "tmdb_id": 273204,
                     "original_language": None,
                     "cover": {
                         "checksum": None,

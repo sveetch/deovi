@@ -107,11 +107,10 @@ def test_collector_scan_file_manifest(monkeypatch, media_sample):
         "relative_dir": Path("ping/pong"),
         "manifest": {
             "path": media_sample / "ping/pong/SampleVideo_720x480_1mb.json",
-            "tmdb_id": None,
+            "tmdb_id": 273204,
             "tmdb_type": "movie",
             "locked": False,
             "title": "Sample 720x480 1mb JSON",
-            "tmdb_id": 273204,
             "overview": None,
             "status": None,
             "original_language": None,

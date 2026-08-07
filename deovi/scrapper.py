@@ -11,7 +11,6 @@ from tmdbv3api import Configuration, TMDb, TV, Movie
 
 import yaml
 
-from .models import CollectionManifest, MovieManifest, SerieManifest
 from .models.mixins import ManifestLoaderMixin
 from .utils.jsons import ExtendedJsonEncoder
 
@@ -332,7 +331,6 @@ class TmdbScrapper:
         for branch, files in branches.items():
             # Try each file from branch
             for fileitem in files:
-                discovered_path = None
                 data = None
 
                 # Load format from file extension
@@ -381,12 +379,9 @@ class TmdbScrapper:
     def fetch_poster(self, manifest, url):
         """
         Download poster from given url path and write it to basepath destination.
-
-        TODO: Write to the right location with the right filename, see
-        'poster_filename' docstring
         """
-        # NOTE: Manifest could include a dedicated method to return just the cover
-        # filename
+        # NOTE: Manifest models could include a dedicated method to return just the
+        # cover filename
         if manifest.tmdb_type == "movie":
             filename = manifest.path.stem
         else:
@@ -408,7 +403,7 @@ class TmdbScrapper:
 
         return destination
 
-    def write_manifest_data(self, manifest, write_diff=False):
+    def write_manifest_data(self, manifest, original=None, write_diff=False):
         """
         Write given data to manifest and possibly create a log file about differences
         with previous manifest file if any.
@@ -423,18 +418,19 @@ class TmdbScrapper:
             list:
         """
         diff_lines = []
+        original = original or {}
 
         new_data = json.loads(manifest.as_json())
 
         # Write differences if any
         # TODO: Currently we dont have the 'original' data anymore since manifest
         # has been updated previously, so we cant diff anything
-        #if manifest.path.exists():
-            #diffs = DeepDiff(original_data, new_data)
-            #diff_lines = diffs.pretty().splitlines()
-            #if not self.dry and write_diff and diff_lines:
-                #diffpath = manifest.path.with_suffix(".diff.txt")
-                #diffpath.write_text("\n".join(diff_lines))
+        if manifest.path.exists():
+            diffs = DeepDiff(original, new_data)
+            diff_lines = diffs.pretty().splitlines()
+            if not self.dry and write_diff and diff_lines:
+                diffpath = manifest.path.with_suffix(".diff.txt")
+                diffpath.write_text("\n".join(diff_lines))
 
         # Rewrite manifest
         if not self.dry:
@@ -471,6 +467,8 @@ class TmdbScrapper:
         Returns:
             tuple:
         """
+        original_data = json.loads(manifest.as_json())
+
         # Fetch and serialize media informations
         if manifest.tmdb_type == "tv":
             data = self.serialize_tv_payload(manifest.tmdb_id)
@@ -490,7 +488,11 @@ class TmdbScrapper:
             cover_filepath = self.fetch_poster(manifest, data.pop("poster_path"))
             manifest.cover = cover_filepath.name
 
-        diff = self.write_manifest_data(manifest, write_diff=write_diff)
+        diff = self.write_manifest_data(
+            manifest,
+            original=original_data,
+            write_diff=write_diff,
+        )
 
         return (manifest, diff)
 
@@ -509,17 +511,25 @@ class TmdbScrapper:
         """
 
         branches = self.find_elligible_manifest_file(basedir)
-        print()
-        print("   - branches:")
-        print(json.dumps(branches, indent=4, cls=ExtendedJsonEncoder))
+        # print()
+        # print("   - branches:")
+        # print(json.dumps(branches, indent=4, cls=ExtendedJsonEncoder))
 
         manifests = self.load_original_manifests(branches)
         print()
-        print("   - loaded manifests:")
+        print("🚚 LOADED manifests:")
         print(json.dumps(manifests, indent=4, cls=ExtendedJsonEncoder))
 
-        # TODO: Scrap each manifest with 'fetch_manifest_data'
-        for manifest in manifests:
-            self.fetch_manifest_data(manifest, write_diff=write_diff)
+        # Scrap each valid manifest
+        processed = [
+            self.fetch_manifest_data(
+                manifest_path,
+                write_diff=write_diff,
+            )
+            for manifest_path in manifests
+        ]
+        print()
+        print("🍻 PROCESSED manifests:")
+        print(json.dumps(processed, indent=4, cls=ExtendedJsonEncoder))
 
-        return
+        return processed

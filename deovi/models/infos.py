@@ -9,9 +9,6 @@ from dataclasses import (
 )
 from typing import Any, ClassVar, Union
 
-import yaml
-
-from .manifests import CollectionManifest, MovieManifest, SerieManifest
 from ..conf import settings
 from ..exceptions import InformationModelError
 from ..utils.jsons import ExtendedJsonEncoder

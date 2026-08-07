@@ -138,7 +138,7 @@ else:
             debug=False,
         )
 
-        stats = connector.fetch_all_from_manifests(
+        connector.fetch_all_from_manifests(
             basedir,
             write_diff=write_diff,
         )
