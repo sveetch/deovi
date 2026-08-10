@@ -93,12 +93,17 @@ def test_scrap_basic_success(caplog, tmp_path, settings):
         (
             __pkgname__,
             logging.INFO,
-            "Title: {}".format(SAMPLE_TV_PAYLOAD["title"]),
+            "Manifest: {}".format(tmp_path / "manifest.yaml")
         ),
         (
             __pkgname__,
             logging.INFO,
-            "Poster: {}".format(str(poster_path)),
+            "Cover: {}".format(str(poster_path))
+        ),
+        (
+            __pkgname__,
+            logging.INFO,
+            "Title: {}".format(SAMPLE_TV_PAYLOAD["title"])
         ),
     ]
 
@@ -173,11 +178,16 @@ def test_scrap_basic_dry(caplog, tmp_path, settings):
         (
             __pkgname__,
             logging.INFO,
-            "Title: {}".format(SAMPLE_TV_PAYLOAD["title"])
+            "Manifest: {}".format(tmp_path / "manifest.yaml")
         ),
         (
             __pkgname__,
             logging.INFO,
-            "Poster: {}".format(str(poster_path))
-        )
+            "Cover: {}".format(str(poster_path))
+        ),
+        (
+            __pkgname__,
+            logging.INFO,
+            "Title: {}".format(SAMPLE_TV_PAYLOAD["title"])
+        ),
     ]

@@ -7,7 +7,7 @@ from pathlib import Path
 import deovi
 
 
-API_FILEKEY_FILENAME = "tmdb-api-key.txt"
+API_FILEKEY_FILENAME = "test-tmdb-api-key.txt"
 
 
 # Sample TV serie 'The Outer Limits' in english

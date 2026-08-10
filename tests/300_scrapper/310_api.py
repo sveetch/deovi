@@ -10,6 +10,9 @@ All tests use sample payload downloaded from TMDB.
     Remember than TmdbScrapper initialization itself involves a request to API, since
     client validate API key and retrieve base API configuration.
 """
+import copy
+from pathlib import Path
+
 import pytest
 
 import yaml
@@ -99,12 +102,18 @@ def test_scrapper_fetch_tv(tmp_path, settings):
     scrapper.fetch_media(tmp_path, SAMPLE_TV_ID, tmdb_type="tv")
 
     manifest_path = tmp_path / "manifest.yaml"
-    assert (tmp_path / "cover.jpg").exists()
-    assert manifest_path.exists()
+    assert (tmp_path / "cover.jpg").exists() is True
+    assert manifest_path.exists() is True
 
     manifest = yaml.load(manifest_path.read_text(), Loader=yaml.FullLoader)
 
-    assert manifest == SAMPLE_TV_PAYLOAD
+    # Patch sample payload to add expected manifest variables
+    expected = copy.deepcopy(SAMPLE_TV_PAYLOAD)
+    expected["path"] = str(manifest_path)
+    expected["locked"] = False
+    expected["cover"] = "cover.jpg"
+
+    assert manifest == expected
 
 
 @api_allowed
@@ -116,11 +125,31 @@ def test_scrapper_fetch_movie(tmp_path, settings):
     NOTE: This involves 2 requests to API
     """
     scrapper = TmdbScrapper(settings.tmdbapi_key(), language="en")
+
+    # With default filename
     scrapper.fetch_media(tmp_path, SAMPLE_MOVIE_ID, tmdb_type="movie")
-
     manifest_path = tmp_path / "manifest.yaml"
-    assert (tmp_path / "cover.jpg").exists()
-    assert manifest_path.exists()
+    # On default a movie cover adopts the filename of the manifest
+    assert (tmp_path / "manifest.jpg").exists() is True
+    assert manifest_path.exists() is True
 
+    # Patch sample payload to add expected manifest variables
     manifest = yaml.load(manifest_path.read_text(), Loader=yaml.FullLoader)
-    assert manifest == SAMPLE_MOVIE_PAYLOAD
+    expected = copy.deepcopy(SAMPLE_MOVIE_PAYLOAD)
+    expected["path"] = str(manifest_path)
+    expected["locked"] = False
+    expected["cover"] = "manifest.jpg"
+
+    assert manifest == expected
+
+    # With default filename
+    scrapper.fetch_media(
+        tmp_path,
+        SAMPLE_MOVIE_ID,
+        tmdb_type="movie",
+        filename=Path("foo/custom.mkv")
+    )
+    manifest_path = tmp_path / "custom.yaml"
+    # with custom filename, the cover filename adopt it
+    assert (tmp_path / "custom.jpg").exists() is True
+    assert manifest_path.exists() is True

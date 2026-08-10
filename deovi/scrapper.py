@@ -11,6 +11,7 @@ from tmdbv3api import Configuration, TMDb, TV, Movie
 
 import yaml
 
+from .models import MovieManifest, SerieManifest
 from .models.mixins import ManifestLoaderMixin
 from .utils.jsons import ExtendedJsonEncoder
 
@@ -19,11 +20,18 @@ class TmdbScrapper:
     """
     Class to scrap informations from TMDb API.
 
+    .. Note::
+        The scrapper is not aware of any custom Manifest variables to
+        remember when overwriting an existing manifest. If original manifest was
+        storing one or many custom Manifest variables that are not in API payload
+        they will be lost on update.
+
+        Actually in practice this is not a subject of concern because manifest model
+        don't have 'non-payload' variables to keep persistent.
+
     Attributes:
         DEFAULT_LANGUAGE (string): Default value for ``language`` argument.
         DEFAULT_POSTER_SIZE (string): Default value for ``poster_size`` argument.
-        DEFAULT_POSTER_FILENAME (string): Default value for ``poster_filename``
-            argument.
         DEFAULT_MANIFEST_FORMAT (string): Default value for ``manifest_format``
             argument.
 
@@ -36,10 +44,6 @@ class TmdbScrapper:
         manifest_format (string): Manifest file format to use for creation. Note than
             method ``fetch_all_from_manifests`` will prefer to re use the same format
             for existing ones.
-        poster_filename (string): Filename to use to write download poster image,
-            without any extension. DEPRECATED: in new convention, the cover name for
-            a Media is the same filename that the media file and for a Directory it is
-            always 'cover'.
         dry (boolean): If enabled nothing will be written or removed. The JSON payload
             from the ``debug`` is always written no matter of the dry option.
         debug (boolean): If enabled the fetched payload from TmdbScrapper (not to
@@ -49,15 +53,13 @@ class TmdbScrapper:
     # TODO: Most of these attrs should come from settings
     DEFAULT_LANGUAGE = "fr"
     DEFAULT_POSTER_SIZE = "w780"
-    DEFAULT_POSTER_FILENAME = "cover"
     DEFAULT_MANIFEST_FORMAT = "yaml"
 
     def __init__(self, api_key, language=None, poster_size=None,
-                 poster_filename=None, manifest_format=None, dry=False, debug=False):
+                 manifest_format=None, dry=False, debug=False):
         self.dry = dry
         self.debug = debug
         self.poster_size = poster_size or self.DEFAULT_POSTER_SIZE
-        self.poster_filename = poster_filename or self.DEFAULT_POSTER_FILENAME
         self.manifest_format = manifest_format or self.DEFAULT_MANIFEST_FORMAT
         self.logger = logging.getLogger("deovi")
 
@@ -185,101 +187,6 @@ class TmdbScrapper:
             ]),
         }
 
-    def old_fetch_poster(self, path, basepath):
-        """
-        Download poster from given url path and write it to basepath destination.
-
-        TODO: Write to the right location with the right filename, see
-        'poster_filename' docstring
-        """
-        basefilepath = basepath / self.poster_filename
-
-        url = self.get_poster_url(path)
-        extension = Path(
-            url.split("/")[-1]
-        ).suffix
-
-        destination = basefilepath.with_suffix(extension)
-
-        # Go download the file
-        with requests.get(url, stream=True) as r:
-            if not self.dry:
-                # Create destination directory if missing
-                if not basepath.exists():
-                    basepath.mkdir(parents=True, exist_ok=True)
-                # Write file from stream
-                with open(destination, "wb") as f:
-                    shutil.copyfileobj(r.raw, f)
-
-        return destination
-
-    def old_write_manifest_data(self, sourcepath, data, write_diff=False):
-        """
-        DEPRECATED
-        Write given data to manifest and possibly create a log file about differences
-        with previous manifest file if any.
-        """
-        diff_lines = []
-
-        # Write differences if any
-        if sourcepath.exists():
-            original = yaml.load(sourcepath.read_text(), Loader=yaml.FullLoader)
-            diffs = DeepDiff(original, data)
-            diff_lines = diffs.pretty().splitlines()
-            if not self.dry and write_diff and diff_lines:
-                diffpath = sourcepath.with_suffix(".diff.txt")
-                diffpath.write_text("\n".join(diff_lines))
-
-        # Write/overwrite manifest
-        if not self.dry:
-            if self.manifest_format == "json":
-                sourcepath.write_text(json.dumps(data, indent=4))
-            else:
-                sourcepath.write_text(
-                    yaml.dump(data, Dumper=yaml.Dumper)
-                )
-
-        return diff_lines
-
-    def fetch_media(self, destination, tmdb_id, tmdb_type="tv", write_diff=False):
-        """
-        Get informations payload and images for given TMDB ID.
-
-        This downloads images files and build a YAML manifest to the given directory.
-
-        TODO: Craft a manifest on the fly and use 'fetch_manifest_data'
-        """
-        # Fetch and serialize media informations
-        if tmdb_type == "tv":
-            data = self.serialize_tv_payload(tmdb_id)
-        elif tmdb_type == "movie":
-            data = self.serialize_movie_payload(tmdb_id)
-        else:
-            raise NotImplementedError("Given 'tmdb_type' is not implemented: {}".format(
-                tmdb_type
-            ))
-
-        # Download possible poster image file in destination directory
-        fetched_poster = None
-        if data.get("poster_path", None):
-            poster_path = data.pop("poster_path")
-            fetched_poster = self.old_fetch_poster(poster_path, destination)
-
-        # Build manifest file to destination directory
-        if self.manifest_format == "json":
-            manifest = destination / "manifest.json"
-        else:
-            manifest = destination / "manifest.yaml"
-
-        diff = self.old_write_manifest_data(manifest, data, write_diff=write_diff)
-
-        return (
-            data,
-            manifest,
-            fetched_poster,
-            diff,
-        )
-
     def find_elligible_manifest_file(self, basedir):
         """
         Recursively find all manifest files from a directory.
@@ -353,7 +260,7 @@ class TmdbScrapper:
                     autochecksum=False,
                 )
 
-                # TODO: We may output a debug log for locked manifest
+                # output a debug log for locked manifest
                 if (
                     manifest
                     and manifest.locked is not True
@@ -379,6 +286,13 @@ class TmdbScrapper:
     def fetch_poster(self, manifest, url):
         """
         Download poster from given url path and write it to basepath destination.
+
+        Arguments:
+            manifest (MovieManifest, SerieManifest): The related manifest object.
+            url (string):
+
+        Returns:
+            Path:
         """
         # NOTE: Manifest models could include a dedicated method to return just the
         # cover filename
@@ -405,14 +319,16 @@ class TmdbScrapper:
 
     def write_manifest_data(self, manifest, original=None, write_diff=False):
         """
-        Write given data to manifest and possibly create a log file about differences
-        with previous manifest file if any.
+        Write given data to manifest and possibly create a log of differences
+        with possible original (previous) manifest.
 
         Arguments:
             manifest (MovieManifest, SerieManifest): The manifest object to write.
 
         Keyword Arguments:
-            write_diff (bool):
+            original (dict):
+            write_diff (bool): Enable creation of differences between possible original
+                data and fetched data.
 
         Returns:
             list:
@@ -423,17 +339,20 @@ class TmdbScrapper:
         new_data = json.loads(manifest.as_json())
 
         # Write differences if any
-        # TODO: Currently we dont have the 'original' data anymore since manifest
-        # has been updated previously, so we cant diff anything
-        if manifest.path.exists():
+        if write_diff and manifest.path.exists():
             diffs = DeepDiff(original, new_data)
             diff_lines = diffs.pretty().splitlines()
-            if not self.dry and write_diff and diff_lines:
+            if not self.dry and diff_lines:
                 diffpath = manifest.path.with_suffix(".diff.txt")
                 diffpath.write_text("\n".join(diff_lines))
 
-        # Rewrite manifest
+        # (re)write manifest
         if not self.dry:
+            # Create missing directory if needed
+            if not manifest.path.parent.exists():
+                manifest.path.parent.mkdir()
+
+            # Serialize to the right format
             if manifest.path.suffix == ".json":
                 manifest.path.write_text(json.dumps(new_data, indent=4))
 
@@ -444,7 +363,7 @@ class TmdbScrapper:
 
         return diff_lines
 
-    def fetch_manifest_data(self, manifest, write_diff=False):
+    def process_manifest(self, manifest, write_diff=False):
         """
         Get informations payload and images for given TMDB ID.
 
@@ -455,14 +374,15 @@ class TmdbScrapper:
             use it or be totally deprecated.
 
             This one stands only on manifest model. 'fetch_media' would need to craft
-            a dummy manifest before using 'fetch_manifest_data'.
+            a dummy manifest before using 'process_manifest'.
 
         Arguments:
             manifest (MovieManifest, SerieManifest): The manifest object where to get
                 the TMDB type and ID, also its path will be used to write manifest file.
 
         Keyword Arguments:
-            write_diff (bool):
+            write_diff (bool): Enable creation of differences between possible original
+                data and fetched data.
 
         Returns:
             tuple:
@@ -496,40 +416,70 @@ class TmdbScrapper:
 
         return (manifest, diff)
 
+    def fetch_media(self, destination, tmdb_id, tmdb_type="tv", filename=None,
+                    write_diff=False):
+        """
+        Get information and cover for given TMDB ID an type.
+
+        TODO: Rename to 'fetch_from_id'.
+
+        Arguments:
+            destination (Path): Directory path where to write manifest and possible
+                cover files.
+            tmdb_id (string):
+
+        Keyword Arguments:
+            tmdb_type (string):
+            filename (Path): A file path to use to define a custom manifest filename.
+                It can be relative path, absolute or even a simple filename. Commonly
+                this should only be used for a Movie.
+            write_diff (bool): Enable creation of differences between possible original
+                data and fetched data.
+
+        Returns:
+            tuple: The manifest object and list of differences (if enabled).
+        """
+        if tmdb_type == "tv":
+            model = SerieManifest
+        elif tmdb_type == "movie":
+            model = MovieManifest
+        else:
+            raise NotImplementedError("Given 'tmdb_type' is not implemented: {}".format(
+                tmdb_type
+            ))
+
+        # Build manifest
+        filename = filename.stem if filename else "manifest"
+        manifest_path = destination / "{}.{}".format(filename, self.manifest_format)
+        manifest = model(path=manifest_path, tmdb_id=tmdb_id)
+
+        manifest, diff = self.process_manifest(manifest, write_diff=write_diff)
+
+        return (manifest, diff)
+
     def fetch_all_from_manifests(self, basedir, write_diff=False):
         """
-        Scrap informations from TMDB for all manifests.
+        Get information from TMDB for all manifests.
+
+        TODO: Rename to 'fetch_from_manifests'.
 
         Arguments:
             basedir (Path): Where to search for manifests.
 
         Keyword Arguments:
-            write_diff (bool):
+            write_diff (bool): Enable creation of differences between possible original
+                data and fetched data.
 
         Returns:
-            None:
+            list: List of processed items. Each item is a tuple with the manifest
+                object and list of differences (if enabled).
         """
 
         branches = self.find_elligible_manifest_file(basedir)
-        # print()
-        # print("   - branches:")
-        # print(json.dumps(branches, indent=4, cls=ExtendedJsonEncoder))
 
         manifests = self.load_original_manifests(branches)
-        print()
-        print("🚚 LOADED manifests:")
-        print(json.dumps(manifests, indent=4, cls=ExtendedJsonEncoder))
 
-        # Scrap each valid manifest
-        processed = [
-            self.fetch_manifest_data(
-                manifest_path,
-                write_diff=write_diff,
-            )
-            for manifest_path in manifests
+        return [
+            self.process_manifest(manifest, write_diff=write_diff)
+            for manifest in manifests
         ]
-        print()
-        print("🍻 PROCESSED manifests:")
-        print(json.dumps(processed, indent=4, cls=ExtendedJsonEncoder))
-
-        return processed

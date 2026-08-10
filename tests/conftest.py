@@ -9,6 +9,7 @@ import pytest
 import deovi
 from deovi.logger import init_logger
 from deovi.renamer.tasks import TaskMaster
+from deovi.scrapper import TmdbScrapper
 
 from tests.utils import get_tmdbapi_key
 
@@ -225,3 +226,51 @@ def task_manager():
     tests simple and just use "TaskMaster()" in them.
     """
     return TaskMaster()
+
+
+@pytest.fixture(scope="function")
+def disable_api(monkeypatch):
+    """
+    Fixture function to disable all method that would involves API or requests
+    """
+    def dummy_client(cls, *args, **kwargs):
+        # No client object needed
+        return None
+
+    def dummy_configurations(cls):
+        # Dummy media URL
+        cls.secure_base_url = "nope://niet/"
+
+    def dummy_poster(cls, *args, **kwargs):
+        # Dummy poster path
+        manifest, url = args
+        if manifest.tmdb_type == "movie":
+            return Path("/nope/niet/dummy_movie-cover.png")
+        elif manifest.tmdb_type == "tv":
+            return Path("/nope/niet/dummy_serie-cover.png")
+        else:
+            return None
+
+    def dummy_tv_payload(cls, *args, **kwargs):
+        """
+        Return a dummy payload for a serie manifest.
+        """
+        return {
+            "title": "changed-serie",
+            "poster_path": "serie-cover.png",
+            "bonus": "yep",
+        }
+
+    def dummy_movie_payload(cls, *args, **kwargs):
+        # Return a dummy payload for a movie manifest
+        return {
+            "title": "changed-movie",
+            "poster_path": "movie-cover.png",
+            "bonus": "yep",
+        }
+
+    monkeypatch.setattr(TmdbScrapper, "get_client", dummy_client)
+    monkeypatch.setattr(TmdbScrapper, "get_api_configurations", dummy_configurations)
+    monkeypatch.setattr(TmdbScrapper, "fetch_poster", dummy_poster)
+    monkeypatch.setattr(TmdbScrapper, "serialize_tv_payload", dummy_tv_payload)
+    monkeypatch.setattr(TmdbScrapper, "serialize_movie_payload", dummy_movie_payload)

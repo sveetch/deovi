@@ -147,14 +147,21 @@ else:
             debug=False,
         )
 
-        data, manifest, poster, diffs = connector.fetch_media(
+        manifest, diffs = connector.fetch_media(
             destination,
             tmdb_id,
             tmdb_type=tmdb_type,
             write_diff=write_diff,
         )
-        logger.info("Title: {}".format(data["title"]))
-        logger.info("Poster: {}".format(poster))
+
+        cover = None
+        if manifest.cover:
+            cover = manifest.path.parent / manifest.cover
+
+        logger.info("Manifest: {}".format(manifest.path))
+        logger.info("Cover: {}".format(cover))
+        logger.info("Title: {}".format(manifest.title))
+
         if diffs:
             logger.info("There were differences with previous manifest file:")
             for line in diffs:
