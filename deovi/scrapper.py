@@ -119,7 +119,14 @@ class TmdbScrapper:
         """
         Get informations payload for given TV ID.
 
-        List values are sorted to help enforcing some stability.
+        Included list values are sorted to help enforcing some stability.
+
+        Arguments:
+            tmdb_id (integer): The TMDB ID of the serie to get.
+
+        Returns:
+            dict: Serialized payload, not all content from TMDB API are serialized,
+            only the ones we support.
         """
         # Fetch payload from API
         payload = TV().details(tmdb_id)
@@ -156,7 +163,14 @@ class TmdbScrapper:
         """
         Get informations payload for given MOVIE ID.
 
-        List values are sorted to help enforcing some stability.
+        Included list values are sorted to help enforcing some stability.
+
+        Arguments:
+            tmdb_id (integer): The TMDB ID of the movie to get.
+
+        Returns:
+            dict: Serialized payload, not all content from TMDB API are serialized,
+            only the ones we support.
         """
         # Fetch payload from API
         payload = Movie().details(tmdb_id)
@@ -220,11 +234,14 @@ class TmdbScrapper:
         Retrieve all valid manifests from branches.
 
         * In a branch, the first valid manifest file win;
+        * An invalid manifest is ignored and a possible following one will be loaded (if
+          valid);
         * 'locked' option only ignore the current file item, not the branch, other
           elligible manifest in a branch may be considered as valid;
 
         Arguments:
-            branches (dict):
+            branches (dict): A dictionnary in format returned by
+                ``find_elligible_manifest_file``.
 
         Returns:
             list: List of manifest model objects.
@@ -289,10 +306,10 @@ class TmdbScrapper:
 
         Arguments:
             manifest (MovieManifest, SerieManifest): The related manifest object.
-            url (string):
+            url (string): URL of the cover image file to download.
 
         Returns:
-            Path:
+            Path: The path of the downloaded image file.
         """
         # NOTE: Manifest models could include a dedicated method to return just the
         # cover filename
@@ -319,34 +336,38 @@ class TmdbScrapper:
 
     def write_manifest_data(self, manifest, original=None, write_diff=False):
         """
-        Write given data to manifest and possibly create a log of differences
+        Write given data to a manifest file and possibly create a log of differences
         with possible original (previous) manifest.
 
         Arguments:
             manifest (MovieManifest, SerieManifest): The manifest object to write.
 
         Keyword Arguments:
-            original (dict):
-            write_diff (bool): Enable creation of differences between possible original
-                data and fetched data.
+            original (dict): A dictionnary for original manifest exported. This is
+                only used if given manifest file exists (assumed it is the current
+                original).
+            write_diff (bool): Enable creation of difference file between possible
+                original data and fetched data.
 
         Returns:
-            list:
+            list: List of difference logs if there was some.
         """
         diff_lines = []
         original = original or {}
 
         new_data = json.loads(manifest.as_json())
 
-        # Write differences if any
-        if write_diff and manifest.path.exists():
+        # Only compare differences if there was an existing original manifest file
+        if manifest.path.exists():
             diffs = DeepDiff(original, new_data)
             diff_lines = diffs.pretty().splitlines()
-            if not self.dry and diff_lines:
+
+            # If there are some diff, we are not in dry mode and writing diff is enabled
+            if write_diff and not self.dry and diff_lines:
                 diffpath = manifest.path.with_suffix(".diff.txt")
                 diffpath.write_text("\n".join(diff_lines))
 
-        # (re)write manifest
+        # Write or overwrite manifest
         if not self.dry:
             # Create missing directory if needed
             if not manifest.path.parent.exists():
@@ -381,8 +402,8 @@ class TmdbScrapper:
                 the TMDB type and ID, also its path will be used to write manifest file.
 
         Keyword Arguments:
-            write_diff (bool): Enable creation of differences between possible original
-                data and fetched data.
+            write_diff (bool): Enable creation of difference file between possible
+                original data and fetched data.
 
         Returns:
             tuple:
@@ -433,8 +454,8 @@ class TmdbScrapper:
             filename (Path): A file path to use to define a custom manifest filename.
                 It can be relative path, absolute or even a simple filename. Commonly
                 this should only be used for a Movie.
-            write_diff (bool): Enable creation of differences between possible original
-                data and fetched data.
+            write_diff (bool): Enable creation of difference file between possible
+                original data and fetched data.
 
         Returns:
             tuple: The manifest object and list of differences (if enabled).
@@ -467,8 +488,8 @@ class TmdbScrapper:
             basedir (Path): Where to search for manifests.
 
         Keyword Arguments:
-            write_diff (bool): Enable creation of differences between possible original
-                data and fetched data.
+            write_diff (bool): Enable creation of difference file between possible
+                original data and fetched data for each manifest.
 
         Returns:
             list: List of processed items. Each item is a tuple with the manifest

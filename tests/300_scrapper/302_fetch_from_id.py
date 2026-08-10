@@ -46,7 +46,13 @@ def test_for_serie(media_sample, disable_api):
         "number_of_seasons": None,
         "number_of_episodes": None
     }
-    assert diff == []
+    assert diff == [
+        (
+            "Type of root['cover'] changed from NoneType to str and value changed from "
+            'None to "dummy_serie-cover.png".'
+        ),
+        'Value of root[\'title\'] changed from "manifest.json" to "changed-serie".',
+    ]
 
     written_new_manifest = json.loads(new_serie_manifest.read_text())
     assert written_new_manifest["title"] == "changed-serie"
@@ -62,8 +68,10 @@ def test_for_serie(media_sample, disable_api):
     )
 
     assert diff == [
-        "Type of root['cover'] changed from NoneType to str and value changed from "
-        'None to "dummy_serie-cover.png".',
+        (
+            "Type of root['cover'] changed from NoneType to str and value changed from "
+            'None to "dummy_serie-cover.png".'
+        ),
         'Value of root[\'title\'] changed from "manifest.json" to '
         '"changed-serie".',
     ]
