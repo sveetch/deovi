@@ -3,9 +3,9 @@ import json
 import pytest
 
 from deovi.exceptions import JobValidationError
+from deovi.printer import PrinterInterface
 from deovi.renamer.jobs import Job
 from deovi.renamer.runner import JobRunner
-from deovi.renamer.printer import PrinterInterface
 from deovi.renamer.tasks import TaskMaster
 
 

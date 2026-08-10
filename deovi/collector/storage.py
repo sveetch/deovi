@@ -3,7 +3,7 @@ import shutil
 import uuid
 from pathlib import Path
 
-from ..renamer.printer import PrinterInterface
+from ..printer import PrinterInterface
 from ..utils.checksum import ChecksumOperator
 
 

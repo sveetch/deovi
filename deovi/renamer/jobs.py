@@ -5,7 +5,7 @@ from slugify import slugify
 
 from ..exceptions import JobValidationError
 
-from .printer import PrinterInterface
+from ..printer import PrinterInterface
 from .validators import is_allowed_file
 
 

@@ -6,7 +6,7 @@ from .. import __version__
 from ..conf import settings
 from ..exceptions import CollectorError
 from ..models import DirectoryInformation, MediaInformation
-from ..renamer.printer import PrinterInterface
+from ..printer import PrinterInterface
 from ..utils.jsons import ExtendedJsonEncoder
 from .new_storage import NewAssetStorage
 

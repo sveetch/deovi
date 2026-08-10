@@ -1,6 +1,6 @@
 from ..exceptions import JobValidationError, TaskValidationError
 
-from .printer import PrinterInterface
+from ..printer import PrinterInterface
 from .jobs import Job
 from .validators import validate_jobs, validate_task_options
 

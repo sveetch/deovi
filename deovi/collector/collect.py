@@ -6,7 +6,7 @@ import yaml
 
 from ..conf import settings
 from ..exceptions import CollectorError
-from ..renamer.printer import PrinterInterface
+from ..printer import PrinterInterface
 from ..utils.jsons import ExtendedJsonEncoder
 from ..utils.checksum import ChecksumOperator
 from .storage import AssetStorage

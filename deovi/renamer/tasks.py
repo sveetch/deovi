@@ -1,4 +1,4 @@
-from .printer import PrinterInterface
+from ..printer import PrinterInterface
 
 
 class TaskMethods:

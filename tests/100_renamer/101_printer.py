@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-from deovi.renamer.printer import PrinterInterface
+from deovi.printer import PrinterInterface
 
 
 @pytest.mark.parametrize("length, template, expected_indent, expected_indice", [

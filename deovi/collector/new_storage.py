@@ -2,7 +2,7 @@ import datetime
 import shutil
 from pathlib import Path
 
-from ..renamer.printer import PrinterInterface
+from ..printer import PrinterInterface
 # DEPRECATED in favor of functions
 from ..utils.checksum import ChecksumOperator
 
