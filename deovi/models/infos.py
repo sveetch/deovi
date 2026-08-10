@@ -216,6 +216,10 @@ class DirectoryInformation(BaseInformation):
                     item["manifest"]["cover"] = cover_asset["source"]
                     item["manifest"]["cover_checksum"] = cover_asset["checksum"]
 
+        print("@@@@@@@@@@@@@@@@@@")
+        print(json.dumps(payload, cls=ExtendedJsonEncoder))
+        print("@@@@@@@@@@@@@@@@@@")
+
         self.checksum = self.get_content_checksum(
             json.dumps(payload, cls=ExtendedJsonEncoder)
         )

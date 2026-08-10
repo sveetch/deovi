@@ -3,7 +3,7 @@ from pathlib import Path
 
 import click
 
-from ..collector import Collector
+from ..collector.new_collect import NewCollector
 from ..conf import settings
 
 
@@ -42,11 +42,14 @@ from ..conf import settings
 @click.pass_context
 def collect_command(context, source, destination, extension, checksum):
     """
-    Recursively collect every directories with elligible media files from a basepath
-    and dump it to a JSON file.
+    Recursively collect every elligible directories with manifests, covers and media
+    files and dump it to a JSON file.
 
-    The 'source' argument is a path which holds directories with media files to find and
-    the 'destination' argument is a file path where to write the JSON dump.
+    SOURCE\n
+        The path where to start searching.
+
+    DESTINATION\n
+        A file path where to write the JSON dump.
     """
     logger = logging.getLogger("deovi")
 
@@ -57,9 +60,13 @@ def collect_command(context, source, destination, extension, checksum):
     logger.info("Destination: {}".format(destination))
     logger.info("Extensions: {}".format(", ".join(extension)))
 
-    collector = Collector(source, extensions=extension)
-
-    stats = collector.run(destination=destination, checksum=checksum)
+    collector = NewCollector(
+        source,
+        extensions=extension,
+        autoload_manifests=True,
+        autochecksum=True
+    )
+    stats = collector.run(destination=destination)
 
     logger.info("Registered directories: {}".format(stats["directories"]))
     logger.info("Registered files: {}".format(stats["files"]))

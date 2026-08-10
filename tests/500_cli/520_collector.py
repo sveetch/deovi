@@ -1,10 +1,12 @@
 import json
 import logging
 
+from freezegun import freeze_time
+
 from click.testing import CliRunner
 
 from deovi import __pkgname__
-from deovi.collector import Collector
+from deovi.collector.new_collect import NewCollector
 from deovi.cli.entrypoint import cli_frontend
 from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat
 
@@ -31,20 +33,23 @@ def test_job_required_arguments(caplog, media_sample):
     assert caplog.record_tuples == []
 
 
-def test_job_success(monkeypatch, caplog, media_sample):
+@freeze_time("2012-10-15 10:00:00.001007")
+def test_job_success(monkeypatch, caplog, settings, tmp_path):
     """
     With correct required arguments, command should succeed to write a registry from
     given source into a JSON file at given destination.
     """
-    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    media_sample = settings.datas_path / "media_sample"
 
     runner = CliRunner()
 
     source = media_sample / "foo/bar"
-    destination = media_sample / "registry.json"
+    destination = tmp_path / "registry.json"
 
     # Without any args
     result = runner.invoke(cli_frontend, [
+        "-v", "5",
         "collect",
         str(source),
         str(destination),
@@ -67,6 +72,35 @@ def test_job_success(monkeypatch, caplog, media_sample):
             __pkgname__,
             logging.INFO,
             "Extensions: mkv",
+        ),
+        (
+            __pkgname__,
+            logging.DEBUG,
+            "Scanning {}".format(source),
+        ),
+        (
+            __pkgname__,
+            logging.DEBUG,
+            (
+                "Ignored YAML manifest because it misses the required 'tmdb_type' "
+                "field: {}/manifest.yaml"
+            ).format(source),
+        ),
+        (
+            __pkgname__,
+            logging.DEBUG,
+            (
+                "Ignored JSON manifest because it misses the required 'tmdb_type' "
+                "field: {}/SampleVideo_360x240_1mb.json"
+            ).format(source),
+        ),
+        (
+            __pkgname__,
+            logging.DEBUG,
+            (
+                "Ignored YAML manifest because it misses the required 'tmdb_type' "
+                "field: {}/SampleVideo_360x240_1mb.yaml"
+            ).format(source),
         ),
         (
             __pkgname__,
@@ -98,24 +132,33 @@ def test_job_success(monkeypatch, caplog, media_sample):
         ".": {
             "path": str(source),
             "name": "bar",
-            "title": "Foo bar YAML",
             "absolute_dir": str(media_sample / "foo"),
             "relative_dir": ".",
             "size": 4096,
             "mtime": DUMMY_ISO_DATETIME,
-            "children_files": [
+            "manifest": None,
+            "checksum": (
+                "19eeccbae3d525a004abef1e039a52c4759412acc3680daa9812e4f516cacb46e5"
+                "a8c349128246bb4f0ee843cad5b80ba31259cd2c76b4537ddf13cd03893a9a"
+            ),
+            "medias": [
                 {
                     "path": str(source / "SampleVideo_360x240_1mb.mkv"),
                     "name": "SampleVideo_360x240_1mb.mkv",
                     "absolute_dir": str(source),
                     "relative_dir": ".",
-                    "directory": "",
+                    "name_alt": "",
+                    "manifest": None,
+                    "checksum": (
+                        "bb0ca8dd15c875f617df993b8fce624bfe74ed49a11207056b55c0a2b58a"
+                        "471bd1aa7d02f10de70c4bd88d0b9e770214ef8c5912703e77dfd67566923"
+                        "ba672e1"
+                    ),
                     "extension": "mkv",
                     "container": "Matroska",
                     "size": 1055721,
                     "mtime": DUMMY_ISO_DATETIME
                 }
             ],
-            "cover": None,
         }
     }

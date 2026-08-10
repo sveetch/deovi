@@ -34,24 +34,15 @@ class NewCollector(PrinterInterface):
             still collected in registry. Default is False, so only directories with
             direct media children are collected, the other directories are ignored from
             registry (but still scanned for children directories).
-        manifest (string): Manifest filename to search for in a directory.
-        cover_name (string): Cover file name (without extension) used to search for
-            cover files.
         cover_extensions (list): Cover file extensions (with leading dot) used to
             search for cover files.
         autoload_manifests (bool): If enabled, the manifest are discovered and used
             to collect additional data from directories or files.
         autochecksum (bool): Whether to enable content checksums or not. Default
             to False, no checksum are done.
-        allow_media_cover (bool): If False, cover files will be ignored from dump.
-            By default this is True and so covers are managed and dumped.
-            Deprecated, since cover is now enabled from non empty 'cover_extensions'
-            which is passed to manifest discovering.
     """
     def __init__(self, basepath, extensions=None, allow_empty_dir=False,
-                 manifest=None, cover_name=None,
-                 cover_extensions=None, allow_media_cover=True,
-                 autoload_manifests=False, autochecksum=False):
+                 cover_extensions=None, autoload_manifests=False, autochecksum=False):
         super().__init__()
 
         self.basepath = basepath

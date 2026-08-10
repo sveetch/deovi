@@ -69,7 +69,7 @@ class ManifestLoaderMixin:
             manifest = yaml.load(path.read_text(), Loader=yaml.FullLoader)
         except yaml.YAMLError:
             msg = "No YAML object could be decoded from manifest: {}"
-            LOGGER.warning(msg.format(path))
+            LOGGER.debug(msg.format(path))
             return None
         else:
             # Filter out the forbidden attributes
@@ -84,7 +84,7 @@ class ManifestLoaderMixin:
                 "Ignored YAML manifest because it misses the required 'tmdb_type' "
                 "field: {}"
             )
-            LOGGER.warning(msg.format(path))
+            LOGGER.debug(msg.format(path))
             return None
 
         return manifest
@@ -110,7 +110,7 @@ class ManifestLoaderMixin:
             manifest = json.loads(path.read_text())
         except json.JSONDecodeError:
             msg = "No JSON object could be decoded from manifest: {}"
-            LOGGER.warning(msg.format(path))
+            LOGGER.debug(msg.format(path))
             return None
         else:
             # Filter out the forbidden attributes
@@ -125,7 +125,7 @@ class ManifestLoaderMixin:
                 "Ignored JSON manifest because it misses the required 'tmdb_type' "
                 "field: {}"
             )
-            LOGGER.warning(msg.format(path))
+            LOGGER.debug(msg.format(path))
             return None
 
         return manifest

@@ -96,14 +96,12 @@ else:
         """
         Scrap informations and poster image from TMDb API for all manifest found.
 
-        .. TODO::
-            * Expect a directory;
-            * rglob manifest.[json|yaml] to find all manifest;
-            * Only proceed to unlocked tv and movie;
-            * Scrap elligible manifest;
-            * Replace manifest content with the scrapped one;
-            * Replacement must not remove attributes that are not TMDB (like the lock
-              option);
+        This will recursively walk through the given base directory to find any
+        valid manifest files (almost all '*.json' and '*.yaml' with expected structure)
+        then scrap information for each valid manifest.
+
+        Updated manifests are overwritten with the new data returned from API. Possible
+        cover is downloaded and stored along the manifest.
 
         Required arguments (in order):
 

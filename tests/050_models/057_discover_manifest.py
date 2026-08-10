@@ -17,8 +17,6 @@ from deovi.models import (
 def test_manifest_no_valid(settings):
     """
     When the directory does not have any valid manifest file
-
-    TODO: Should use caplog to see the error from invalid manifest
     """
     base_samplepath = settings.datas_path / "media_sample"
 
@@ -50,6 +48,8 @@ def test_manifest_fallback_on_yaml(settings, caplog):
     """
     Yaml manifest is discovered since the JSON one is not valid
     """
+    caplog.set_level(logging.DEBUG)
+
     base_samplepath = settings.datas_path / "media_sample"
 
     root = DirectoryInformation(
@@ -71,7 +71,7 @@ def test_manifest_fallback_on_yaml(settings, caplog):
     assert caplog.record_tuples == [
         (
             __pkgname__,
-            logging.WARNING,
+            logging.DEBUG,
             expected_msg.format(base_samplepath / "manifest.json"),
         ),
     ]
