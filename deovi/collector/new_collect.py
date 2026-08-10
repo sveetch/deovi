@@ -2,6 +2,7 @@ import datetime
 import json
 from shutil import disk_usage
 
+from .. import __version__
 from ..conf import settings
 from ..exceptions import CollectorError
 from ..models import DirectoryInformation, MediaInformation
@@ -248,6 +249,10 @@ class NewCollector(PrinterInterface):
             with destination.open("w") as fp:
                 json.dump(
                     {
+                        "deovi": {
+                            "version": __version__,
+                            "executed_on": datetime.datetime.now(),
+                        },
                         "device": device_stats,
                         "registry": self.registry,
                     },
