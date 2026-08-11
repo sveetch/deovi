@@ -26,7 +26,7 @@ class BaseManifest(ExportMixin):
 
     Attributes:
         EXPORT_PRIVATES (list): List of strings for field names that won't be exported
-            from ``as_dict`` and ``as_json`` methods. If you have recursive parenting
+            from ``serialize`` and ``as_json`` methods. If you have recursive parenting
             you should care of this field.
 
     Arguments:

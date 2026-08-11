@@ -29,7 +29,7 @@ def test_for_serie(media_sample, disable_api):
     manifest, diff = scrapper.fetch_media(new_serie, 42, tmdb_type="tv")
 
     # Check result of processed manifest as returned from method
-    assert manifest.as_dict(preserve=True) == {
+    assert manifest.as_coerced() == {
         "path": new_serie / "manifest.json",
         "tmdb_id": 42,
         "tmdb_type": "tv",
@@ -90,7 +90,7 @@ def test_for_movie_default(media_sample, disable_api):
 
     # Check result of processed manifest as returned from method
     assert diff == []
-    assert manifest.as_dict(preserve=True) == {
+    assert manifest.as_coerced() == {
         "path": new_movie / "manifest.json",
         "tmdb_id": 42,
         "tmdb_type": "movie",
@@ -129,7 +129,7 @@ def test_for_movie_filename(media_sample, disable_api):
 
     # Check result of processed manifest as returned from method
     assert diff == []
-    assert manifest.as_dict(preserve=True) == {
+    assert manifest.as_coerced() == {
         "path": new_movie / "SampleVideo_720x480_1mb.json",
         "tmdb_id": 42,
         "tmdb_type": "movie",
@@ -167,7 +167,7 @@ def test_yaml(media_sample, disable_api):
     )
 
     # Check result of processed manifest as returned from method
-    assert manifest.as_dict(preserve=True) == {
+    assert manifest.as_coerced() == {
         "path": new_movie / "SampleVideo_720x480_1mb.yaml",
         "tmdb_id": 42,
         "tmdb_type": "movie",

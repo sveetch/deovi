@@ -60,7 +60,7 @@ def test_movie_creation(monkeypatch, tmp_path):
     assert the_pit.cover.destination.suffix == ".jpg"
 
     # Serialized
-    assert the_pit.as_dict(preserve=True) == {
+    assert the_pit.as_coerced() == {
         "casting": [],
         "cover": {
             "checksum": None,
@@ -132,7 +132,7 @@ def test_collection_creation(monkeypatch, tmp_path):
     assert starworse.cover.destination.suffix == ".jpg"
 
     # Serialized
-    assert starworse.as_dict(preserve=True) == {
+    assert starworse.as_coerced() == {
         "casting": [],
         "cover": {
             "checksum": None,
@@ -196,7 +196,7 @@ def test_serie_creation(monkeypatch, tmp_path):
     assert the_outer_limits.cover.destination.suffix == ".jpg"
 
     # Serialized
-    assert the_outer_limits.as_dict(preserve=True) == {
+    assert the_outer_limits.as_coerced() == {
         "casting": [],
         "cover": {
             "checksum": None,

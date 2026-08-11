@@ -32,7 +32,7 @@ class DummyModel(ExportMixin):
 
 
 @freeze_time("2012-10-15 10:00:00")
-def test_as_dict(monkeypatch):
+def test_serialize(monkeypatch):
     """
     ExportMixin inheriter model using SerializableList (instead of builtin
     list) should serialize its included models to Python builtin.
@@ -61,7 +61,7 @@ def test_as_dict(monkeypatch):
         cover=pong,
     )
 
-    assert franky.as_dict() == {
+    assert franky.serialize() == {
         "casting": [
             Asset(
                 source=Path("/home/foo/ping.png"),
@@ -104,7 +104,7 @@ def test_as_dict(monkeypatch):
         "size": 42,
     }
 
-    assert franky.as_dict(preserve=True) == {
+    assert franky.as_coerced() == {
         "casting": [
             {
                 "checksum": None,

@@ -18,7 +18,7 @@ def test_creation():
         basepath=Path("/home/cities"),
     )
 
-    assert duckcity.as_dict(preserve=True) == {
+    assert duckcity.as_coerced() == {
         "absolute_dir": Path("/home/cities"),
         "checksum": None,
         "manifest": None,
@@ -44,7 +44,7 @@ def test_basic():
         checksum="coin42coin001",
     )
 
-    assert duckcity.as_dict(preserve=True) == {
+    assert duckcity.as_coerced() == {
         "absolute_dir": Path("/home/cities"),
         "checksum": "coin42coin001",
         "manifest": None,
@@ -95,7 +95,7 @@ def test_set_medias():
     assert picsou.parent == duckcity
 
     # Ensure we strictly have the right expected types
-    payload = duckcity.as_dict(preserve=True)
+    payload = duckcity.as_coerced()
     assert isinstance(payload["medias"], list) is True
     assert isinstance(payload["medias"], SerializableList) is False
     assert isinstance(payload["medias"][0], dict) is True

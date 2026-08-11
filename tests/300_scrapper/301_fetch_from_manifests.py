@@ -36,7 +36,7 @@ def test_for_manifests(media_sample, disable_api):
     processed = scrapper.fetch_all_from_manifests(media_sample)
 
     # Check result of processed manifest as returned from method
-    assert [v[0].as_dict(preserve=True) for v in processed] == [
+    assert [v[0].as_coerced() for v in processed] == [
         {
             "path": pong / "SampleVideo_720x480_1mb.json",
             "tmdb_id": 273204,
@@ -122,7 +122,7 @@ def test_for_diff(media_sample, disable_api):
     processed = scrapper.fetch_all_from_manifests(pong, write_diff=True)
 
     # Check result of processed manifest as returned from method
-    assert [v[0].as_dict(preserve=True) for v in processed] == [
+    assert [v[0].as_coerced() for v in processed] == [
         {
             "path": pong / "manifest.json",
             "tmdb_id": 21567,

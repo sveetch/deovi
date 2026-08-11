@@ -51,7 +51,7 @@ class BaseInformation(ChecksumMixin, ExportMixin, ManifestLoaderMixin):
 
     Attributes:
         EXPORT_PRIVATES (list): List of strings for field names that won't be exported
-            from ``as_dict`` and ``as_json`` methods. If you have recursive parenting
+            from ``serialize`` and ``as_json`` methods. If you have recursive parenting
             you should care of this field.
 
     Arguments:
@@ -200,7 +200,7 @@ class DirectoryInformation(BaseInformation):
         # Copy the payload to patch
         payload = {
             k: v
-            for k, v in self.as_dict(preserve=True).items()
+            for k, v in self.as_coerced().items()
         }
 
         # Patch directory manifest cover
@@ -304,7 +304,7 @@ class MediaInformation(BaseInformation):
 
     Attributes:
         EXPORT_PRIVATES (list): List of strings for field names that won't be exported
-            from ``as_dict`` and ``as_json`` methods.
+            from ``serialize`` and ``as_json`` methods.
 
     Keyword Arguments:
         name_alt (str): The parent directory name but with an empty string instead of

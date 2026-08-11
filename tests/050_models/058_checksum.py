@@ -43,7 +43,7 @@ def test_checksum(settings, monkeypatch):
         cover_extensions=[".gif", ".jpg"],
     )
 
-    assert duckcity.as_dict(preserve=True) == {
+    assert duckcity.as_coerced() == {
         "absolute_dir": media_sample / "ping",
         "checksum": (
             "2c72ae797271e20404648f725eaa8ba3850e1a17037decd476f3a34f7236dd83274078e"

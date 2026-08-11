@@ -76,7 +76,7 @@ def test_collector_scan_file(monkeypatch, media_sample, path, expected):
 
     data = collector.scan_file(path)
 
-    assert expected == data.as_dict()
+    assert expected == data.serialize()
 
 
 def test_collector_scan_file_manifest(monkeypatch, media_sample):
@@ -98,7 +98,7 @@ def test_collector_scan_file_manifest(monkeypatch, media_sample):
 
     # import json
     # print(data.as_json())
-    assert data.as_dict(preserve=True) == {
+    assert data.as_coerced() == {
         "path": path,
         "size": 1050238,
         "mtime": "1977-06-02T07:35:15",

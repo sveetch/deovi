@@ -26,12 +26,12 @@ def test_serializablelist_fundamentals():
     assert sorted(pistache) == ["flip", "piou", "youpi"]
 
 
-def test_serializablelist_preserved():
+def test_serializablelist_coercedd():
     """
-    Preserve option on method 'as_dict()' is working as expected.
+    Preserve option on method 'serialize()' is working as expected.
 
-    NOTE: preserve option name may not be the best because it does the inverse behavior
-    (preserve model object when False, turn model object to Python builtin when True)
+    NOTE: coerced option name may not be the best because it does the inverse behavior
+    (coerced model object when False, turn model object to Python builtin when True)
     """
     ping = Asset(source=Path("/home/foo/ping.png"))
     pong = Asset(source=Path("/home/foo/pong.png"))
@@ -39,8 +39,8 @@ def test_serializablelist_preserved():
     pistache = SerializableList(["youpi", ping, "niet", pong])
     assert len(pistache) == 4
 
-    # Without enabled option, model objects are preserved
-    flat_list = pistache.as_dict()
+    # Without enabled option, model objects are coercedd
+    flat_list = pistache.serialize()
     assert flat_list[0] == "youpi"
     assert flat_list[2] == "niet"
     assert isinstance(flat_list[1], Asset) is True
@@ -48,9 +48,9 @@ def test_serializablelist_preserved():
     assert flat_list[1].source == ping.source
     assert flat_list[3].source == pong.source
 
-    # Without enable option, model objects with as_dict are serialized to Python
+    # Without enable option, model objects with serialize are serialized to Python
     # builtins
-    flat_list = pistache.as_dict(preserve=True)
+    flat_list = pistache.as_coerced()
     assert flat_list[0] == "youpi"
     assert flat_list[2] == "niet"
     assert isinstance(flat_list[1], dict) is True

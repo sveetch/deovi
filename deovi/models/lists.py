@@ -1,30 +1,28 @@
-import json
-
 from collections import UserList
 
-from ..utils.jsons import ExtendedJsonEncoder
+from .mixins.export import ExportMixin
 
 
-class SerializableList(UserList):
+class SerializableList(ExportMixin, UserList):
     """
     A custom list object that can be used in the chain of model serialization.
 
-    Python builtin list object can not transmit the ``preserve`` option of models
-    methods ``as_dict``, so instead models would prefer to use SerializableList as
+    Python builtin list object can not transmit the ``coerced`` option of models
+    methods ``serialize``, so instead models would prefer to use SerializableList as
     model attributes.
 
     You may expect all the builtin list object behaviors from this custom one with
     addition of the serialization methods.
     """
-    def as_dict(self, preserve=False):
+    def serialize(self, coerced=False):
         """
         A safe way to convert to a dict without recursion issues.
 
         Keyword Arguments:
-            preserve (bool): If enabled all values which have the method ``as_dict()``
+            coerced (bool): If enabled all values which have the method ``serialize()``
                 will use it instead of returning model object. This is almost only
                 implemented internally in Deovi models so you can get an output of
-                ``as_dict()`` only with Python builtin types.
+                ``serialize()`` only with Python builtin types.
 
         Returns:
             dict: This model object attribute serialized in a dictionnary, items named
@@ -32,15 +30,9 @@ class SerializableList(UserList):
         """
         return [
             (
-                v.as_dict(preserve=preserve)
-                if preserve is True and hasattr(v, "as_dict")
+                v.serialize(coerced=coerced)
+                if coerced is True and hasattr(v, "serialize")
                 else v
             )
             for v in self.data
         ]
-
-    def as_json(self):
-        """
-        Returns the output of ``as_dict()`` in a JSON string.
-        """
-        return json.dumps(self.as_dict(), indent=4, cls=ExtendedJsonEncoder)

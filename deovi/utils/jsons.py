@@ -44,8 +44,8 @@ class ExtendedJsonEncoder(json.JSONEncoder):
 
         # Support for models without to import them (from their specific class name)
         # NOTE: This is to be as a last resort
-        if hasattr(obj, "as_dict"):
-            return obj.as_dict()
+        if hasattr(obj, "serialize"):
+            return obj.serialize()
 
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)

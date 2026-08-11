@@ -14,7 +14,7 @@ def test_creation(monkeypatch):
 
     picsou = Asset(source=Path("/home/cities/duckcity/picsou.jpg"))
 
-    assert picsou.as_dict(preserve=True) == {
+    assert picsou.as_coerced() == {
         "source": Path("/home/cities/duckcity/picsou.jpg"),
         "destination": Path("dummy_uuid4.jpg"),
         "checksum": None,
