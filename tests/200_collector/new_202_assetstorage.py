@@ -1,4 +1,3 @@
-import uuid
 import hashlib
 from pathlib import Path
 
@@ -7,7 +6,8 @@ import pytest
 from freezegun import freeze_time
 
 from deovi.collector import AssetStorage
-from deovi.utils.tests import dummy_uuid4, dummy_blake2b
+from deovi.models import Asset
+from deovi.utils.tests import dummy_blake2b
 
 
 @freeze_time("2012-10-15 10:00:00")
@@ -46,8 +46,7 @@ from deovi.utils.tests import dummy_uuid4, dummy_blake2b
         "foo_foo.json_2012-10-15T10:00:00",
     ),
 ])
-def test_storage_base_paths(monkeypatch, basepath, expected_basepath,
-                            expected_attachment):
+def test_base_paths(monkeypatch, basepath, expected_basepath, expected_attachment):
     """
     Should compute correct storage basepath and attachment directory name from
     given basepath.
@@ -62,7 +61,7 @@ def test_storage_base_paths(monkeypatch, basepath, expected_basepath,
 
 
 @freeze_time("2012-10-15 10:00:00")
-def test_storage_set_basepath(monkeypatch):
+def test_set_basepath(monkeypatch):
     """
     Method 'set_basepath' should set a new basepath, some related computed paths and
     checksum behavior.
@@ -88,7 +87,7 @@ def test_storage_set_basepath(monkeypatch):
 
 
 @freeze_time("2012-10-15 10:00:00")
-def test_storage_set_basepath_blake2b():
+def test_set_basepath_blake2b():
     """
     Basic test on set_basepath with "real" blake2b to check result format.
     """
@@ -107,49 +106,13 @@ def test_storage_set_basepath_blake2b():
     assert len(hashid) == 20
 
 
-@freeze_time("2012-10-15 10:00:00")
-def test_storage_get_directory_asset(monkeypatch, media_sample):
-    """
-    Asset should be found from given path when it matches allowed asset filenames.
-    """
-    monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
-    monkeypatch.setattr(hashlib, "blake2b", dummy_blake2b)
-
-    basepath = media_sample / "dump.json"
-
-    # Predicted name since we use freeze_time and no checksum
-    storage_assets = Path("dump_20121015T100000")
-
-    # No allowed filename can be found from given path
-    storage = AssetStorage(basepath)
-    assert storage.get_directory_asset(
-        media_sample,
-        ["cover.jpg"],
-    ) is None
-
-    # An allowed filename have been found from given path
-    storage = AssetStorage(basepath)
-    assert storage.get_directory_asset(
-        media_sample,
-        ["cover.jpg", "cover.png"],
-    ) == (
-        media_sample / "cover.png",
-        storage_assets / "dummy_uuid4.png",
-    )
-
-
-def test_storage_store_assets(monkeypatch, media_sample):
+def test_store(media_sample):
     """
     Storage should correctly store asset files
     """
-    monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
-
     basepath = media_sample / "dump.json"
 
-    storage = AssetStorage(
-        basepath,
-        allowed_cover_filenames=["cover.jpg", "cover.png"],
-    )
+    storage = AssetStorage(basepath)
 
     # Get full path to the assets directory
     assets_destination = media_sample / storage.storage_assets
@@ -157,23 +120,37 @@ def test_storage_store_assets(monkeypatch, media_sample):
     # At this point the assets directory does not exists yet
     assert assets_destination.exists() is False
 
-    # Get some proper asset items from sample structure
-    assets = [
-        storage.get_directory_cover(media_sample),
-        storage.get_directory_cover(media_sample / "ping/pong/pang"),
+    # Set some asset items from sample structure
+    storage.queue = [
+        Asset(
+            source=(media_sample / "ping/pong/cover.gif"),
+            destination="foo/cover.gif",
+        ),
+        Asset(
+            source=(media_sample / "ping/pong/pang/cover.jpg"),
+            destination="zip/zap/cover.jpg",
+        ),
     ]
 
-    # Stored file are named with an uuid (but here it's a fake one from mockup)
-    assert storage.store_assets(assets) == (
+    assert storage.store() == (
         assets_destination,
         [
-            assets_destination / "dummy_uuid4.png",
-            assets_destination / "dummy_uuid4.jpg",
+            assets_destination / "foo/cover.gif",
+            assets_destination / "zip/zap/cover.jpg",
         ],
     )
 
-    # Ensure stored files have correctly written in the right dir
-    assert list(assets_destination.iterdir()) == [
-        assets_destination / "dummy_uuid4.png",
-        assets_destination / "dummy_uuid4.jpg",
+    # Check tree content of 'assets_destination'
+    tree = sorted(
+        [
+            str(f.relative_to(assets_destination))
+            for f in assets_destination.rglob('*')
+        ]
+    )
+    assert tree == [
+        "foo",
+        "foo/cover.gif",
+        "zip",
+        "zip/zap",
+        "zip/zap/cover.jpg",
     ]

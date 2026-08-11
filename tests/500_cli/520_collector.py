@@ -6,7 +6,7 @@ from freezegun import freeze_time
 from click.testing import CliRunner
 
 from deovi import __pkgname__
-from deovi.collector.new_collect import NewCollector
+from deovi.collector.collect import Collector
 from deovi.cli.entrypoint import cli_frontend
 from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat
 
@@ -39,7 +39,7 @@ def test_job_success(monkeypatch, caplog, settings, tmp_path):
     With correct required arguments, command should succeed to write a registry from
     given source into a JSON file at given destination.
     """
-    monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
     media_sample = settings.datas_path / "media_sample"
 
     runner = CliRunner()

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from freezegun import freeze_time
 
-from deovi.collector.new_collect import NewCollector
+from deovi.collector.collect import Collector
 from deovi.utils.tests import (
     timestamp_to_isoformat, dummy_uuid4,
 )
@@ -16,10 +16,10 @@ def test_collector_run_basic(monkeypatch, media_sample):
     Scanning from basepath should return recursive data for directories with media
     files.
     """
-    monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
 
-    collector = NewCollector(media_sample, extensions=["mkv"], autoload_manifests=True)
+    collector = Collector(media_sample, extensions=["mkv"], autoload_manifests=True)
     stats = collector.run()
 
     # payload = {
@@ -63,10 +63,10 @@ def test_collector_run_manifest(monkeypatch, media_sample):
     Collector should correctly find directory manifest files, directory covers,
     add them to directory payload and collect their assets in storage dir.
     """
-    monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
 
-    collector = NewCollector(media_sample, autoload_manifests=True)
+    collector = Collector(media_sample, autoload_manifests=True)
 
     # Storage dir is created from mocked blake2b so we already know the storage dirname
     dump_destination = media_sample / "dump.json"
@@ -129,12 +129,12 @@ def test_collector_run_checksum(monkeypatch, media_sample):
     a field file checksum. Also, the directories checksum should be identical for two
     consecutive runs on the same content.
     """
-    monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
 
     dump_destination = media_sample / "dump.json"
 
     # First run
-    collector = NewCollector(media_sample, autochecksum=True)
+    collector = Collector(media_sample, autochecksum=True)
     collector.run(dump_destination)
     payload = json.loads(dump_destination.read_text())
     dumped_registry = payload["registry"]
@@ -153,7 +153,7 @@ def test_collector_run_checksum(monkeypatch, media_sample):
     first_foo_bar_checksum = dumped_registry["foo/bar"]["checksum"]
 
     # Run collect a second time
-    collector = NewCollector(media_sample, autochecksum=True)
+    collector = Collector(media_sample, autochecksum=True)
     collector.run(dump_destination)
     payload = json.loads(dump_destination.read_text())
     dumped_registry = payload["registry"]

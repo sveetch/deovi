@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from deovi.collector.new_collect import NewCollector
+from deovi.collector.collect import Collector
 from deovi.exceptions import CollectorError
 from deovi.utils.tests import timestamp_to_isoformat, dummy_uuid4
 from deovi.models import DirectoryInformation
@@ -14,7 +14,7 @@ def test_outofbasepath(media_sample):
     """
     Trying to scan a directory which is out of basepath should raise an error.
     """
-    collector = NewCollector((media_sample / "foo/bar"))
+    collector = Collector((media_sample / "foo/bar"))
 
     with pytest.raises(CollectorError):
         collector.scan_directory(media_sample)
@@ -35,7 +35,7 @@ def test_allow_empty_dir(media_sample, empty, expected):
     Option "allow_empty_dir" may change the number of collected directories (if
     targeted structure does have directories without any direct media files).
     """
-    collector = NewCollector(
+    collector = Collector(
         media_sample,
         allow_empty_dir=empty,
         extensions=["mp4"],
@@ -59,7 +59,7 @@ def test_empty(tmp_path):
         json.dumps({"title": "The Outer Limits", "tmdb_type": "tv"})
     )
 
-    collector = NewCollector(tmp_path, extensions=["mkv"])
+    collector = Collector(tmp_path, extensions=["mkv"])
     collector.scan_directory(serie_path)
     assert len(collector.registry) == 0
     assert list(collector.registry.keys()) == []
@@ -69,7 +69,7 @@ def test_no_autoload(monkeypatch, tmp_path):
     """
     Without manifest autoload no manifest should be discovered.
     """
-    monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
 
     serie_path = tmp_path / "the_outer_limits"
@@ -90,7 +90,7 @@ def test_no_autoload(monkeypatch, tmp_path):
     )
 
     # Collect and check expected result
-    collector = NewCollector(tmp_path, extensions=["mkv"], autoload_manifests=False)
+    collector = Collector(tmp_path, extensions=["mkv"], autoload_manifests=False)
     collector.scan_directory(serie_path)
     assert len(collector.registry) == 1
     assert list(collector.registry.keys()) == ["the_outer_limits"]
@@ -127,11 +127,11 @@ def test_with_cover_and_mediafile(monkeypatch, media_sample):
     Collector should collect required directory, its media files, manifest, cover and
     an empty child directory.
     """
-    monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
 
     # Collect directory
-    collector = NewCollector(media_sample, extensions=["mkv"], autoload_manifests=True)
+    collector = Collector(media_sample, extensions=["mkv"], autoload_manifests=True)
     collector.scan_directory((media_sample / "ping/pong"))
     assert len(collector.registry) == 1
     assert list(collector.registry.keys()) == ["ping/pong"]

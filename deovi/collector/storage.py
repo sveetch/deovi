@@ -1,9 +1,9 @@
 import datetime
 import shutil
-import uuid
 from pathlib import Path
 
 from ..printer import PrinterInterface
+# DEPRECATED in favor of functions
 from ..utils.checksum import ChecksumOperator
 
 
@@ -22,20 +22,18 @@ class AssetStorage(PrinterInterface):
             the current working directory.
         checksum (boolean): Whether to enable checksum or not. Default
             to False, asset storage paths won't any checksum included in their name.
-        allowed_cover_filenames (list): List of filenames elligible as a directory
-            cover file.
     """
     # Name used when given basepath is an empty Path
     DEFAULT_BASE_PATH = "attachment"
 
-    def __init__(self, basepath=None, checksum=False, allowed_cover_filenames=None):
+    def __init__(self, basepath=None, checksum=False):
         super().__init__()
+
+        self.queue = []
 
         self.checksum_op = ChecksumOperator()
 
         self.set_basepath(basepath, checksum=checksum)
-
-        self.allowed_cover_filenames = allowed_cover_filenames or []
 
     def set_basepath(self, path=None, checksum=False):
         """
@@ -81,12 +79,12 @@ class AssetStorage(PrinterInterface):
 
         Keyword Arguments:
             checksum (boolean): Whether to enable checksum or not. Default
-                to False, asset storage paths won't any checksum included in its
+                to False, assets storage path won't include any checksum in its
                 name.
 
         Returns:
             pathlib.Path: A filename composed from the filepath filename (without dirs
-            or extension) and a computed unique hash.
+            or extension) and possibly a computed unique hash.
         """
         if not filepath or str(filepath) == ".":
             filepath = Path(self.DEFAULT_BASE_PATH)
@@ -103,65 +101,18 @@ class AssetStorage(PrinterInterface):
         # Merge path stem with suffix
         return Path("{}_{}".format(filepath.stem, suffix))
 
-    def get_directory_asset(self, path, filename_patterns):
+    def store(self):
         """
-        Search for an asset file from given path.
-
-        The first filename which match an allowed asset filename is returned. Order
-        of ``filename_patterns`` defines matching order.
-
-        Arguments:
-            path (pathlib.Path): A Path object for the directory where to find
-                cover image file.
-            filename_patterns (list): A list of strings for asset filenames to search
-                in directory.
-
-        Returns:
-            tuple: A tuple of two items ``(source, destination)`` where 'source' is the
-                source cover file (Path object) resolved to an absolute path
-                and 'destination' a filename (Path object) with a uuid4 instead of
-                original source file name but with original source file extensions
-                keeped.
-        """
-        for filename in filename_patterns:
-            filepath = path / filename
-
-            if filepath.exists():
-                return (
-                    filepath.resolve(),
-                    self.storage_assets / Path(
-                        "".join([str(uuid.uuid4()), filepath.suffix])
-                    ),
-                )
-
-        return None
-
-    def get_directory_cover(self, path):
-        """
-        Shortand around ``get_directory_asset`` to check for cover filenames.
-
-        Arguments:
-            path (pathlib.Path): A Path object for the directory where to find
-                cover image file.
-
-        Returns:
-            tuple: A tuple with the format as from ``get_directory_asset`` returns.
-        """
-        return self.get_directory_asset(
-            path,
-            self.allowed_cover_filenames,
-        )
-
-    def store_assets(self, assets):
-        """
-        Store all given assets files into the assets directory.
+        Store all assets files from storage queue into the assets directory.
 
         Assets are written to their destination path as given as second item of each
         asset, (first item is the source path).
 
-        Arguments:
-            assets (list): List of tuple ``(source, destination)`` where both items are
-                Path objects as returned from ``Collector.get_directory_asset()``.
+        Destination path parent directories are created if it does not already exists.
+
+        TODO: For security, we should resolve destination path to ensure it does not
+        contains syntax to go up before the destination path node such as with something
+        like "../foo/".
 
         Returns:
             tuple: The asset storage path and the list of stored files in their final
@@ -170,21 +121,27 @@ class AssetStorage(PrinterInterface):
         container = None
         stored = []
 
-        if len(assets) > 0:
+        if len(self.queue) > 0:
             container = self.storage_path / self.storage_assets
 
             if not container.exists():
                 container.mkdir(parents=True, exist_ok=True)
 
-            for source, destination in assets:
-                if not source.exists():
-                    msg = "File to store does not exists from your filesystem: {}"
-                    self.log_warning(msg.format(source))
+            for asset in self.queue:
+                destination_path = container / asset.destination
 
-                # Destination path should be a relative path (from base) which already
-                # include the assets directory
-                shutil.copy(source, self.storage_path / destination)
-                stored.append(self.storage_path / destination)
+                # Check source
+                if not asset.source.exists():
+                    msg = "File to store does not exists from your filesystem: {}"
+                    self.log_warning(msg.format(asset.source))
+
+                # Check destination
+                if not destination_path.parent.exists():
+                    destination_path.parent.mkdir(parents=True, exist_ok=True)
+
+                # Copy files and register it in the 'done' list
+                shutil.copy(asset.source, destination_path)
+                stored.append(destination_path)
 
         return (
             container,

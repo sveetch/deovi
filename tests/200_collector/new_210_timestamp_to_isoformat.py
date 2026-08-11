@@ -1,6 +1,6 @@
 import pytest
 
-from deovi.collector import Collector
+from deovi.collector.collect import Collector
 
 
 @pytest.mark.parametrize("timestamp, expected", [

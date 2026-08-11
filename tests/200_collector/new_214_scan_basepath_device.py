@@ -1,4 +1,4 @@
-from deovi.collector.new_collect import NewCollector
+from deovi.collector.collect import Collector
 
 
 def test_scan_basepath_device(media_sample):
@@ -9,7 +9,7 @@ def test_scan_basepath_device(media_sample):
     system to another. We only check that expected informations are there and not
     empty.
     """
-    collector = NewCollector(media_sample)
+    collector = Collector(media_sample)
 
     stats = collector.scan_basepath_device(collector.basepath)
 

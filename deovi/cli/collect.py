@@ -3,7 +3,7 @@ from pathlib import Path
 
 import click
 
-from ..collector.new_collect import NewCollector
+from ..collector.collect import Collector
 from ..conf import settings
 
 
@@ -60,7 +60,7 @@ def collect_command(context, source, destination, extension, checksum):
     logger.info("Destination: {}".format(destination))
     logger.info("Extensions: {}".format(", ".join(extension)))
 
-    collector = NewCollector(
+    collector = Collector(
         source,
         extensions=extension,
         autoload_manifests=True,

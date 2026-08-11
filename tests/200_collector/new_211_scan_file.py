@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from deovi.collector.new_collect import NewCollector
+from deovi.collector.collect import Collector
 from deovi.models import MediaInformation, MovieManifest
 from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_uuid4
 
@@ -64,7 +64,7 @@ def test_collector_scan_file(monkeypatch, media_sample, path, expected):
 
     No manifest is involved here.
     """
-    monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
 
     # Rewrite path strings to Path objects
     path = media_sample / path
@@ -72,7 +72,7 @@ def test_collector_scan_file(monkeypatch, media_sample, path, expected):
     expected["absolute_dir"] = media_sample / expected["absolute_dir"]
     expected["relative_dir"] = Path(expected["relative_dir"])
 
-    collector = NewCollector(media_sample)
+    collector = Collector(media_sample)
 
     data = collector.scan_file(path)
 
@@ -84,12 +84,12 @@ def test_collector_scan_file_manifest(monkeypatch, media_sample):
     Scanning a file with manifest autoload enabled should return the right media file
     datas with its manifest data also.
     """
-    monkeypatch.setattr(NewCollector, "timestamp_to_isoformat", timestamp_to_isoformat)
+    monkeypatch.setattr(Collector, "timestamp_to_isoformat", timestamp_to_isoformat)
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)
 
     path = media_sample / "ping/pong/SampleVideo_720x480_1mb.mkv"
 
-    collector = NewCollector(media_sample, autoload_manifests=True)
+    collector = Collector(media_sample, autoload_manifests=True)
 
     data = collector.scan_file(path)
 
