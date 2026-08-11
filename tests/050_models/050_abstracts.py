@@ -10,16 +10,14 @@ from typing import Any, ClassVar
 from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 
-# TODO: Abstract should be renamed, along the 'as_dict(preserve=False)' to
-# 'serialize(safe=False)'
-from deovi.models.abstracts import ExportAbstract as SerializableAbstract
+from deovi.models.mixins.export import ExportMixin
 from deovi.models.assets import Asset
 from deovi.models.lists import SerializableList
 from deovi.utils.tests import dummy_uuid4
 
 
 @dataclass
-class DummyModel(SerializableAbstract):
+class DummyModel(ExportMixin):
     """
     Base model for information models.
     """
@@ -36,7 +34,7 @@ class DummyModel(SerializableAbstract):
 @freeze_time("2012-10-15 10:00:00")
 def test_as_dict(monkeypatch):
     """
-    SerializableAbstract inheriter model using SerializableList (instead of builtin
+    ExportMixin inheriter model using SerializableList (instead of builtin
     list) should serialize its included models to Python builtin.
     """
     monkeypatch.setattr(uuid, "uuid4", dummy_uuid4)

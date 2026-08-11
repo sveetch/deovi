@@ -3,9 +3,9 @@ import logging
 
 import yaml
 
-from .. import __pkgname__
-from ..conf import settings
-from .manifests import CollectionManifest, MovieManifest, SerieManifest
+from ... import __pkgname__
+from ...conf import settings
+from ..manifests import CollectionManifest, MovieManifest, SerieManifest
 
 
 LOGGER = logging.getLogger(__pkgname__)

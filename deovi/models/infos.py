@@ -14,16 +14,17 @@ from ..exceptions import InformationModelError
 from ..utils.jsons import ExtendedJsonEncoder
 from .. import __pkgname__
 
-from .abstracts import ChecksumAbstract, ExportAbstract
-from .mixins import ManifestLoaderMixin
 from .lists import SerializableList
+from .mixins.export import ExportMixin
+from .mixins.checksum import ChecksumMixin
+from .mixins.loader import ManifestLoaderMixin
 
 
 LOGGER = logging.getLogger(__pkgname__)
 
 
 @dataclass
-class BaseInformation(ChecksumAbstract, ExportAbstract, ManifestLoaderMixin):
+class BaseInformation(ChecksumMixin, ExportMixin, ManifestLoaderMixin):
     """
     Base model for information models.
 

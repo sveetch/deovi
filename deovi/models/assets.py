@@ -8,15 +8,15 @@ from dataclasses import (
 from typing import ClassVar
 
 from .. import __pkgname__
-
-from .abstracts import ChecksumAbstract, ExportAbstract
+from .mixins.export import ExportMixin
+from .mixins.checksum import ChecksumMixin
 
 
 LOGGER = logging.getLogger(__pkgname__)
 
 
 @dataclass
-class Asset(ChecksumAbstract, ExportAbstract):
+class Asset(ChecksumMixin, ExportMixin):
     """
     Asset model.
 

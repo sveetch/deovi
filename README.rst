@@ -11,7 +11,7 @@
 Deovi
 =====
 
-A set of utilities to collect and rename media files.
+Tools to rename files, collect their filepaths and scrap information from TMDB.
 
 Links
 *****

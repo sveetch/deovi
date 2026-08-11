@@ -13,7 +13,8 @@ class SerializableList(UserList):
     methods ``as_dict``, so instead models would prefer to use SerializableList as
     model attributes.
 
-    You may expect all the builtin list object behaviors from this custom one.
+    You may expect all the builtin list object behaviors from this custom one with
+    addition of the serialization methods.
     """
     def as_dict(self, preserve=False):
         """

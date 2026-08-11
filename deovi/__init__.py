@@ -1,4 +1,4 @@
-"""An utility to rename files using tasks from a job"""
+"""Tools to rename files, collect their filepaths and scrap information from TMDB"""
 from importlib.metadata import version
 
 

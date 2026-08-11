@@ -221,9 +221,6 @@ def warning_logger():
 def task_manager():
     """
     Return initialized task manager
-
-    TODO: Since there is no more a formatter to init, this fixture seems useless. Keep
-    tests simple and just use "TaskMaster()" in them.
     """
     return TaskMaster()
 

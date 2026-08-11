@@ -10,14 +10,14 @@ from typing import Any, ClassVar, Union
 from .assets import Asset
 from .. import __pkgname__
 
-from .abstracts import ExportAbstract
+from .mixins.export import ExportMixin
 
 
 LOGGER = logging.getLogger(__pkgname__)
 
 
 @dataclass
-class BaseManifest(ExportAbstract):
+class BaseManifest(ExportMixin):
     """
     Base model for manifest models includes all common fields for all manifest models.
 

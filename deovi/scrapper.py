@@ -12,7 +12,7 @@ from tmdbv3api import Configuration, TMDb, TV, Movie
 import yaml
 
 from .models import MovieManifest, SerieManifest
-from .models.mixins import ManifestLoaderMixin
+from .models.mixins.loader import ManifestLoaderMixin
 from .utils.jsons import ExtendedJsonEncoder
 
 
