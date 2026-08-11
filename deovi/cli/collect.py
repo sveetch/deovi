@@ -64,7 +64,7 @@ def collect_command(context, source, destination, extension, checksum):
         source,
         extensions=extension,
         autoload_manifests=True,
-        autochecksum=True
+        autochecksum=checksum,
     )
     stats = collector.run(destination=destination)
 

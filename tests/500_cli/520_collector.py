@@ -54,6 +54,7 @@ def test_job_success(monkeypatch, caplog, settings, tmp_path):
         str(source),
         str(destination),
         "--extension", "mkv",
+        "--checksum",
     ])
 
     assert result.exit_code == 0

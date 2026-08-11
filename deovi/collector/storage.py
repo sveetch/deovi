@@ -3,8 +3,7 @@ import shutil
 from pathlib import Path
 
 from ..printer import PrinterInterface
-# DEPRECATED in favor of functions
-from ..utils.checksum import ChecksumOperator
+from ..utils.checksum import compute_checksum_file_path
 
 
 class AssetStorage(PrinterInterface):
@@ -30,8 +29,6 @@ class AssetStorage(PrinterInterface):
         super().__init__()
 
         self.queue = []
-
-        self.checksum_op = ChecksumOperator()
 
         self.set_basepath(basepath, checksum=checksum)
 
@@ -91,7 +88,7 @@ class AssetStorage(PrinterInterface):
 
         if checksum:
             # Build hash from name + current ISO datetime
-            suffix = self.checksum_op.filepath(filepath)
+            suffix = compute_checksum_file_path(filepath)
         else:
             # Build a simple datetime stamp
             suffix = datetime.datetime.now().isoformat(

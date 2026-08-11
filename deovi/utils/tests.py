@@ -56,7 +56,7 @@ class dummy_blake2b():
         return self.content
 
 
-def dummy_checksum_file(cls, filepath):
+def dummy_checksum_file(filepath):
     """
     A function to mockup ``checksum_file()``
 
@@ -71,13 +71,12 @@ def dummy_checksum_file(cls, filepath):
     Returns:
         string: The given file path.
     """
-    print("🔖 dummy_checksum_file:", filepath, type(filepath))
     return str(filepath)
 
 
-def dummy_checksumoperator_filepath(cls, filepath):
+def dummy_checksumoperator_filepath(filepath):
     """
-    Support both ChecksumOperator.file and ChecksumOperator.filepath for monkey
+    Support both 'checksum_file_content' and 'compute_checksum_file_path' for monkey
     patching.
 
     Arguments and keyword arguments are the same than original methods.
@@ -93,23 +92,4 @@ def dummy_checksumoperator_filepath(cls, filepath):
         datetime.datetime.now().isoformat(),
     )
 
-    print("✨ dummy_checksumoperator_filepath:", content, type(content))
-
     return content
-
-
-def dummy_checksumoperator_directory_payload(cls, payload, files_fields=[],
-                                             storage=None):
-    """
-    Support ``ChecksumOperator.directory_payload`` for monkey patching.
-
-    Arguments and keyword arguments are the same than original method.
-
-    Returns:
-        string: JSON payload as done from ``ChecksumOperator.payload_files()``.
-    """
-    return cls.payload_files(
-        payload,
-        files_fields=files_fields,
-        storage=storage
-    )
