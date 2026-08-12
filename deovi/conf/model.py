@@ -48,6 +48,18 @@ class SettingsObject:
     # All manifest fields that is known to be filled from tmdb
     supported_tmdb_fields: tuple[str] = dataclasses_field(default_factory=tuple)
 
+    # Default content language requested for detail from TMDB API
+    # NOTE: Was DEFAULT_LANGUAGE
+    scrapping_language: str = "fr"
+
+    # Default poster size name as expected from TMDB API
+    # NOTE: Was DEFAULT_POSTER_SIZE
+    scrapping_cover_size: str = "w780"
+
+    # Default manifest format to output when writing a new manifest
+    # NOTE: Was DEFAULT_MANIFEST_FORMAT
+    scrapping_manifest_format: str = "yaml"
+
     def __post_init__(self):
         """
         Fill attributes with default values.

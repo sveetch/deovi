@@ -11,6 +11,7 @@ from tmdbv3api import Configuration, TMDb, TV, Movie
 
 import yaml
 
+from .conf import settings
 from .models import MovieManifest, SerieManifest
 from .models.mixins.loader import ManifestLoaderMixin
 from .utils.jsons import ExtendedJsonEncoder
@@ -18,7 +19,7 @@ from .utils.jsons import ExtendedJsonEncoder
 
 class TmdbScrapper:
     """
-    Class to scrap informations from TMDb API.
+    Class to scrap media information from TMDb API.
 
     .. Note::
         The scrapper is not aware of any custom Manifest variables to
@@ -28,12 +29,6 @@ class TmdbScrapper:
 
         Actually in practice this is not a subject of concern because manifest model
         don't have 'non-payload' variables to keep persistent.
-
-    Attributes:
-        DEFAULT_LANGUAGE (string): Default value for ``language`` argument.
-        DEFAULT_POSTER_SIZE (string): Default value for ``poster_size`` argument.
-        DEFAULT_MANIFEST_FORMAT (string): Default value for ``manifest_format``
-            argument.
 
     Arguments:
         api_key (string): Private key needed to use API.
@@ -50,21 +45,19 @@ class TmdbScrapper:
             confuse with the real TMDB payload) is saved on disk in a JSON file named
             after the media tmdb_id, file is saved in the current working directory.
     """
-    # TODO: Most of these attrs should come from settings
-    DEFAULT_LANGUAGE = "fr"
-    DEFAULT_POSTER_SIZE = "w780"
-    DEFAULT_MANIFEST_FORMAT = "yaml"
-
     def __init__(self, api_key, language=None, poster_size=None,
                  manifest_format=None, dry=False, debug=False):
         self.dry = dry
         self.debug = debug
-        self.poster_size = poster_size or self.DEFAULT_POSTER_SIZE
-        self.manifest_format = manifest_format or self.DEFAULT_MANIFEST_FORMAT
+        self.poster_size = poster_size or settings.scrapping_cover_size
+        self.manifest_format = manifest_format or settings.scrapping_manifest_format
         self.logger = logging.getLogger("deovi")
 
         # Set TMDb client options
-        self.client = self.get_client(api_key, (language or self.DEFAULT_LANGUAGE))
+        self.client = self.get_client(
+            api_key,
+            language or settings.scrapping_language
+        )
 
         # Get some config attributes from API
         self.get_api_configurations()
@@ -300,7 +293,7 @@ class TmdbScrapper:
 
         return manifests
 
-    def fetch_poster(self, manifest, url):
+    def get_cover(self, manifest, url):
         """
         Download poster from given url path and write it to basepath destination.
 
@@ -312,7 +305,7 @@ class TmdbScrapper:
             Path: The path of the downloaded image file.
         """
         # NOTE: Manifest models could include a dedicated method to return just the
-        # cover filename
+        # cover filename so the computation logic could be shared in other modules
         if manifest.tmdb_type == "movie":
             filename = manifest.path.stem
         else:
@@ -426,7 +419,7 @@ class TmdbScrapper:
 
         # Download possible cover image file in destination directory
         if data.get("poster_path", None):
-            cover_filepath = self.fetch_poster(manifest, data.pop("poster_path"))
+            cover_filepath = self.get_cover(manifest, data.pop("poster_path"))
             manifest.cover = cover_filepath.name
 
         diff = self.write_manifest_data(

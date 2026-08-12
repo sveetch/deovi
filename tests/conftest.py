@@ -268,6 +268,6 @@ def disable_api(monkeypatch):
 
     monkeypatch.setattr(TmdbScrapper, "get_client", dummy_client)
     monkeypatch.setattr(TmdbScrapper, "get_api_configurations", dummy_configurations)
-    monkeypatch.setattr(TmdbScrapper, "fetch_poster", dummy_poster)
+    monkeypatch.setattr(TmdbScrapper, "get_cover", dummy_poster)
     monkeypatch.setattr(TmdbScrapper, "serialize_tv_payload", dummy_tv_payload)
     monkeypatch.setattr(TmdbScrapper, "serialize_movie_payload", dummy_movie_payload)
