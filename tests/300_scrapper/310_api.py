@@ -99,7 +99,7 @@ def test_scrapper_fetch_tv(tmp_path, settings):
     NOTE: This involves 2 requests to API
     """
     scrapper = TmdbScrapper(settings.tmdbapi_key(), language="en")
-    scrapper.fetch_media(tmp_path, SAMPLE_TV_ID, tmdb_type="tv")
+    scrapper.fetch_from_id(tmp_path, SAMPLE_TV_ID, tmdb_type="tv")
 
     manifest_path = tmp_path / "manifest.yaml"
     assert (tmp_path / "cover.jpg").exists() is True
@@ -127,7 +127,7 @@ def test_scrapper_fetch_movie(tmp_path, settings):
     scrapper = TmdbScrapper(settings.tmdbapi_key(), language="en")
 
     # With default filename
-    scrapper.fetch_media(tmp_path, SAMPLE_MOVIE_ID, tmdb_type="movie")
+    scrapper.fetch_from_id(tmp_path, SAMPLE_MOVIE_ID, tmdb_type="movie")
     manifest_path = tmp_path / "manifest.yaml"
     # On default a movie cover adopts the filename of the manifest
     assert (tmp_path / "manifest.jpg").exists() is True
@@ -143,7 +143,7 @@ def test_scrapper_fetch_movie(tmp_path, settings):
     assert manifest == expected
 
     # With default filename
-    scrapper.fetch_media(
+    scrapper.fetch_from_id(
         tmp_path,
         SAMPLE_MOVIE_ID,
         tmdb_type="movie",

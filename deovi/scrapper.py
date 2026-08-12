@@ -37,7 +37,7 @@ class TmdbScrapper:
         language (string): Used language for payload content.
         poster_size (string): Size name as supported from TMDb API.
         manifest_format (string): Manifest file format to use for creation. Note than
-            method ``fetch_all_from_manifests`` will prefer to re use the same format
+            method ``fetch_from_path`` will prefer to re use the same format
             for existing ones.
         dry (boolean): If enabled nothing will be written or removed. The JSON payload
             from the ``debug`` is always written no matter of the dry option.
@@ -202,7 +202,7 @@ class TmdbScrapper:
         without extension, then for each group we try to validate firstly the JSON one
         and validation fails we try the YAML one.
 
-        During validation the manifest content is deserialized into a manifest model.
+        During validation the manifest content is deserialized to a manifest model.
 
         Arguments:
             basedir (Path): Where to search for manifests.
@@ -384,10 +384,10 @@ class TmdbScrapper:
         This downloads images files and build a manifest to the given directory.
 
         NOTE:
-            New method to scrap an item on TMDB ID, once finished 'fetch_media' should
+            New method to scrap an item on TMDB ID, once finished 'fetch_from_id' should
             use it or be totally deprecated.
 
-            This one stands only on manifest model. 'fetch_media' would need to craft
+            This one stands only on manifest model. 'fetch_from_id' would need to craft
             a dummy manifest before using 'process_manifest'.
 
         Arguments:
@@ -430,12 +430,10 @@ class TmdbScrapper:
 
         return (manifest, diff)
 
-    def fetch_media(self, destination, tmdb_id, tmdb_type="tv", filename=None,
-                    write_diff=False):
+    def fetch_from_id(self, destination, tmdb_id, tmdb_type="tv", filename=None,
+                      write_diff=False):
         """
         Get information and cover for given TMDB ID an type.
-
-        TODO: Rename to 'fetch_from_id'.
 
         Arguments:
             destination (Path): Directory path where to write manifest and possible
@@ -443,8 +441,9 @@ class TmdbScrapper:
             tmdb_id (string):
 
         Keyword Arguments:
-            tmdb_type (string):
-            filename (Path): A file path to use to define a custom manifest filename.
+            tmdb_type (string): The media type name can be either "tv" or "movie",
+                default to "tv".
+            filename (Path): A file path to use to compute the manifest filename.
                 It can be relative path, absolute or even a simple filename. Commonly
                 this should only be used for a Movie.
             write_diff (bool): Enable creation of difference file between possible
@@ -471,11 +470,11 @@ class TmdbScrapper:
 
         return (manifest, diff)
 
-    def fetch_all_from_manifests(self, basedir, write_diff=False):
+    def fetch_from_path(self, basedir, write_diff=False):
         """
-        Get information from TMDB for all manifests.
+        Get information from TMDB for all found manifest files in the given path.
 
-        TODO: Rename to 'fetch_from_manifests'.
+        Each manifest must define the TMDB ID and TYPE to be validated and processed.
 
         Arguments:
             basedir (Path): Where to search for manifests.

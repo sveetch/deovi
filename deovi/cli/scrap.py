@@ -147,7 +147,7 @@ else:
             debug=False,
         )
 
-        manifest, diffs = connector.fetch_media(
+        manifest, diffs = connector.fetch_from_id(
             destination,
             tmdb_id,
             tmdb_type=tmdb_type,

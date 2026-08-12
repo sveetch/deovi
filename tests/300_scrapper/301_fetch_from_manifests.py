@@ -33,7 +33,7 @@ def test_for_manifests(media_sample, disable_api):
 
     # Process manifests
     scrapper = TmdbScrapper("nokey")
-    processed = scrapper.fetch_all_from_manifests(media_sample)
+    processed = scrapper.fetch_from_path(media_sample)
 
     # Check result of processed manifest as returned from method
     assert [v[0].as_coerced() for v in processed] == [
@@ -119,7 +119,7 @@ def test_for_diff(media_sample, disable_api):
 
     # Process manifests
     scrapper = TmdbScrapper("nokey")
-    processed = scrapper.fetch_all_from_manifests(pong, write_diff=True)
+    processed = scrapper.fetch_from_path(pong, write_diff=True)
 
     # Check result of processed manifest as returned from method
     assert [v[0].as_coerced() for v in processed] == [

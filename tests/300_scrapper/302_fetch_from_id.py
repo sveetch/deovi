@@ -26,7 +26,7 @@ def test_for_serie(media_sample, disable_api):
 
     # Process ID
     scrapper = TmdbScrapper("nokey", manifest_format="json")
-    manifest, diff = scrapper.fetch_media(new_serie, 42, tmdb_type="tv")
+    manifest, diff = scrapper.fetch_from_id(new_serie, 42, tmdb_type="tv")
 
     # Check result of processed manifest as returned from method
     assert manifest.as_coerced() == {
@@ -60,7 +60,7 @@ def test_for_serie(media_sample, disable_api):
 
     # Again with diff
     scrapper = TmdbScrapper("nokey", manifest_format="json")
-    manifest, diff = scrapper.fetch_media(
+    manifest, diff = scrapper.fetch_from_id(
         new_serie,
         42,
         tmdb_type="tv",
@@ -86,7 +86,7 @@ def test_for_movie_default(media_sample, disable_api):
 
     # Process ID
     scrapper = TmdbScrapper("nokey", manifest_format="json")
-    manifest, diff = scrapper.fetch_media(new_movie, 42, tmdb_type="movie")
+    manifest, diff = scrapper.fetch_from_id(new_movie, 42, tmdb_type="movie")
 
     # Check result of processed manifest as returned from method
     assert diff == []
@@ -120,7 +120,7 @@ def test_for_movie_filename(media_sample, disable_api):
 
     # Process ID
     scrapper = TmdbScrapper("nokey", manifest_format="json")
-    manifest, diff = scrapper.fetch_media(
+    manifest, diff = scrapper.fetch_from_id(
         new_movie,
         42,
         tmdb_type="movie",
@@ -159,7 +159,7 @@ def test_yaml(media_sample, disable_api):
 
     # Process ID
     scrapper = TmdbScrapper("nokey", manifest_format="yaml")
-    manifest, diff = scrapper.fetch_media(
+    manifest, diff = scrapper.fetch_from_id(
         new_movie,
         42,
         tmdb_type="movie",

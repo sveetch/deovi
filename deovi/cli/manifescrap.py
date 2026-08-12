@@ -136,7 +136,7 @@ else:
             debug=False,
         )
 
-        connector.fetch_all_from_manifests(
+        connector.fetch_from_path(
             basedir,
             write_diff=write_diff,
         )
