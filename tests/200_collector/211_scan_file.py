@@ -16,7 +16,7 @@ from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_
             "name": "SampleVideo_1280x720_1mb.mkv",
             "absolute_dir": "",
             "relative_dir": ".",
-            "name_alt": "",
+            "dir_altname": "",
             "extension": "mkv",
             "container": "Matroska",
             "size": 1052413,
@@ -32,7 +32,7 @@ from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_
             "name": "SampleVideo_720x480_1mb.mp4",
             "absolute_dir": "moo",
             "relative_dir": "moo",
-            "name_alt": "moo",
+            "dir_altname": "moo",
             "extension": "mp4",
             "container": "MPEG-4",
             "size": 1057149,
@@ -48,7 +48,7 @@ from deovi.utils.tests import DUMMY_ISO_DATETIME, timestamp_to_isoformat, dummy_
             "name": "SampleVideo_176x144_1mb.3gp",
             "absolute_dir": "ping/pong/pang",
             "relative_dir": "ping/pong/pang",
-            "name_alt": "pang",
+            "dir_altname": "pang",
             "extension": "3gp",
             "container": "3GPP",
             "size": 1038741,
@@ -125,7 +125,7 @@ def test_collector_scan_file_manifest(monkeypatch, media_sample):
             "release_date": ""
         },
         "checksum":  None,
-        "name_alt": "pong",
+        "dir_altname": "pong",
         "extension": "mkv",
         "container": "Matroska"
     }

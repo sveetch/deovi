@@ -30,6 +30,7 @@ else:
     """
     Scrapping feature requirements are available
     """
+    from ..conf import settings
     from ..scrapper import TmdbScrapper
 
     @click.command()
@@ -101,7 +102,7 @@ else:
     def scrap_command(context, tmdb_type, tmdb_id, destination, key, filekey,
                       language, write_diff, formatter, dry):
         """
-        Scrap TV show informations and poster image from TMDb API.
+        Scrap TV show informations and poster image of a single resource from TMDb API.
 
         Required arguments (in order):
 
@@ -111,7 +112,7 @@ else:
             lead to an error.
 
         TMDB_ID\n
-            The media ID from TMDb, it may looks like an integer, exemple: 14009.
+            The media ID from TMDb, it is expected to be an integer like '14009'.
 
         DESTINATION\n
             Destination directory path where to write manifest and cover files.
@@ -129,6 +130,20 @@ else:
             raise click.Abort()
         elif filekey:
             key = filekey.read_text().strip()
+
+        try:
+            tmdb_id = int(tmdb_id)
+        except ValueError:
+            logger.critical(
+                "Given TMDB ID is not a valid integer: {}".format(tmdb_id)
+            )
+            raise click.Abort()
+
+        if tmdb_type not in settings.scrapped_manifest_types:
+            logger.critical(
+                "Given TMDB TYPE is not a valid type to scrap: {}".format(tmdb_type)
+            )
+            raise click.Abort()
 
         logger.info("TMDB Type: {}".format(tmdb_type))
         logger.info("TMDB ID: {}".format(tmdb_id))

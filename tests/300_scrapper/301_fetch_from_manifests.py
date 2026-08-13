@@ -1,45 +1,66 @@
 import json
+import logging
 
-import yaml
-
+from deovi import __pkgname__
 from deovi.scrapper import TmdbScrapper
+from deovi.models import CollectionManifest, MovieManifest, SerieManifest
 
 
-def test_for_manifests(media_sample, disable_api):
+def test_basic(caplog, disable_api, tmp_path):
     """
-    Scrapper will retrieve all valid manifest and proceed to update them with
-    fetched data payload. Also the original manifest format is respected.
-
-    No request is done here and cover file is not written on FS.
+    Scrap from a list of crafted Manifest objects.
     """
-    # We only expect valid manifests from 'ping/pong'
-    pong = media_sample / "ping/pong"
-    pong_manifest = pong / "manifest.json"
-    samplevideo_manifest = pong / "SampleVideo_720x480_1mb.json"
 
-    # Patch original pong manifests to add an attribute
-    patched_pong = json.loads(pong_manifest.read_text())
-    patched_pong["status"] = "zap"
-    pong_manifest.write_text(json.dumps(patched_pong))
+    # Basic definition with payload and without cover
+    the_serie_path = tmp_path / "manifest.json"
+    the_serie = SerieManifest(
+        the_serie_path,
+        tmdb_id=42,
+        tmdb_type="tv"
+    )
 
-    # Patch bar YAML manifest to make it valid
-    bar = media_sample / "foo/bar"
-    bar_manifest = bar / "manifest.yaml"
-    bar_manifest.write_text((
-        "title: \"Foo bar YAML\"\n"
-        "tmdb_id: 001\n"
-        "tmdb_type: \"tv\"\n"
-    ))
+    the_movie_path = tmp_path / "the-movie.json"
+    the_movie = MovieManifest(
+        the_movie_path,
+        tmdb_id=33,
+        tmdb_type="movie",
+    )
+
+    the_collection_path = tmp_path / "manifest.json"
+    the_collection = CollectionManifest(
+        the_collection_path,
+        tmdb_id=77,
+        tmdb_type="movie",
+    )
+
+    manifests = [the_serie, the_movie, the_collection]
 
     # Process manifests
     scrapper = TmdbScrapper("nokey")
-    processed = scrapper.fetch_from_path(media_sample)
+    processed = scrapper.fetch_from_manifests(manifests)
 
     # Check result of processed manifest as returned from method
     assert [v[0].as_coerced() for v in processed] == [
         {
-            "path": pong / "SampleVideo_720x480_1mb.json",
-            "tmdb_id": 273204,
+            "path": the_serie_path,
+            "tmdb_id": 42,
+            "tmdb_type": "tv",
+            "locked": False,
+            "title": "changed-serie",
+            "overview": None,
+            "status": None,
+            "original_language": None,
+            "cover": "dummy_serie-cover.png",
+            "casting": [],
+            "crew": [],
+            "genres": [],
+            "first_air_date": "",
+            "number_of_seasons": None,
+            "number_of_episodes": None
+        },
+        {
+            "path": the_movie_path,
+            "tmdb_id": 33,
             "tmdb_type": "movie",
             "locked": False,
             "title": "changed-movie",
@@ -52,102 +73,53 @@ def test_for_manifests(media_sample, disable_api):
             "genres": [],
             "release_date": ""
         },
-        {
-            "path": pong / "manifest.json",
-            "tmdb_id": 21567,
-            "tmdb_type": "tv",
-            "locked": False,
-            "title": "changed-serie",
-            "overview": None,
-            "status": "zap",
-            "original_language": None,
-            "cover": "dummy_serie-cover.png",
-            "casting": [],
-            "crew": [],
-            "genres": [],
-            "first_air_date": "",
-            "number_of_seasons": None,
-            "number_of_episodes": None
-        },
-        {
-            "path": bar / "manifest.yaml",
-            "tmdb_id": 1,
-            "tmdb_type": "tv",
-            "locked": False,
-            "title": "changed-serie",
-            "overview": None,
-            "status": None,
-            "original_language": None,
-            "cover": "dummy_serie-cover.png",
-            "casting": [],
-            "crew": [],
-            "genres": [],
-            "first_air_date": "",
-            "number_of_seasons": None,
-            "number_of_episodes": None
-        },
     ]
 
     # Written manifest files have been well updated
-    written_samplevideo_manifest = json.loads(samplevideo_manifest.read_text())
-    assert written_samplevideo_manifest["title"] == "changed-movie"
-    assert written_samplevideo_manifest["cover"] == "dummy_movie-cover.png"
-    assert written_samplevideo_manifest["status"] is None
+    written_serie_manifest = json.loads(the_serie_path.read_text())
+    assert written_serie_manifest["title"] == "changed-serie"
+    assert written_serie_manifest["cover"] == "dummy_serie-cover.png"
+    assert written_serie_manifest["status"] is None
 
-    written_pong_manifest = json.loads(pong_manifest.read_text())
-    assert written_pong_manifest["title"] == "changed-serie"
-    assert written_pong_manifest["cover"] == "dummy_serie-cover.png"
-    assert written_pong_manifest["status"] == "zap"
+    written_movie_manifest = json.loads(the_movie_path.read_text())
+    assert written_movie_manifest["title"] == "changed-movie"
+    assert written_movie_manifest["cover"] == "dummy_movie-cover.png"
+    assert written_movie_manifest["status"] is None
 
-    written_bar_manifest = yaml.load(bar_manifest.read_text(), Loader=yaml.FullLoader)
-    assert written_bar_manifest["title"] == "changed-serie"
-    assert written_bar_manifest["cover"] == "dummy_serie-cover.png"
-    assert written_bar_manifest["status"] is None
-
-
-def test_for_diff(media_sample, disable_api):
-    """
-    Differences between original and new data are properly returned.
-
-    No request is done here and cover file is not written on FS.
-    """
-    # We only expect valid manifests from 'ping/pong'
-    pong = media_sample / "ping/pong"
-
-    # Remove useless manifest
-    (pong / "SampleVideo_720x480_1mb.json").unlink()
-
-    # Process manifests
-    scrapper = TmdbScrapper("nokey")
-    processed = scrapper.fetch_from_path(pong, write_diff=True)
-
-    # Check result of processed manifest as returned from method
-    assert [v[0].as_coerced() for v in processed] == [
-        {
-            "path": pong / "manifest.json",
-            "tmdb_id": 21567,
-            "tmdb_type": "tv",
-            "locked": False,
-            "title": "changed-serie",
-            "overview": None,
-            "status": None,
-            "original_language": None,
-            "cover": "dummy_serie-cover.png",
-            "casting": [],
-            "crew": [],
-            "genres": [],
-            "first_air_date": "",
-            "number_of_seasons": None,
-            "number_of_episodes": None
-        },
+    # Since it is a single chunk, there is no pause
+    assert caplog.record_tuples == [
+        (
+            __pkgname__,
+            logging.WARNING,
+            "Given tmdb_type 'collection' is not supported for processing: {}".format(
+                the_collection_path
+            )
+        ),
     ]
 
-    assert [v[1] for v in processed] == [
-        [
-            (
-                "Type of root['cover'] changed from NoneType to str and value "
-                "changed from None to \"dummy_serie-cover.png\"."
-            ),
-            "Value of root['title'] changed from \"Pong JSON\" to \"changed-serie\"."
-        ],
+
+def test_many_chunks_with_pause(caplog, disable_api, tmp_path):
+    """
+    When the amount of manifest to process is over the limit, manifests should be
+    processed per chunk with a pause time between them.
+    """
+    caplog.set_level(logging.DEBUG)
+    scrapper = TmdbScrapper("nokey")
+
+    # Force execution of generator
+    list(
+        scrapper.fetch_from_manifests([
+            MovieManifest(
+                tmp_path / "the-movie-{}.json".format(i),
+                tmdb_id=i,
+                tmdb_type="movie",
+            )
+            for i in range(1, 22)
+        ])
+    )
+
+    # There is a pause time between chunks but not after the last one
+    assert caplog.record_tuples == [
+        (__pkgname__, logging.INFO, "💬 Batch pausing for 1s"),
+        (__pkgname__, logging.INFO, "💬 Batch pausing for 1s"),
     ]

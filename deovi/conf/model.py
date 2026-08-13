@@ -49,16 +49,19 @@ class SettingsObject:
     supported_tmdb_fields: tuple[str] = dataclasses_field(default_factory=tuple)
 
     # Default content language requested for detail from TMDB API
-    # NOTE: Was DEFAULT_LANGUAGE
     scrapping_language: str = "fr"
 
     # Default poster size name as expected from TMDB API
-    # NOTE: Was DEFAULT_POSTER_SIZE
     scrapping_cover_size: str = "w780"
 
     # Default manifest format to output when writing a new manifest
-    # NOTE: Was DEFAULT_MANIFEST_FORMAT
     scrapping_manifest_format: str = "yaml"
+
+    # Default amount of items to process in each chunk
+    chunk_size: int = 10
+
+    # Default time in seconds to wait before processing a next chunk
+    batch_pause: int = 1
 
     def __post_init__(self):
         """

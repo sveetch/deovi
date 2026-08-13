@@ -46,8 +46,8 @@ def test_checksum(settings, monkeypatch):
     assert duckcity.as_coerced() == {
         "absolute_dir": media_sample / "ping",
         "checksum": (
-            "2c72ae797271e20404648f725eaa8ba3850e1a17037decd476f3a34f7236dd83274078e"
-            "b4c437b411d3969e339238df5129df7d76144940d24a67a9039a3b6ba"
+            "ee269f9e3977695964e5d7bf305d44a1f22ceb093e53b62b39263e9d2c648c34f7633d4"
+            "309ad0f3397c443df01f8f8e356dcb13e7f67d8bf59eb5f212d59c4ae"
         ),
         "manifest": {
             "casting": [],
@@ -109,7 +109,7 @@ def test_checksum(settings, monkeypatch):
                 },
                 "mtime": FakeDatetime(2012, 10, 15, 10, 0, 0, 1007),
                 "name": "SampleVideo_720x480_1mb.mkv",
-                "name_alt": "pong",
+                "dir_altname": "pong",
                 "path": media_sample / "ping/pong/SampleVideo_720x480_1mb.mkv",
                 "relative_dir": Path("ping/pong"),
                 "size": 42,

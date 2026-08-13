@@ -7,6 +7,13 @@ History
 Development
 ***********
 
+This is large refactoring of the Deovi core and commands to improve code and add new
+features.
+
+The refactoring is too heavy to be described here so you would need
+to search through commits to find details, however for command usage there is almost
+not breaking changes except the ones listed below.
+
 * Added support for Python 3.12 and 3.13;
 * Removed support for Python 3.8 and 3.9;
 * Updated Makefile;
@@ -15,18 +22,37 @@ Development
   *The Outer Limits* from TMDb;
 * Added logo;
 * Moved documentation theme to "Furo";
-* [scrap] Improved Scrapper class and 'scrap' command to support movie along tv media;
+* [collect] Because of some changes in collector and scrapper behaviors, the resulting
+  registry dump has some little changes:
+
+  * tmdb id, tmdb type, cover and title fields have moved into the manifest fields;
+  * Now the dump can contain manifest for Media files;
+  * 'DirectoryInformation.children_files' attribute has been renamed to
+    'DirectoryInformation.medias';
+  * 'MediaInformation.directory' attribute has been renamed to
+    'MediaInformation.dir_altname';
+  * The dump registry include now a new field 'deovi' which contains the Deovi version
+    used to create dump and also a date of creation;
+
+* [scrap] Improved Scrapper class and 'scrap' command to support movie in addition to
+  tv resource;
 * [scrap] Improved Scrapper to output manifest in JSON format in addition to YAML;
+* [scrap] Scrapper now support the ``locked`` option from a manifest to avoid update;
 * [scrap] Breaking change: The command now required the TMDB type to be given as the
   first argument;
 * [scrap] Added original language, casting and crew to retrieved information from
   payload;
+* [scrap] Added new command 'manifescrap' command to recursively search for manifest of
+  resources to scrap;
+* [scrap] Now the scrapper methods for many resources (either from manifest objects or
+  recursive path) process resource per chunk and apply a pause between them to follow
+  the soft request limit from TMDB API;
 
 
 Version 0.7.0 - 2024/04/28
 **************************
 
-* [collect] Breaking changes: The collection dump structure has change to include
+* [collect] Breaking changes: The collection dump structure has changed to include
   device statistics in item ``device`` and all collected directory items (previously at
   root) have been moved into item ``registry``;
 * [collect] Fixed inconsistant collector test because of arbitrary order from

@@ -27,7 +27,7 @@ def test_creation():
         "manifest": None,
         "checksum": None,
         "container": "MPEG-4",
-        "name_alt": "",
+        "dir_altname": "",
         "extension": "mp4",
     }
 
@@ -55,7 +55,7 @@ def test_basic():
         "manifest": None,
         "checksum": "plop",
         "container": "MPEG-4",
-        "name_alt": "",
+        "dir_altname": "",
         "extension": "mp4",
     }
 
@@ -89,6 +89,6 @@ def test_checksum(tmp_path):
             "942fab40bb08d464e57a273315b3af34694faa6e3c3c3419060d035a61"
         ),
         "container": "MPEG-4",
-        "name_alt": "",
+        "dir_altname": "",
         "extension": "mp4",
     }

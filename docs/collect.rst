@@ -6,10 +6,12 @@
 Collector
 =========
 
-This tool purpose is to recursively collect informations about media files from a path,
-media files will be stored and organized internally per directory. Note than collector
-does not open files to get their meta informations, it just collect their filesystem
-informations (date, paths, size, etc..).
+The purpose of this tool is to recursively collect informations about media files from
+a path, media files will be stored and organized internally per directory.
+
+.. Note::
+    Collector does not open files to get their meta informations, it just collect their
+    filesystem informations (date, paths, size, etc..).
 
 Although the tool can output some kind of collection resume, the real feature is to
 dump collection to a JSON file that can be used programmatically.
@@ -55,23 +57,8 @@ directories which have at least a single media file. All directories that don't 
 any supported media files will be ignored from collection.
 
 
-Directory cover
-***************
-
-Each directory may have a cover image file to collect. A cover is only owned by its
-direct directory, children directories won't inherit its parent one.
-
-Collector recognize a file as a cover if it is named ``cover`` and have extension
-``png``, ``jpg``, ``jpeg`` or ``gif``. If there is multiple elligible cover files in
-the same directory, collector will choose the one with the extension priority as
-described from previous extension list order.
-
-.. Note::
-    It is recommended to optimize your cover image file sizes.
-
-
-Directory manifest
-******************
+Manifest
+********
 
 Each directory may contains a YAML file ``manifest.yml`` to include some directory meta
 informations to include in the dump. The manifest content is almost free except it can
@@ -87,6 +74,21 @@ Forbidden item names are:
 * ``path``;
 * ``relative_dir``;
 * ``size``;
+
+Directory cover
+***************
+
+Each directory may have a cover image file to collect. A cover is only owned by its
+direct directory, children directories won't inherit its parent one.
+
+Collector recognize a file as a cover if it is named ``cover`` and have extension
+``png``, ``jpg``, ``jpeg`` or ``gif``. If there is multiple elligible cover files in
+the same directory, collector will choose the one with the extension priority as
+described from previous extension list order.
+
+.. Note::
+    It is recommended to optimize your cover image file sizes.
+
 
 
 Directory checksum

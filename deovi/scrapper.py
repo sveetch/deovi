@@ -2,6 +2,7 @@ import json
 import logging
 import requests
 import shutil
+import time
 from collections import defaultdict
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from .conf import settings
 from .models import MovieManifest, SerieManifest
 from .models.mixins.loader import ManifestLoaderMixin
 from .utils.jsons import ExtendedJsonEncoder
+from . import __pkgname__
 
 
 class TmdbScrapper:
@@ -35,23 +37,31 @@ class TmdbScrapper:
 
     Keyword Arguments:
         language (string): Used language for payload content.
-        poster_size (string): Size name as supported from TMDb API.
+        cover_size (string): Size name as supported from TMDb API.
         manifest_format (string): Manifest file format to use for creation. Note than
             method ``fetch_from_path`` will prefer to re use the same format
             for existing ones.
+        chunk_size (integer): Amount of items to process in a chunk. This is used with
+            ``batch_pause`` to play well with the TMDB API request limit.
+        batch_pause (integer): Time in seconds to pause processing. This is only used
+            if the amount of items to process is over the ``chunk_size`` limit. You
+            can set it to ``0`` to avoid pause but it is not recommended.
         dry (boolean): If enabled nothing will be written or removed. The JSON payload
             from the ``debug`` is always written no matter of the dry option.
         debug (boolean): If enabled the fetched payload from TmdbScrapper (not to
             confuse with the real TMDB payload) is saved on disk in a JSON file named
             after the media tmdb_id, file is saved in the current working directory.
     """
-    def __init__(self, api_key, language=None, poster_size=None,
-                 manifest_format=None, dry=False, debug=False):
+    def __init__(self, api_key, language=None, cover_size=None,
+                 manifest_format=None, chunk_size=None, batch_pause=None, dry=False,
+                 debug=False):
         self.dry = dry
         self.debug = debug
-        self.poster_size = poster_size or settings.scrapping_cover_size
+        self.cover_size = cover_size or settings.scrapping_cover_size
         self.manifest_format = manifest_format or settings.scrapping_manifest_format
-        self.logger = logging.getLogger("deovi")
+        self.logger = logging.getLogger(__pkgname__)
+        self.chunk_size = chunk_size or settings.chunk_size
+        self.batch_pause = settings.batch_pause if batch_pause is None else batch_pause
 
         # Set TMDb client options
         self.client = self.get_client(
@@ -91,7 +101,7 @@ class TmdbScrapper:
         """
         return "".join([
             self.secure_base_url,
-            self.poster_size,
+            self.cover_size,
             path
         ])
 
@@ -304,7 +314,7 @@ class TmdbScrapper:
         Returns:
             Path: The path of the downloaded image file.
         """
-        # NOTE: Manifest models could include a dedicated method to return just the
+        # NOTE: Manifest models could include a dedicated method to return the
         # cover filename so the computation logic could be shared in other modules
         if manifest.tmdb_type == "movie":
             filename = manifest.path.stem
@@ -381,14 +391,7 @@ class TmdbScrapper:
         """
         Get informations payload and images for given TMDB ID.
 
-        This downloads images files and build a manifest to the given directory.
-
-        NOTE:
-            New method to scrap an item on TMDB ID, once finished 'fetch_from_id' should
-            use it or be totally deprecated.
-
-            This one stands only on manifest model. 'fetch_from_id' would need to craft
-            a dummy manifest before using 'process_manifest'.
+        This will download images files and build a manifest at its path.
 
         Arguments:
             manifest (MovieManifest, SerieManifest): The manifest object where to get
@@ -409,9 +412,13 @@ class TmdbScrapper:
         elif manifest.tmdb_type == "movie":
             data = self.serialize_movie_payload(manifest.tmdb_id)
         else:
-            raise NotImplementedError("Given 'tmdb_type' is not implemented: {}".format(
-                manifest.tmdb_type
-            ))
+            self.logger.warning(
+                "Given tmdb_type '{}' is not supported for processing: {}".format(
+                    manifest.tmdb_type,
+                    manifest.path,
+                )
+            )
+            return None, None
 
         # Update manifest object with serialized data
         for k, v in data.items():
@@ -450,31 +457,27 @@ class TmdbScrapper:
                 original data and fetched data.
 
         Returns:
-            tuple: The manifest object and list of differences (if enabled).
+            tuple: The manifest object and list of differences.
         """
         if tmdb_type == "tv":
             model = SerieManifest
         elif tmdb_type == "movie":
             model = MovieManifest
         else:
-            raise NotImplementedError("Given 'tmdb_type' is not implemented: {}".format(
-                tmdb_type
-            ))
+            raise NotImplementedError(
+                "Given tmdb_type '{}' has no supported model".format(tmdb_type)
+            )
 
         # Build manifest
         filename = filename.stem if filename else "manifest"
         manifest_path = destination / "{}.{}".format(filename, self.manifest_format)
         manifest = model(path=manifest_path, tmdb_id=tmdb_id)
 
-        manifest, diff = self.process_manifest(manifest, write_diff=write_diff)
+        return self.process_manifest(manifest, write_diff=write_diff)
 
-        return (manifest, diff)
-
-    def fetch_from_path(self, basedir, write_diff=False):
+    def fetch_from_manifests(self, manifests, write_diff=False):
         """
-        Get information from TMDB for all found manifest files in the given path.
-
-        Each manifest must define the TMDB ID and TYPE to be validated and processed.
+        Get information from TMDB for all given manifest objects.
 
         Arguments:
             basedir (Path): Where to search for manifests.
@@ -484,15 +487,51 @@ class TmdbScrapper:
                 original data and fetched data for each manifest.
 
         Returns:
-            list: List of processed items. Each item is a tuple with the manifest
-                object and list of differences (if enabled).
+            generator: List of processed items. Each item is a tuple with the manifest
+                object and a list of differences.
+        """
+        chunks = [
+            manifests[i:i + self.chunk_size]
+            for i in range(0, len(manifests), self.chunk_size)
+        ]
+
+        is_single_chunk = len(chunks) == 1
+
+        for i, chunk in enumerate(chunks, start=1):
+            is_last_chunk = i >= len(chunks)
+
+            for c, manifest in enumerate(chunk, start=1):
+                result = self.process_manifest(manifest, write_diff=write_diff)
+                if result[0] is not None:
+                    yield result
+
+            # Only apply a pause if not null, there is more than one chunk and it is not
+            # the last one
+            if self.batch_pause and not is_single_chunk and not is_last_chunk:
+                self.logger.info("💬 Batch pausing for {}s".format(self.batch_pause))
+                time.sleep(self.batch_pause)
+
+    def fetch_from_path(self, basedir, write_diff=False):
+        """
+        Get information from TMDB for all found manifest files in the given path.
+
+        Each manifest file must define at least the TMDB ID and TYPE to be validated
+        and processed.
+
+        Arguments:
+            basedir (Path): Where to search for manifests.
+
+        Keyword Arguments:
+            write_diff (bool): Enable creation of difference file between possible
+                original data and fetched data for each manifest.
+
+        Returns:
+            generator: List of processed items. Each item is a tuple with the manifest
+                object and list of differences.
         """
 
         branches = self.find_elligible_manifest_file(basedir)
 
         manifests = self.load_original_manifests(branches)
 
-        return [
-            self.process_manifest(manifest, write_diff=write_diff)
-            for manifest in manifests
-        ]
+        return self.fetch_from_manifests(manifests, write_diff=write_diff)

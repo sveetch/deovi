@@ -148,7 +148,7 @@ def test_job_success(monkeypatch, caplog, settings, tmp_path):
                     "name": "SampleVideo_360x240_1mb.mkv",
                     "absolute_dir": str(source),
                     "relative_dir": ".",
-                    "name_alt": "",
+                    "dir_altname": "",
                     "manifest": None,
                     "checksum": (
                         "bb0ca8dd15c875f617df993b8fce624bfe74ed49a11207056b55c0a2b58a"

@@ -30,13 +30,19 @@ else:
     """
     Scrapping feature requirements are available
     """
+    from ..conf import settings
     from ..scrapper import TmdbScrapper
 
     @click.command()
     @click.argument(
         "basedir",
         nargs=1,
-        type=click.Path(exists=True, path_type=Path)
+        type=click.Path(
+            path_type=Path,
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+        )
     )
     @click.option(
         "--key",
@@ -49,8 +55,11 @@ else:
     @click.option(
         "--filekey",
         type=click.Path(
-            file_okay=True, dir_okay=False, resolve_path=False, path_type=Path,
+            path_type=Path,
             exists=True,
+            file_okay=True,
+            dir_okay=False,
+            resolve_path=False,
         ),
         help=(
             "TMDb API private key from a file, the file must only contain the key "
@@ -66,6 +75,27 @@ else:
         default="fr",
     )
     @click.option(
+        "--chunk",
+        type=click.INT,
+        metavar="INTEGER",
+        help=(
+            "Amount of items to process in a chunk. This is used with 'pause' "
+            "to play well with the TMDB API request limit."
+        ),
+        default=settings.chunk_size,
+    )
+    @click.option(
+        "--pause",
+        type=click.INT,
+        metavar="INTEGER",
+        help=(
+            "Time in seconds to pause processing. This is only used if the amount of "
+            "items to process is over the 'chunk' size limit. You can set it to '0' "
+            "to avoid pause but it is not recommended."
+        ),
+        default=settings.batch_pause,
+    )
+    @click.option(
         "--write-diff",
         is_flag=True,
         help=(
@@ -76,14 +106,6 @@ else:
         ),
     )
     @click.option(
-        "--formatter",
-        metavar="STRING",
-        help=(
-            "Manifest output format, either 'yaml' or 'json'."
-        ),
-        default="yaml",
-    )
-    @click.option(
         "--dry",
         is_flag=True,
         help=(
@@ -91,10 +113,11 @@ else:
         ),
     )
     @click.pass_context
-    def manifescrap_command(context, basedir, key, filekey,
-                            language, write_diff, formatter, dry):
+    def manifescrap_command(context, basedir, key, filekey, language, chunk, pause,
+                            write_diff, dry):
         """
-        Scrap informations and poster image from TMDb API for all manifest found.
+        Scrap informations and poster image from TMDb API for all manifest found from
+        a path.
 
         This will recursively walk through the given base directory to find any
         valid manifest files (almost all '*.json' and '*.yaml' with expected structure)
@@ -122,16 +145,18 @@ else:
             key = filekey.read_text().strip()
 
         logger.info("basedir: {}".format(basedir))
-        logger.debug("Manifest format: {}".format(formatter))
         logger.debug("Language: {}".format(language))
+        logger.debug("Chunk size: {}".format(chunk))
+        logger.debug("Pause time: {}".format(pause))
         logger.debug("API Key {}".format(
             "from file" if filekey else "from string",
         ))
 
         connector = TmdbScrapper(
             key,
-            manifest_format=formatter,
             language=language,
+            chunk_size=chunk,
+            batch_pause=pause,
             dry=dry,
             debug=False,
         )

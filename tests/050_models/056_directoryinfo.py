@@ -113,7 +113,7 @@ def test_set_medias():
                 "manifest": None,
                 "mtime": FakeDatetime(2012, 10, 15, 10, 0, 0, 1007),
                 "name": "picsou.mp4",
-                "name_alt": "",
+                "dir_altname": "",
                 "path": Path("/home/cities/duckcity/picsou.mp4"),
                 "relative_dir": Path("."),
                 "size": 42,
@@ -145,7 +145,7 @@ def test_set_medias():
                 "relative_dir": ".",
                 "manifest": None,
                 "checksum": None,
-                "name_alt": "",
+                "dir_altname": "",
                 "extension": "mp4",
                 "container": "MPEG-4"
             }
@@ -179,7 +179,7 @@ def test_set_medias():
                 "relative_dir": ".",
                 "manifest": None,
                 "checksum": None,
-                "name_alt": "",
+                "dir_altname": "",
                 "extension": "mp4",
                 "container": "MPEG-4"
             },
@@ -192,7 +192,7 @@ def test_set_medias():
                 "relative_dir": ".",
                 "manifest": None,
                 "checksum": None,
-                "name_alt": "",
+                "dir_altname": "",
                 "extension": "mp4",
                 "container": "MPEG-4"
             }

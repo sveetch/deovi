@@ -167,8 +167,6 @@ class DirectoryInformation(BaseInformation):
     """
     Model for directory information.
 
-    NOTE: 'children_files' attribute has been renamed to 'medias'.
-
     .. Note: ::
         Deovi store information per directory even if each media can have some data in
         another model, so the directory information is crucial.
@@ -216,10 +214,6 @@ class DirectoryInformation(BaseInformation):
                     cover_asset = item["manifest"]["cover"]
                     item["manifest"]["cover"] = cover_asset["source"]
                     item["manifest"]["cover_checksum"] = cover_asset["checksum"]
-
-        print("@@@@@@@@@@@@@@@@@@")
-        print(json.dumps(payload, cls=ExtendedJsonEncoder))
-        print("@@@@@@@@@@@@@@@@@@")
 
         self.checksum = self.get_content_checksum(
             json.dumps(payload, cls=ExtendedJsonEncoder)
@@ -299,30 +293,28 @@ class MediaInformation(BaseInformation):
     """
     Model for a media file information.
 
-    NOTE: 'directory' attribute has been renamed to 'name_alt'.
-    TODO: Finally 'name_alt' should be named 'dir_altname'.
 
     Attributes:
         EXPORT_PRIVATES (list): List of strings for field names that won't be exported
             from ``serialize`` and ``as_json`` methods.
 
     Keyword Arguments:
-        name_alt (str): The parent directory name but with an empty string instead of
+        dir_altname (str): The parent directory name but with an empty string instead of
             the basepath dirname when the file is at basepath root.
         extension (str): The file extension without leading dot. Computed automatically
             from given path.
         container (str): The media container name, like ``MPEG-4`` for ``mp4``.
             Computed automatically from settings if not given, this is recommended.
     """
-    name_alt: str = None
+    dir_altname: str = None
     extension: str = None
     container: str = None
 
     def __post_init__(self, basepath, autoload, autochecksum, cover_extensions):
         super().__post_init__(basepath, autoload, autochecksum, cover_extensions)
 
-        if not self.name_alt:
-            self.name_alt = (
+        if not self.dir_altname:
+            self.dir_altname = (
                 ""
                 if self.path.parent.name == basepath.name
                 else self.path.parent.name
