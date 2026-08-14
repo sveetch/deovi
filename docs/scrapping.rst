@@ -7,23 +7,23 @@
 Scrapping
 =========
 
-.. Note::
-    To use this command you will have to install Deovi with the feature ``scrapping``.
-
 The scrapping tool stands on `TMDb API`_ to get TV serie details and cover. Details
 are written into a manifest file along the cover at the given destination directory.
 
-The first purpose of this scrapping tool is to create manifest suitable with collector
-from ``collect``.
+The first purpose of the scrapping tools is to create manifests suitable with
+:ref:`intro_collector`.
 
+.. Hint::
+    Scrapping must be runned before running :ref:`intro_collector` else the scrapped
+    information can not be collected.
 
 Requirements
 ************
 
 #. First you will need a `TMDb account <https://www.themoviedb.org/signup>`_;
 #. Then `create an API key <https://www.themoviedb.org/settings/api>`_;
-#. You will give this key to the command else it won't be able to request the
-   `TMDb API`_;
+#. You will give this key to the command;
+
 
 Giving API key to command
 *************************
@@ -36,6 +36,9 @@ Or you can save your key into a file like ``tmdb-api-key.txt`` (and only the key
 nothing else) and give it with option ``--filekey``: ::
 
     deovi COMMAND ... --filekey tmdb-api-key.txt
+
+
+.. _scrapping_tmdb_id:
 
 TMDB Identifier
 ***************
@@ -55,6 +58,7 @@ Where its ID is: ::
 
     21567
 
+
 Manifest and cover files
 ************************
 
@@ -69,11 +73,8 @@ files into the destination directory:
 Manifest file
 -------------
 
-The manifest file which contains details returned by the TMDb API, this file can be
-used with collector from ``collect`` command.
-
-The manifest format can be either YAML or JSON, depending the option
-``--formatter``.
+The manifest file contains details for a resource and will be updated from scrapper
+with data returned by the TMDb API. This file can be used with :ref:`intro_collector`.
 
 If a previous manifest file already existed in the destination directory it will be
 totally overwritten by a new one. You should stick to the same format because this
@@ -84,11 +85,41 @@ Finally if there is any differences between old
 and new manifest, they will be displayed and possibly stored into a
 *Difference file* (see below).
 
+Naming
+......
+
 Manifest file name is built depending the TMDB TYPE:
 
 * TV has a generic filename ``manifest.[json,yaml]``;
 * Movie adopt the same filename as its media source, such as for file ``foobar.mkv`` it
   will be ``foobar.[json.yaml]``;
+
+.. Note::
+    File name is only built for non existing manifest so this only apply when scrapping
+    a single resource with command ``scrap``.
+
+Format
+......
+
+The manifest format can be either YAML or JSON.
+
+The minimal structure for a JSON manifest to be scrapped is: ::
+
+    {
+        "tmdb_id": 42,
+        "tmdb_type": "tv"
+    }
+
+And in YAML it would be: ::
+
+    tmdb_id: 42
+    tmdb_type: tv
+
+Where ``tmdb_id`` is the :ref:`scrapping_tmdb_id` and ``tmdb_type`` is the TMDB resource
+type that can be either ``tv``, ``movie`` or ``collection``.
+
+Only these attributes are required for the manifest to be scrapped, however the
+``collection`` type is not scrapped.
 
 Differences file
 ----------------
@@ -111,9 +142,11 @@ Difference file name is built from the manifest file name with suffix replaced t
 Cover file
 ----------
 
-If show has a cover image, it will be downloaded and written with this name.
+If resource has a cover image, it will be downloaded and written along the manifest
+file.
 
-Previous existing cover file can be overwritten by a following run of the scrapper.
+.. Warning::
+    Previous existing cover file can be overwritten by a following run of the scrapper.
 
 Cover file name is built from the manifest filename with suffix replaced with the cover
 image format, commonly ``.jpg``.
@@ -140,8 +173,8 @@ The default language used in command is ``fr`` (french).
 Usage
 *****
 
-Directly for a single TV show
------------------------------
+Single resource from ID
+-----------------------
 
 We want to get the details from TV show *The Outer Limits* in english into
 directory ``series/the-outer-limits``: ::
@@ -156,8 +189,8 @@ This would write the following files to given destination: ::
         └── manifest.yaml
 
 
-For all manifests from a directory
-----------------------------------
+Updating existing manifests
+---------------------------
 
 For many medias, instead of using ``scrap`` command for each of them, you can also
 just use this command and point it to a directory path. The directory will be walked

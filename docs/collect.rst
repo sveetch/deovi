@@ -6,19 +6,54 @@
 Collector
 =========
 
-The purpose of this tool is to recursively collect informations about media files from
-a path, media files will be stored and organized internally per directory.
+The purpose of this tool is to recursively collect informations about resource files
+from a path.
 
 .. Note::
     Collector does not open files to get their meta informations, it just collect their
     filesystem informations (date, paths, size, etc..).
 
-Although the tool can output some kind of collection resume, the real feature is to
-dump collection to a JSON file that can be used programmatically.
+Although the tool output some kind of resume, the main goal is to dump collection to a
+JSON file that can be used programmatically such as with `django-deovi`_, a Django
+project that allow to browse collected resources (once imported).
 
-This JSON dump is supported by `django-deovi`_, a Django project that can be used to
-browse collection once imported.
+.. _collector_resourcer_type:
 
+Resource types
+**************
+
+There are currently three types of resources that can be collected.
+
+Serie
+-----
+
+Is for a directory that contains media files, it is assumed each of the media file is
+an episode.
+
+Its manifest is expected to be named ``manifest.json`` located in the Collection
+directory.
+
+Movie
+-----
+
+Is for a media file supported from :ref:`collector_media_kind`.
+
+Its manifest is expected to be named like its related media files with extension
+changed to ``.json`` or ``.yaml``, depending the manifest format. The manifest file
+should be located along the media file in the same directory.
+
+Collection
+----------
+
+Is for a directory that contains media files, but opposed to a Serie, a collection can
+not be scrapped because it does not exists in TMDB. See it more like a virtual resource
+that allows you to regroup a collection of movies, like for a saga (Star Wars, Alien,
+etc..).
+
+Its manifest is expected to be named ``manifest.json`` located in the Collection
+directory.
+
+.. _collector_media_kind:
 
 Media kind
 **********
@@ -53,196 +88,129 @@ Empty directories
 *****************
 
 The collector is running recursively on given path to scan and it will only retains
-directories which have at least a single media file. All directories that don't have
-any supported media files will be ignored from collection.
+directories (for Serie or Collection) that have at least a single media file.
+
+All directories that don't have any supported media files will be ignored from
+collecting.
 
 
 Manifest
 ********
 
-Each directory may contains a YAML file ``manifest.yml`` to include some directory meta
-informations to include in the dump. The manifest content is almost free except it can
-not defines item names that are computed from collection to avoid overwriting.
+Each directory may contains a manifest file (either JSON or YAML) to include some
+directory meta information to include in the dump.
 
-Forbidden item names are:
+Each resource may have a related manifest, no matter its type. Serie and Collection
+resource are dedicated to a directory while Movie is only for a media file (as
+supported from :ref:`collector_media_kind`).
 
-* ``absolute_dir``;
-* ``children_files``;
+The manifest content is almost free except it can not defines item names that are
+computed from collection to avoid overwriting.
+
+.. Warning::
+    If you are planning to use :ref:`intro_scrapping` be aware that it will overwrite
+    the manifest file and all your custom values will be lost.
+
+Forbidden item names in manifest are:
+
 * ``cover``;
-* ``mtime``;
 * ``name``;
 * ``path``;
-* ``relative_dir``;
-* ``size``;
+* ``parent``;
 
-Directory cover
-***************
 
-Each directory may have a cover image file to collect. A cover is only owned by its
-direct directory, children directories won't inherit its parent one.
+Cover
+*****
 
-Collector recognize a file as a cover if it is named ``cover`` and have extension
-``png``, ``jpg``, ``jpeg`` or ``gif``. If there is multiple elligible cover files in
-the same directory, collector will choose the one with the extension priority as
-described from previous extension list order.
+Each resource may have a cover image file to collect if its manifest defines one.
 
-.. Note::
+.. Hint::
     It is recommended to optimize your cover image file sizes.
-
 
 
 Directory checksum
 ******************
 
-If this options is enable a checksum will be computed from all gathered informations
-from directory. This means basic directory informations (paths, size, etc..) but also
-additional data from possible manifest and cover file.
+If this options is enabled a checksum will be computed for each resource.
+
+Serie and Collection build a checksum from all gathered informations. This means basic
+directory informations (paths, size, etc..) but also additional data from possible
+manifest and cover file.
 
 The directory checksum is included in directory payload from dump and the cover file
 checksum also. Cover checksum is used to compute the directory one but is available
 also in directory payload as an helper to just check for cover file change.
-
 
 Usage
 *****
 
 Command requires two positionnal arguments in this order:
 
-* ``source``: A path to a directory to scan recursively for collection;
-* ``destination``: A path to file that will be created with the JSON dump. Note that if
-  you have directory covers, a new directory will be created along the JSON dump file
-  to store all the cover files;
+* ``source``: A directory path to scan recursively for resources;
+* ``destination``: A file path for the JSON dump to create. If resources have a cover,
+  a new directory will be created along the JSON dump file to store all the cover files;
 
 And possible keyword arguments:
 
 * ``--checksum``: If given this will enable directory checksum. On default checksum
   is disabled;
 
-So with the following command: ::
+Sample command usage: ::
 
-    deovi collect --checksum my_device plop.json
+    deovi collect my_device plop.json --checksum
 
-For the following ``my_device/`` directory content: ::
+Sample
+******
+
+This is a sample of proper structure to collect: ::
 
     my_device/
     ├── cover.png
     ├── manifest.yaml
-    ├── SampleVideo_1280x720_1mb.mkv
-    ├── foo/
-    │   ├── bar/
-    │   │   └── nope.txt
-    │   ├── cover.png
-    │   ├── manifest.yaml
-    │   └── SampleVideo_720x480_1mb.mp4
-    └── ping/
-        └── pong/
-            ├── cover.gif
-            ├── SampleVideo_720x480_1mb.mkv
-            └── SampleVideo_720x480_2mb.mkv
+    ├── SampleVideo.mkv
+    ├── nope/
+    ├── the-serie/
+    │   ├── cover.png
+    │   ├── manifest.yaml
+    │   ├── episode01.mkv
+    │   └── episode02.mp4
+    ├── other-serie/
+    │   ├── cover.png
+    │   ├── manifest.yaml
+    │   ├── episode01.mkv
+    │   ├── episode02.mkv
+    │   ├── episode03.mp4
+    │   └── episode04.mp4
+    └── classics/
+        ├── cover.jpg
+        ├── Casablanca.mkv
+        ├── Casablanca.yaml
+        ├── manifest.yaml
+        ├── The-pit.json
+        └── The-pit.mkv
 
-It would create a ``plop.json`` file with a JSON collection dump alike this: ::
+``my_device`` would be collected as the root, named ``.``. We don't recommend to have
+resource at the root since ``.`` is not a significant name.
 
-    {
-        "foo": {
-            "path": "/home/donald/my_device/foo",
-            "name": "foo",
-            "absolute_dir": "/home/donald/my_device",
-            "relative_dir": "foo",
-            "size": 4096,
-            "mtime": "2023-03-03T15:28:31+00:00",
-            "children_files": [
-                {
-                    "path": "/home/donald/my_device/foo/SampleVideo_720x480_1mb.mp4",
-                    "name": "SampleVideo_720x480_1mb.mp4",
-                    "absolute_dir": "/home/donald/my_device/foo",
-                    "relative_dir": "foo",
-                    "directory": "foo",
-                    "extension": "mp4",
-                    "container": "MPEG-4",
-                    "size": 1057149,
-                    "mtime": "2023-03-03T15:28:31+00:00"
-                }
-            ],
-            "title": "Foo bar",
-            "cover": "my_device_7a4067f264f889051f91/c6a67d9c-1590-4c67-9c93-37a4da5a01f9.png",
-            "cover_checksum": "...",
-            "checksum": "..."
-        },
-        "ping/pong": {
-            "path": "/home/donald/my_device/ping/pong",
-            "name": "pong",
-            "absolute_dir": "/home/donald/my_device/ping",
-            "relative_dir": "ping/pong",
-            "size": 4096,
-            "mtime": "2023-03-03T15:28:31+00:00",
-            "children_files": [
-                {
-                    "path": "/home/donald/my_device/ping/pong/SampleVideo_720x480_2mb.mkv",
-                    "name": "SampleVideo_720x480_2mb.mkv",
-                    "absolute_dir": "/home/donald/my_device/ping/pong",
-                    "relative_dir": "ping/pong",
-                    "directory": "pong",
-                    "extension": "mkv",
-                    "container": "Matroska",
-                    "size": 2106944,
-                    "mtime": "2023-03-03T15:28:31+00:00"
-                },
-                {
-                    "path": "/home/donald/my_device/ping/pong/SampleVideo_720x480_1mb.mkv",
-                    "name": "SampleVideo_720x480_1mb.mkv",
-                    "absolute_dir": "/home/donald/my_device/ping/pong",
-                    "relative_dir": "ping/pong",
-                    "directory": "pong",
-                    "extension": "mkv",
-                    "container": "Matroska",
-                    "size": 1050238,
-                    "mtime": "2023-03-03T15:28:31+00:00"
-                }
-            ],
-            "cover": "my_device_7a4067f264f889051f91/c92308e0-c385-441b-ba7c-a79babf94c6e.gif"
-            "cover_checksum": "...",
-            "checksum": "..."
-        },
-        ".": {
-            "path": "my_device",
-            "name": "my_device",
-            "absolute_dir": ".",
-            "relative_dir": ".",
-            "size": 4096,
-            "mtime": "2023-03-03T15:28:31+00:00",
-            "children_files": [
-                {
-                    "path": "/home/donald/my_device/SampleVideo_1280x720_1mb.mkv",
-                    "name": "SampleVideo_1280x720_1mb.mkv",
-                    "absolute_dir": "/home/donald/my_device",
-                    "relative_dir": ".",
-                    "directory": "",
-                    "extension": "mkv",
-                    "container": "Matroska",
-                    "size": 1052413,
-                    "mtime": "2023-03-03T15:28:31+00:00"
-                }
-            ],
-            "title": "Media sample root",
-            "cover": "my_device_7a4067f264f889051f91/54d4d2a3-5c13-4c8e-9b8f-d4877edf24d6.png"
-            "cover_checksum": "...",
-            "checksum": "..."
-        }
-    }
+``nope`` directory won't be collected because it does not have any supported files (no
+media or manifest). Everything else should be collected.
 
-.. Note::
-    As you can see from this dump sample, there is a directory entry ``.``, which is
-    for the collected file from the root of source argument ``my_device``.
+For example ``other-serie/manifest.yaml`` would be collected as the ``other-serie``
+manifest, ``classics/Casablanca.yaml`` could be collected as the
+manifest of ``classics/Casablanca.mkv`` (if valid) and ``classics/cover.jpg`` as the
+``classics/`` cover if its manifest define it as so.
 
-    We recommend you to organize your directory structure to avoid having files at root
-    of source because ``.`` is not a very meaning name.
+The resulting dump will contains a registry of collected resources, each resource gather
+its filesystem information and possible manifest information.
 
-And a directory ``plop_ad79e25c5391ea259df8/`` which include cover files: ::
+And a directory like ``my_device_7a4067f264f889051f91/`` will be created with all cover
+files from all resources: ::
 
     my_device_7a4067f264f889051f91/
     ├── 54d4d2a3-5c13-4c8e-9b8f-d4877edf24d6.png
-    ├── c6a67d9c-1590-4c67-9c93-37a4da5a01f9.png
-    └── c92308e0-c385-441b-ba7c-a79babf94c6e.gif
+    ├── 19eecca3-c610-7c44-9b8f-4c67f247ed64.png
+    ├── d6a67d9c-1590-4c67-9c93-37a4da5a01f9.png
+    └── c92308e0-c385-441b-ba7c-a79babf94c6e.jpg
 
 The cover directory name is created including the dump file name with a hash so it is
 guaranteed to be unique every time you run the collect command.

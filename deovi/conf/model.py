@@ -29,7 +29,7 @@ class SettingsObject:
 
     # Forbidden/reserved keyword from manifest corresponding to computed values from
     # collection (obviously excepted the ones from manifest)
-    manifest_forbidden_vars: dict = dataclasses_field(default_factory=dict)
+    manifest_forbidden_vars: list = dataclasses_field(default_factory=list)
 
     # File name to use with allowed extensions to search for a cover
     cover_name: str = "cover"
@@ -94,11 +94,11 @@ class SettingsObject:
             # manifest loading.
             # This list has evolved to be used only to ignore some fields from loaded
             # payload.
-            self.manifest_forbidden_vars = {
+            self.manifest_forbidden_vars = (
                 "path",
                 "name",
                 "parent",
-            }
+            )
 
         if not self.cover_extensions:
             self.cover_extensions = [

@@ -36,6 +36,7 @@ not breaking changes except the ones listed below.
   * The dump registry include now a new field 'deovi' which contains the Deovi version
     used to create dump and also a date of creation;
 
+* [collect] Update documentation;
 * [scrap] Improved Scrapper class and 'scrap' command to support movie in addition to
   tv resource;
 * [scrap] Improved Scrapper to output manifest in JSON format in addition to YAML;
@@ -49,6 +50,7 @@ not breaking changes except the ones listed below.
 * [scrap] Now the scrapper methods for many resources (either from manifest objects or
   recursive path) process resource per chunk and apply a pause between them to follow
   the soft request limit from TMDB API;
+* [scrap] Update documentation;
 
 
 Version 0.7.0 - 2024/04/28

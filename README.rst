@@ -24,13 +24,16 @@ Dependencies
 ************
 
 * `Python`_ >=3.10;
-* `Click`_ >=8.0;
+* `Click`_ >=8.0,<9.0;
 * `Python Slugify`_ >=5.0.0;
 * `Unidecode`_ (as a sub dependency from "Python Slugify");
 * `PyYAML`_ >=6.0;
+* `deepdiff`_ >=7.0.1;
+* `tmdbv3api`_ >=1.7.7,<2.0.0;
+* `requests`_ >=2.30.0;
 
-And optional dependancies when ``scrapping`` feature is enabled:
 
-* `deepdiff`_;
-* `tmdbv3api`_ ==1.7.7;
-* `requests`_;
+Credits
+*******
+
+Logo vector and icon by `SVG Repo <https://www.svgrepo.com>`_.

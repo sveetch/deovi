@@ -4,12 +4,13 @@
 Renamer
 =======
 
-Principle is to run tasks from a Job to rename files from a directory (not recursively).
+The principle is to run tasks from a Job to rename files from a directory (not
+recursively).
 
 Job
 ***
 
-Job file is what defines the ``basepath`` to search for file to rename, some options
+The Job file defines the ``basepath`` to search for file to rename, some options
 and tasks.
 
 It should be something like this: ::
@@ -76,16 +77,13 @@ A task is just some string manipulation on the filename, although aware of the f
 path, it is only to modify the file name (including extension). Some task are done
 to never change the file extension and some others can change it.
 
+Below are the task rules you can add to your Job ``tasks`` option.
 
-Available tasks
----------------
-
-These are the task rules you can add to your Job ``tasks`` option. You can add as many
-tasks as you want. Just remember than each task starts from the previous task returns,
-or the original filename for the very first task in list.
+You can add as many tasks as you want. Just remember than each task starts from the
+previous task returns, or the original filename for the very first task in list.
 
 capitalize
-..........
+----------
 
 Capitalize file name.
 
@@ -108,7 +106,7 @@ Sample
 
 
 lowercase
-.........
+---------
 
 Lowercase file name, work on the whole filename including extension.
 
@@ -131,7 +129,7 @@ Sample
 
 
 uppercase
-.........
+---------
 
 Uppercase file name.
 
@@ -154,7 +152,7 @@ Sample
 
 
 underscore_to_dash
-..................
+------------------
 
 Convert some strings into another ones:
 
@@ -180,7 +178,7 @@ Sample
 
 
 add_prefix
-..........
+----------
 
 Add a prefix before filename.
 
@@ -208,7 +206,7 @@ Sample
 
 
 numerate
-........
+--------
 
 Prefix file name with a string of index position padded with zero.
 
@@ -245,7 +243,7 @@ Sample
 
 
 catch_segments
-..............
+--------------
 
 Divide filename from given divider string and join resulting segments according to
 options.
@@ -287,7 +285,7 @@ Sample
     ``slice_end`` set to ``3``, the result will be ``three.txt``.
 
 replace
-.......
+-------
 
 Replace every occurences of a string in filename by another one.
 
