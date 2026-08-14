@@ -22,6 +22,8 @@ not breaking changes except the ones listed below.
   *The Outer Limits* from TMDb;
 * Added logo;
 * Moved documentation theme to "Furo";
+* Scrapping requirements (deepdiff, tmdbv3api and requests) are not optional anymore
+  and are now part of the base package requirements;
 * [collect] Because of some changes in collector and scrapper behaviors, the resulting
   registry dump has some little changes:
 

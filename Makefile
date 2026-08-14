@@ -99,7 +99,7 @@ install-backend:
 	@echo ""
 	@printf "$(FORMATBLUE)$(FORMATBOLD)---> Installing everything for development <---$(FORMATRESET)\n"
 	@echo ""
-	$(PIP) install -e .[scrapping,dev,quality,doc,doc-live,release]
+	$(PIP) install -e .[dev,quality,doc,doc-live,release]
 .PHONY: install-backend
 
 install: venv install-backend

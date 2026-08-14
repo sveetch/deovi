@@ -1,9 +1,8 @@
-# Frozen requirement versions for 'deovi==0.8.0rc26' installation
+# Frozen requirement versions for 'deovi==0.8.0rc27' installation
 click==8.4.1
 colorlog==6.10.1
 python-slugify==8.0.4
 PyYAML==6.0.3
-# From extra requirements 'scrapping'
 deepdiff==9.1.0
 tmdbv3api==1.9.0
 requests==2.34.2

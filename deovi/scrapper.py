@@ -7,9 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from deepdiff import DeepDiff
-
 from tmdbv3api import Configuration, TMDb, TV, Movie
-
 import yaml
 
 from .conf import settings
