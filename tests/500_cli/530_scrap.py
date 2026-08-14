@@ -8,7 +8,10 @@ from deovi import __pkgname__
 from deovi.cli.entrypoint import cli_frontend
 
 from tests.utils import (
-    API_FILEKEY_FILENAME, SAMPLE_TV_ID, SAMPLE_TV_PAYLOAD, get_tmdbapi_key,
+    API_FILEKEY_FILENAME,
+    SAMPLE_TV_ID,
+    SAMPLE_TV_PAYLOAD,
+    get_tmdbapi_key,
 )
 
 
@@ -19,7 +22,7 @@ api_allowed = pytest.mark.skipif(
 )
 
 
-def test_scrap_required_args(caplog):
+def test_required_args(caplog):
     """
     Command expected at least the 'tvid' argument, the 'destination' argument and
     either 'key' or 'filekey' option.
@@ -53,7 +56,7 @@ def test_scrap_required_args(caplog):
 
 
 @api_allowed
-def test_scrap_basic_success(caplog, tmp_path, settings):
+def test_basic_success(caplog, tmp_path, settings):
     """
     With all required arguments and options command should succeed to retrieve TV Serie
     details and cover in the right language.
@@ -68,15 +71,12 @@ def test_scrap_basic_success(caplog, tmp_path, settings):
     result = runner.invoke(cli_frontend, [
         "scrap",
         "tv",
-        SAMPLE_TV_ID,
+        str(SAMPLE_TV_ID),
         str(tmp_path),
         "--key", settings.tmdbapi_key(),
         "--language", "en",
         "--write-diff",
     ])
-
-    assert manifest_path.exists() is True
-    assert poster_path.exists() is True
 
     assert result.exit_code == 0
     assert caplog.record_tuples == [
@@ -98,18 +98,21 @@ def test_scrap_basic_success(caplog, tmp_path, settings):
         (
             __pkgname__,
             logging.INFO,
-            "Cover: {}".format(str(poster_path))
+            "Title: {}".format(SAMPLE_TV_PAYLOAD["title"])
         ),
         (
             __pkgname__,
             logging.INFO,
-            "Title: {}".format(SAMPLE_TV_PAYLOAD["title"])
+            "Cover: {}".format(str(poster_path))
         ),
     ]
 
+    assert manifest_path.exists() is True
+    assert poster_path.exists() is True
+
 
 @api_allowed
-def test_scrap_diff_success(caplog, tmp_path, settings):
+def test_diff_success(caplog, tmp_path, settings):
     """
     Success with a diff against a previous existing manifest.
 
@@ -128,7 +131,7 @@ def test_scrap_diff_success(caplog, tmp_path, settings):
     result = runner.invoke(cli_frontend, [
         "scrap",
         "tv",
-        SAMPLE_TV_ID,
+        str(SAMPLE_TV_ID),
         str(tmp_path),
         "--key", settings.tmdbapi_key(),
         "--language", "en",
@@ -140,7 +143,7 @@ def test_scrap_diff_success(caplog, tmp_path, settings):
 
 
 @api_allowed
-def test_scrap_basic_dry(caplog, tmp_path, settings):
+def test_basic_dry(caplog, tmp_path, settings):
     """
     With dry mode enabled everything is runned but nothing should be written.
 
@@ -153,7 +156,7 @@ def test_scrap_basic_dry(caplog, tmp_path, settings):
     result = runner.invoke(cli_frontend, [
         "scrap",
         "tv",
-        SAMPLE_TV_ID,
+        str(SAMPLE_TV_ID),
         str(tmp_path),
         "--key", settings.tmdbapi_key(),
         "--language", "en",
@@ -183,11 +186,11 @@ def test_scrap_basic_dry(caplog, tmp_path, settings):
         (
             __pkgname__,
             logging.INFO,
-            "Cover: {}".format(str(poster_path))
+            "Title: {}".format(SAMPLE_TV_PAYLOAD["title"])
         ),
         (
             __pkgname__,
             logging.INFO,
-            "Title: {}".format(SAMPLE_TV_PAYLOAD["title"])
+            "Cover: {}".format(str(poster_path))
         ),
     ]

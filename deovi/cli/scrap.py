@@ -174,8 +174,8 @@ else:
             cover = manifest.path.parent / manifest.cover
 
         logger.info("Manifest: {}".format(manifest.path))
-        logger.info("Cover: {}".format(cover))
         logger.info("Title: {}".format(manifest.title))
+        logger.info("Cover: {}".format(cover))
 
         if diffs:
             logger.info("There were differences with previous manifest file:")

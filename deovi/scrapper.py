@@ -19,7 +19,7 @@ from .utils.jsons import ExtendedJsonEncoder
 from . import __pkgname__
 
 
-class TmdbScrapper:
+class TmdbScrapper(ManifestLoaderMixin):
     """
     Class to scrap media information from TMDb API.
 
@@ -251,8 +251,6 @@ class TmdbScrapper:
         """
         manifests = []
 
-        loader = ManifestLoaderMixin()
-
         self.logger.info("Validating manifests")
 
         for branch, files in branches.items():
@@ -262,10 +260,10 @@ class TmdbScrapper:
 
                 # Load format from file extension
                 if fileitem.suffix == ".json":
-                    data = loader.get_json_manifest(fileitem)
+                    data = self.get_json_manifest(fileitem)
 
                 elif fileitem.suffix == ".yaml":
-                    data = loader.get_yaml_manifest(fileitem)
+                    data = self.get_yaml_manifest(fileitem)
 
                 else:
                     raise NotImplementedError("Unsupported format extension: {}".format(
@@ -273,7 +271,8 @@ class TmdbScrapper:
                     ))
 
                 # Try to load current file as a manifest model
-                manifest = loader.load_manifest(
+                self.logger.debug("Loading content from: {}".format(fileitem))
+                manifest = self.load_manifest(
                     fileitem,
                     data,
                     cover_extensions=[],
@@ -283,7 +282,7 @@ class TmdbScrapper:
                 # output a debug log for locked manifest
                 if (
                     manifest
-                    and manifest.locked is not True
+                    and manifest.locked is True
                 ):
                     msg = (
                         "Ignored manifest because it is locked: {}"
@@ -293,7 +292,7 @@ class TmdbScrapper:
                 # Only valid manifests, unlocked and not a collection are scrapped
                 if (
                     manifest
-                    and manifest.locked is not True
+                    and manifest.locked is False
                     and manifest.tmdb_id is not None
                     and manifest.tmdb_type != "collection"
                 ):
@@ -481,6 +480,7 @@ class TmdbScrapper:
 
         Arguments:
             basedir (Path): Where to search for manifests.
+            manifests (list): A list of manifest objects to scrap from their ID.
 
         Keyword Arguments:
             write_diff (bool): Enable creation of difference file between possible
@@ -529,9 +529,12 @@ class TmdbScrapper:
             generator: List of processed items. Each item is a tuple with the manifest
                 object and list of differences.
         """
-
+        # Discover every possible manifest find and group them by branch (their
+        # directory holder)
         branches = self.find_elligible_manifest_file(basedir)
 
+        # Load all first valid manifest files from branches
         manifests = self.load_original_manifests(branches)
 
+        # Process
         return self.fetch_from_manifests(manifests, write_diff=write_diff)

@@ -161,7 +161,15 @@ else:
             debug=False,
         )
 
-        connector.fetch_from_path(
+        scrapped = connector.fetch_from_path(
             basedir,
             write_diff=write_diff,
         )
+
+        for item in scrapped:
+            manifest = item[0]
+            logger.info("Successfuly scrapped: {}".format(manifest.path))
+            logger.info("├─ ID: {}".format(manifest.tmdb_id))
+            logger.info("├─ Type: {}".format(manifest.tmdb_type))
+            logger.info("├─ Title: {}".format(manifest.title))
+            logger.info("┕━ Cover: {}".format(manifest.cover))

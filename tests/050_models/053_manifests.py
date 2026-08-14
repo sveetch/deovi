@@ -45,7 +45,7 @@ def test_movie_creation(monkeypatch, tmp_path):
 
     # Basic definition with payload and without cover
     the_pit = MovieManifest(manifest_path, **SAMPLE_MOVIE_PAYLOAD)
-    assert the_pit.tmdb_id == "273204"
+    assert the_pit.tmdb_id == 273204
     assert the_pit.tmdb_type == "movie"
     assert the_pit.title == "The Pit and the Pendulum"
 
@@ -180,7 +180,7 @@ def test_serie_creation(monkeypatch, tmp_path):
 
     # Basic definition with payload and without cover
     the_outer_limits = SerieManifest(manifest_path, **SAMPLE_TV_PAYLOAD)
-    assert the_outer_limits.tmdb_id == "21567"
+    assert the_outer_limits.tmdb_id == 21567
     assert the_outer_limits.tmdb_type == "tv"
     assert the_outer_limits.title == "The Outer Limits"
     assert the_outer_limits.cover is None

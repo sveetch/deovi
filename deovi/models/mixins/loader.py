@@ -12,11 +12,25 @@ LOGGER = logging.getLogger(__pkgname__)
 
 
 class ManifestLoaderMixin:
+    """
+    Mixin to load manifest with given data.
+    """
     def load_manifest(self, path, data, cover_extensions=None, autochecksum=None):
         """
         Load manifest payload as a manifest model object.
 
         The kind of manifest model to be used is guessed from 'tmdb_type'.
+
+        Arguments:
+            path (pathlib.Path): The manifest filepath.
+            data (dict): Initial data to set on manifest object.
+
+        Keyword Arguments:
+            cover_extensions (list): The list of allowed file extensions for cover.
+            autochecksum (boolean): To enable checksum automation of loaded manifest.
+
+        Returns:
+            object: Either a Manifest model object if successfuly loaded else None.
         """
         if data:
             if data["tmdb_type"] == "collection":
