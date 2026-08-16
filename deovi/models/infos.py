@@ -140,27 +140,6 @@ class BaseInformation(ChecksumMixin, ExportMixin, ManifestLoaderMixin):
 
         return relative_dir
 
-    def discover_manifest(self, cover_extensions=None, autochecksum=None):
-        """
-        Discover a possible manifest file matching the expected filename.
-
-        Each manifest model should implement itself its method to discover and load
-        a manifest file related to a model object.
-
-        .. Note::
-            This a dummy default implementation which don't pass any path or data.
-
-        Returns:
-            dict: Should return loaded manifest file data. Base implementation just
-            returns the result of ``load_manifest`` with an empty value.
-        """
-        return self.load_manifest(
-            None,
-            None,
-            cover_extensions=cover_extensions,
-            autochecksum=autochecksum
-        )
-
 
 @dataclass
 class DirectoryInformation(BaseInformation):
@@ -263,26 +242,11 @@ class DirectoryInformation(BaseInformation):
             /foo/bar/
             /foo/bar/manifest.json
 
-        JSON format has highest priority and YAML is only searched if there was no
-        valid JSON manifest found.
-
         Returns:
             dict:
         """
-        discovered_path = None
-        data = None
-
-        if (self.path / "manifest.json").exists():
-            discovered_path = self.path / "manifest.json"
-            data = self.get_json_manifest(discovered_path)
-
-        if not data and (self.path / "manifest.yaml").exists():
-            discovered_path = self.path / "manifest.yaml"
-            data = self.get_yaml_manifest(discovered_path)
-
-        return self.load_manifest(
-            discovered_path,
-            data,
+        return super().discover_manifest(
+            self.path,
             cover_extensions=cover_extensions,
             autochecksum=autochecksum,
         )
@@ -353,20 +317,9 @@ class MediaInformation(BaseInformation):
         Returns:
             dict:
         """
-        discovered_path = None
-        data = None
-
-        if (self.path.with_suffix(".json")).exists():
-            discovered_path = self.path.with_suffix(".json")
-            data = self.get_json_manifest(discovered_path)
-
-        if not data and (self.path.with_suffix(".yaml")).exists():
-            discovered_path = self.path.with_suffix(".yaml")
-            data = self.get_yaml_manifest(discovered_path)
-
-        return self.load_manifest(
-            discovered_path,
-            data,
+        return super().discover_manifest(
+            self.path.parent,
+            name=self.path.stem,
             cover_extensions=cover_extensions,
             autochecksum=autochecksum,
         )

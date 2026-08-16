@@ -126,10 +126,12 @@ def test_job_success(monkeypatch, caplog, settings, tmp_path):
     ]
 
     with destination.open() as fp:
-        content = json.load(fp)
+        dump = json.load(fp)
 
-    assert "device" in content
-    assert content["registry"] == {
+    assert "deovi" in dump
+    assert "device" in dump
+    assert dump["device"]["storage_dir"] == "registry_d7756d7a5a6e1b2ae12c"
+    assert dump["registry"] == {
         ".": {
             "path": str(source),
             "name": "bar",

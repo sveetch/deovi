@@ -1,15 +1,18 @@
 import json
+import logging
 
 import yaml
 
 from deovi.scrapper import TmdbScrapper
 
 
-def test_for_serie(media_sample, disable_api):
+def test_for_serie(caplog, media_sample, disable_api):
     """
     Scrapper should correctly write manifest for a TV show no matter it already exists
     or not.
     """
+    caplog.set_level(logging.DEBUG)
+
     new_serie = media_sample / "new_serie"
     new_serie.mkdir()
     new_serie_manifest = new_serie / "manifest.json"
@@ -19,7 +22,7 @@ def test_for_serie(media_sample, disable_api):
         json.dumps({
             "path": str(new_serie_manifest),
             "tmdb_id": 42,
-            "tmdb_type": "serie",
+            "tmdb_type": "tv",
             "title": "Old plop",
         })
     )
@@ -51,14 +54,14 @@ def test_for_serie(media_sample, disable_api):
             "Type of root['cover'] changed from NoneType to str and value changed from "
             'None to "dummy_serie-cover.png".'
         ),
-        'Value of root[\'title\'] changed from "manifest.json" to "changed-serie".',
+        'Value of root[\'title\'] changed from "Old plop" to "changed-serie".',
     ]
 
     written_new_manifest = json.loads(new_serie_manifest.read_text())
     assert written_new_manifest["title"] == "changed-serie"
     assert written_new_manifest["cover"] == "dummy_serie-cover.png"
 
-    # Again with diff
+    # Again without changes from scrapping there should not be any differencs
     scrapper = TmdbScrapper("nokey", manifest_format="json")
     manifest, diff = scrapper.fetch_from_id(
         new_serie,
@@ -67,14 +70,7 @@ def test_for_serie(media_sample, disable_api):
         write_diff=True
     )
 
-    assert diff == [
-        (
-            "Type of root['cover'] changed from NoneType to str and value changed from "
-            'None to "dummy_serie-cover.png".'
-        ),
-        'Value of root[\'title\'] changed from "manifest.json" to '
-        '"changed-serie".',
-    ]
+    assert diff == []
 
 
 def test_for_movie_default(media_sample, disable_api):

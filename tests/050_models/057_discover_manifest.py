@@ -18,12 +18,12 @@ def test_manifest_no_valid(settings):
     """
     When the directory does not have any valid manifest file
     """
-    base_samplepath = settings.datas_path / "media_sample"
+    basepath = settings.datas_path / "media_sample"
 
     # foo/ does not have any manifest file
     foo = DirectoryInformation(
-        path=(base_samplepath / "foo"),
-        basepath=base_samplepath,
+        path=(basepath / "foo"),
+        basepath=basepath,
         size=42,
         mtime=datetime.datetime.now(),
         autoload=True,
@@ -33,8 +33,8 @@ def test_manifest_no_valid(settings):
 
     # ping/ only have an invalid manifest
     ping = DirectoryInformation(
-        path=(base_samplepath / "ping"),
-        basepath=base_samplepath,
+        path=(basepath / "ping"),
+        basepath=basepath,
         size=42,
         mtime=datetime.datetime.now(),
         autoload=True,
@@ -50,17 +50,17 @@ def test_manifest_fallback_on_yaml(settings, caplog):
     """
     caplog.set_level(logging.DEBUG)
 
-    base_samplepath = settings.datas_path / "media_sample"
+    basepath = settings.datas_path / "media_sample"
 
     root = DirectoryInformation(
-        path=base_samplepath,
-        basepath=base_samplepath,
+        path=basepath,
+        basepath=basepath,
         size=42,
         mtime=datetime.datetime.now(),
         autoload=True,
     )
     assert root.manifest == CollectionManifest(
-        path=base_samplepath / "manifest.yaml",
+        path=basepath / "manifest.yaml",
         title="Media sample root YAML",
     )
 
@@ -72,7 +72,7 @@ def test_manifest_fallback_on_yaml(settings, caplog):
         (
             __pkgname__,
             logging.DEBUG,
-            expected_msg.format(base_samplepath / "manifest.json"),
+            expected_msg.format(basepath / "manifest.json"),
         ),
     ]
 
@@ -82,11 +82,11 @@ def test_manifest_dir_loaded_json(settings, caplog):
     """
     JSON is loaded if found and valid
     """
-    base_samplepath = settings.datas_path / "media_sample"
+    basepath = settings.datas_path / "media_sample"
 
     pong = DirectoryInformation(
-        path=(base_samplepath / "ping/pong"),
-        basepath=base_samplepath,
+        path=(basepath / "ping/pong"),
+        basepath=basepath,
         size=42,
         mtime=datetime.datetime.now(),
         autoload=True,
@@ -95,7 +95,7 @@ def test_manifest_dir_loaded_json(settings, caplog):
 
     # Yaml manifest has been discovered since the JSON one is not valid
     assert pong.manifest == SerieManifest(
-        path=base_samplepath / "ping/pong/manifest.json",
+        path=basepath / "ping/pong/manifest.json",
         title="Pong JSON",
         tmdb_id=21567,
     )
@@ -106,11 +106,11 @@ def test_manifest_media_loaded_json(settings, caplog):
     """
     MediaInformation manifest is named after its own name
     """
-    base_samplepath = settings.datas_path / "media_sample"
+    basepath = settings.datas_path / "media_sample"
 
     sample720 = MediaInformation(
-        path=(base_samplepath / "ping/pong/SampleVideo_720x480_1mb.mkv"),
-        basepath=base_samplepath,
+        path=(basepath / "ping/pong/SampleVideo_720x480_1mb.mkv"),
+        basepath=basepath,
         size=42,
         mtime=datetime.datetime.now(),
         autoload=True,
@@ -119,7 +119,7 @@ def test_manifest_media_loaded_json(settings, caplog):
 
     # JSON manifest has been discovered
     assert sample720.manifest == MovieManifest(
-        path=base_samplepath / "ping/pong/SampleVideo_720x480_1mb.json",
+        path=basepath / "ping/pong/SampleVideo_720x480_1mb.json",
         title="Sample 720x480 1mb JSON",
         tmdb_id=273204,
     )

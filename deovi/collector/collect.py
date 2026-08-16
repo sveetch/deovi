@@ -243,6 +243,8 @@ class Collector(PrinterInterface):
         self.storage.set_basepath(destination, checksum=self.autochecksum)
 
         device_stats = self.scan_basepath_device(self.basepath)
+        device_stats["storage_dir"] = self.storage.storage_assets
+
         self.scan_directory(self.basepath)
 
         if self.registry and destination:

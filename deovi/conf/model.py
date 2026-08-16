@@ -20,16 +20,15 @@ class SettingsObject:
     # automatically.
     medias_extensions: list[str] = dataclasses_field(default_factory=list)
 
-    # Manifest filename to search in a directory
-    # DEPRECATED: With new collector the manifest support JSON/YAML and can have
-    # different names (for Movie)
-    manifest_filename: str = "manifest.yaml"
-    # Manifest file name without format extension
+    # Default manifest file name to discover, without format extension
     manifest_name: str = "manifest"
 
     # Forbidden/reserved keyword from manifest corresponding to computed values from
     # collection (obviously excepted the ones from manifest)
     manifest_forbidden_vars: list = dataclasses_field(default_factory=list)
+
+    # Allowed formats for manifest
+    manifest_allowed_formats: tuple[str] = dataclasses_field(default_factory=tuple)
 
     # File name to use with allowed extensions to search for a cover
     cover_name: str = "cover"
@@ -63,6 +62,11 @@ class SettingsObject:
     # Default time in seconds to wait before processing a next chunk
     batch_pause: int = 1
 
+    # Manifest filename to search in a directory
+    # DEPRECATED: With new collector the manifest support JSON/YAML and can have
+    # different names (for Movie)
+    manifest_filename: str = "manifest.yaml"
+
     def __post_init__(self):
         """
         Fill attributes with default values.
@@ -89,9 +93,10 @@ class SettingsObject:
                 "wmv": "Windows Media Video",
             }
 
+        if not self.manifest_allowed_formats:
+            self.manifest_allowed_formats = ("json", "yaml")
+
         if not self.manifest_forbidden_vars:
-            # NOTE: Previous collector/manifest implementation was using it to reject
-            # manifest loading.
             # This list has evolved to be used only to ignore some fields from loaded
             # payload.
             self.manifest_forbidden_vars = (

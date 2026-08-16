@@ -230,7 +230,7 @@ class TmdbScrapper(ManifestLoaderMixin):
 
         return branches
 
-    def load_original_manifests(self, branches):
+    def load_branches_manifests(self, branches):
         """
         Retrieve all valid manifests from branches.
 
@@ -434,44 +434,6 @@ class TmdbScrapper(ManifestLoaderMixin):
 
         return (manifest, diff)
 
-    def fetch_from_id(self, destination, tmdb_id, tmdb_type="tv", filename=None,
-                      write_diff=False):
-        """
-        Get information and cover for given TMDB ID an type.
-
-        Arguments:
-            destination (Path): Directory path where to write manifest and possible
-                cover files.
-            tmdb_id (string):
-
-        Keyword Arguments:
-            tmdb_type (string): The media type name can be either "tv" or "movie",
-                default to "tv".
-            filename (Path): A file path to use to compute the manifest filename.
-                It can be relative path, absolute or even a simple filename. Commonly
-                this should only be used for a Movie.
-            write_diff (bool): Enable creation of difference file between possible
-                original data and fetched data.
-
-        Returns:
-            tuple: The manifest object and list of differences.
-        """
-        if tmdb_type == "tv":
-            model = SerieManifest
-        elif tmdb_type == "movie":
-            model = MovieManifest
-        else:
-            raise NotImplementedError(
-                "Given tmdb_type '{}' has no supported model".format(tmdb_type)
-            )
-
-        # Build manifest
-        filename = filename.stem if filename else "manifest"
-        manifest_path = destination / "{}.{}".format(filename, self.manifest_format)
-        manifest = model(path=manifest_path, tmdb_id=tmdb_id)
-
-        return self.process_manifest(manifest, write_diff=write_diff)
-
     def fetch_from_manifests(self, manifests, write_diff=False):
         """
         Get information from TMDB for all given manifest objects.
@@ -493,19 +455,21 @@ class TmdbScrapper(ManifestLoaderMixin):
             for i in range(0, len(manifests), self.chunk_size)
         ]
 
-        is_single_chunk = len(chunks) == 1
-
+        # Open each chunk
         for i, chunk in enumerate(chunks, start=1):
             is_last_chunk = i >= len(chunks)
 
+            # Iterate on chunk items
             for c, manifest in enumerate(chunk, start=1):
                 result = self.process_manifest(manifest, write_diff=write_diff)
+
+                # If manifest is empty, it is assumed it has been ignored/invalid
                 if result[0] is not None:
                     yield result
 
             # Only apply a pause if not null, there is more than one chunk and it is not
             # the last one
-            if self.batch_pause and not is_single_chunk and not is_last_chunk:
+            if self.batch_pause and not len(chunks) == 1 and not is_last_chunk:
                 self.logger.info("💬 Batch pausing for {}s".format(self.batch_pause))
                 time.sleep(self.batch_pause)
 
@@ -532,7 +496,72 @@ class TmdbScrapper(ManifestLoaderMixin):
         branches = self.find_elligible_manifest_file(basedir)
 
         # Load all first valid manifest files from branches
-        manifests = self.load_original_manifests(branches)
+        manifests = self.load_branches_manifests(branches)
 
         # Process
         return self.fetch_from_manifests(manifests, write_diff=write_diff)
+
+    def fetch_from_id(self, destination, tmdb_id, tmdb_type="tv", filename=None,
+                      write_diff=False):
+        """
+        Get information and cover for given TMDB ID an type.
+
+        Arguments:
+            destination (Path): Directory path where to write manifest and possible
+                cover files.
+            tmdb_id (string): The TMDB identifier for the resource to scrap from API.
+
+        Keyword Arguments:
+            tmdb_type (string): The media type name can be either "tv" or "movie",
+                default to "tv".
+            filename (Path): A file path to use to compute the manifest filename.
+                It can be relative path, absolute or even a simple filename. This
+                should always been set for a Movie because we expect a filename similar
+                to the related media file (``foo.mp4``) that we can not know before
+                scrapping. When not provided, the name will be ``manifest``.
+            write_diff (bool): Enable creation of difference file between possible
+                original data and fetched data.
+
+        Returns:
+            tuple: The manifest object and list of differences.
+        """
+        if tmdb_type not in settings.scrapped_manifest_types:
+            raise NotImplementedError(
+                "Given tmdb_type '{}' has no supported model".format(tmdb_type)
+            )
+        elif tmdb_type == "tv":
+            filename = filename.stem if filename else settings.manifest_name
+        elif tmdb_type == "movie":
+            filename = filename.stem if filename else settings.manifest_name
+
+        msg = "Discovering in '{}' with filename '{}'"
+        self.logger.debug(msg.format(destination, filename))
+
+        manifest = self.discover_manifest(
+            destination,
+            name=filename,
+            cover_extensions=None,
+            autochecksum=None
+        )
+
+        # If no manifest has been discovered, craft a new one with minimal data
+        if not manifest:
+            if tmdb_type == "tv":
+                model = SerieManifest
+            elif tmdb_type == "movie":
+                model = MovieManifest
+            else:
+                raise NotImplementedError(
+                    "Given tmdb_type '{}' has no supported model".format(tmdb_type)
+                )
+
+            # Build manifest
+            manifest_path = destination / "{}.{}".format(filename, self.manifest_format)
+            manifest = model(path=manifest_path, tmdb_id=tmdb_id)
+
+        # Process
+        result = list(self.fetch_from_manifests([manifest], write_diff=write_diff))
+        if result:
+            return result[0]
+        else:
+            return None, None

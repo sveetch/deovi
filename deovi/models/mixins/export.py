@@ -1,6 +1,8 @@
 import json
 from dataclasses import fields as dataclasses_fields
 
+import yaml
+
 from ...utils.jsons import ExtendedJsonEncoder
 
 
@@ -53,3 +55,16 @@ class ExportMixin:
         Returns the output of ``serialize()`` in a JSON string.
         """
         return json.dumps(self.serialize(), indent=4, cls=ExtendedJsonEncoder)
+
+    def as_yaml(self):
+        """
+        Returns the output of ``serialize()`` in a YAML string.
+
+        .. Note::
+            We get content from ``as_json()`` because it seems difficult to
+            change representation of various types with the yaml library.
+        """
+        return yaml.dump(
+            json.loads(self.as_json()),
+            Dumper=yaml.Dumper
+        )

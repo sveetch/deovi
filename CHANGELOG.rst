@@ -7,7 +7,7 @@ History
 Development
 ***********
 
-This is large refactoring of the Deovi core and commands to improve code and add new
+This is a large refactoring of the Deovi core and commands to improve code and add new
 features.
 
 The refactoring is too heavy to be described here so you would need
