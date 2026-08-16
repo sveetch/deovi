@@ -4,8 +4,8 @@
 History
 =======
 
-Development
-***********
+Version 1.0.0 - 2026/08/16
+**************************
 
 This is a large refactoring of the Deovi core and commands to improve code and add new
 features.

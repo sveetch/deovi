@@ -173,6 +173,9 @@ class DirectoryInformation(BaseInformation):
     def set_checksum(self):
         """
         Directory checksum is a computation of its field values.
+
+        Returns:
+            str: The computed checksum.
         """
         # Copy the payload to patch
         payload = {
@@ -203,6 +206,9 @@ class DirectoryInformation(BaseInformation):
     def can_be_scrapped(self):
         """
         Describe if possible manifest can be scrapped or not
+
+        Returns:
+            boolean: True if media is allowed to be scrapped, else False.
         """
         if self.manifest and self.manifest.can_be_scrapped:
             return True
@@ -243,7 +249,7 @@ class DirectoryInformation(BaseInformation):
             /foo/bar/manifest.json
 
         Returns:
-            dict:
+            object: Either a Manifest model object if successfuly loaded else None.
         """
         return super().discover_manifest(
             self.path,
@@ -315,7 +321,7 @@ class MediaInformation(BaseInformation):
         valid JSON manifest found.
 
         Returns:
-            dict:
+            object: Either a Manifest model object if successfuly loaded else None.
         """
         return super().discover_manifest(
             self.path.parent,
